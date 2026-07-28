@@ -17,9 +17,35 @@
 <div id="app">
 
   <!-- ============ 1) 시작 화면 ============ -->
+  <!-- 학생들이 그린 그림 그대로 만들었어요!
+       제목은 태극기 색(빨강+파랑), 가운데 Start,
+       오른쪽 아래 태극기, 왼쪽 아래 설명란 -->
   <section id="screen-title" class="screen is-on">
-    <div class="title-box">
-      <!-- 태극기 그림이에요. 동그란 태극 무늬를 직접 그렸어요 -->
+
+    <!-- 제목 : '독립을'은 빨강, '향하여'는 파랑이에요 -->
+    <h1 class="game-title">
+      <span class="t-red">독립을</span>
+      <span class="t-blue">향하여</span>
+    </h1>
+
+    <!-- 가운데 큰 Start 글씨와 동그란 재생 버튼 -->
+    <div class="start-block">
+      <div class="start-word">Start</div>
+      <button id="btn-start" class="play-btn" aria-label="게임 시작">▶</button>
+    </div>
+
+    <!-- 팀 이름 -->
+    <p class="team-name">팀 - 서진</p>
+    <p class="team-members">서진 · 조찬우 · 박윤진</p>
+
+    <!-- 왼쪽 아래 : 설명란 -->
+    <div class="corner-help">
+      <span class="corner-label">설명란</span>
+      <button id="btn-info" class="round-btn" aria-label="게임 설명 보기">?</button>
+    </div>
+
+    <!-- 오른쪽 아래 : 태극기 (CSS로 직접 그렸어요) -->
+    <div class="corner-flag">
       <div class="taegeukgi" aria-label="태극기">
         <div class="taegeuk"></div>
         <span class="gwe gwe1"></span>
@@ -27,21 +53,8 @@
         <span class="gwe gwe3"></span>
         <span class="gwe gwe4"></span>
       </div>
-
-      <h1 class="game-title">독립을 향하여</h1>
-      <p class="game-sub">일제로부터 독립하는 게임</p>
-
-      <!-- 게임 설명란이에요 -->
-      <div class="info-card">
-        <p>1940년대 일제강점기.</p>
-        <p>주인공은 학교에서 돌아오다가 독립운동가를 만나<br>비밀 임무를 맡게 돼요.</p>
-        <p class="info-goal">목표는 단 하나, <b>독립</b>!</p>
-      </div>
-
-      <button id="btn-start" class="big-btn">게임 시작</button>
-
-      <p class="team-name">만든 사람 : 서진모둠 (서진 · 조찬우 · 박윤진)</p>
     </div>
+
   </section>
 
 
@@ -115,8 +128,25 @@
     </div>
   </section>
 
+
+  <!-- ============ 덮개 화면 ============
+       멈추기 / 도움말 / 처음으로 를 눌렀을 때
+       게임 위에 덮어서 보여주는 창이에요. -->
+  <div id="overlay">
+    <div class="overlay-card">
+      <div id="overlay-emoji">⏸️</div>
+      <h3 id="overlay-title">잠깐 멈춤</h3>
+      <div id="overlay-body"></div>
+      <div id="overlay-actions"></div>
+    </div>
+  </div>
+
+  <!-- 화면을 크게/작게 했을 때 잠깐 뜨는 알림이에요 -->
+  <div id="zoom-toast">화면 크기 100%</div>
+
 </div>
 
+<script src="js/sound.js"></script>
 <script src="js/input.js"></script>
 <script src="js/game.js"></script>
 </body>

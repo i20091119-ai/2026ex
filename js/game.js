@@ -17,6 +17,7 @@ const game = {
   score: 0,           // 지금까지 모은 독립 포인트
   chapterIndex: 0,    // 지금 몇 번째 장인지 (0부터 세요)
   life: MAX_LIFE,     // 남은 목숨(하트) 개수
+  paused: false,      // 잠깐 멈춤 중인지
 };
 
 
@@ -134,6 +135,7 @@ function addScore(amount) {
   if (amount <= 0) return;      // 0점이면 아무 일도 안 해요
   game.score += amount;
   drawScore();
+  Sound.ding();               // 띠링! 하고 기분 좋은 소리가 나요
 
   // 'pop' 이름표를 잠깐 붙였다 떼면 커졌다 작아지는 애니메이션이 나와요
   el.score.classList.remove('pop');
@@ -157,6 +159,7 @@ function drawHearts() {
 
 // 일본 경찰에게 들켰을 때 부르는 함수예요
 function caught(reason) {
+  Sound.ppyong();          // 뿅... 하고 시무룩한 소리가 나요
   game.life -= 1;          // 하트가 하나 줄어요
   drawHearts();
 
@@ -266,6 +269,7 @@ function startGame() {
   document.body.classList.remove('liberation');
   drawScore();
   drawHearts();
+  if (Sound.isOn()) Sound.startBgm();   // 잔잔한 배경음악을 틀어요
   showScreen('game');
   startChapter();
 }
@@ -273,6 +277,7 @@ function startGame() {
 // 모든 임무를 마쳤을 때 (이겼어요!)
 function finishGame() {
   Input.clear();
+  Sound.fanfare();            // 짜잔! 축하 소리
   el.endEmoji.textContent = '🎉';
   el.endTitle.textContent = '광복!';
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
@@ -283,6 +288,7 @@ function finishGame() {
 // 하트를 모두 잃었을 때 (졌어요)
 function gameOver(reason) {
   Input.clear();
+  Sound.stopBgm();            // 배경음악을 멈춰요
   document.body.classList.remove('liberation');
   el.endEmoji.textContent = '😢';
   el.endTitle.textContent = '붙잡혔어요...';
@@ -291,6 +297,126 @@ function gameOver(reason) {
   el.endScore.textContent = game.score;
   showScreen('end');
 }
+
+
+/* ==================================================================
+   7-2. 5~8번 버튼이 하는 일
+        이 버튼들은 게임 어디서나 항상 눌러서 쓸 수 있어요.
+   ================================================================== */
+
+/* ---------- 5번 버튼 : 소리 크기 🔊 ----------
+   누를 때마다 소리가 한 단계씩 바뀌어요.
+   꺼짐 → 작게 → 보통 → 크게 → 다시 꺼짐 ... */
+function changeVolume() {
+  const level = Sound.cycleVolume();
+  showToast(level.icon + '  ' + level.label);
+  if (level.value > 0) Sound.pok();   // 바뀐 크기를 소리로 확인시켜줘요
+}
+
+/* 화면 아래에 잠깐 떴다 사라지는 알림이에요 */
+let toastTimer = null;
+function showToast(text) {
+  const node = document.getElementById('zoom-toast');
+  node.textContent = text;
+  node.classList.add('is-on');
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    node.classList.remove('is-on');
+  }, 1200);
+}
+
+
+/* ---------- 덮개 화면 도우미 ----------
+   멈추기 · 도움말 · 처음으로 가 모두 이 창을 함께 써요. */
+const overlay = {
+  box:     document.getElementById('overlay'),
+  emoji:   document.getElementById('overlay-emoji'),
+  title:   document.getElementById('overlay-title'),
+  body:    document.getElementById('overlay-body'),
+  actions: document.getElementById('overlay-actions'),
+};
+
+let overlayOpen = false;   // 지금 덮개가 열려 있는지 기억해요
+
+/* 덮개 창을 열어요.
+   buttons 는 [{ label: '글자', run: 누르면할일 }] 모양이에요. */
+function openOverlay(emoji, title, bodyHtml, buttons) {
+  overlay.emoji.textContent = emoji;
+  overlay.title.textContent = title;
+  overlay.body.innerHTML = bodyHtml;
+  overlay.actions.innerHTML = '';
+
+  // 아래쪽 버튼들을 만들어 붙여요
+  (buttons || []).forEach(function (b) {
+    const btn = document.createElement('button');
+    btn.className = b.big ? 'big-btn' : 'small-btn';
+    btn.textContent = b.label;
+    btn.addEventListener('click', b.run);
+    overlay.actions.appendChild(btn);
+  });
+
+  overlay.box.classList.add('is-on');
+  overlayOpen = true;
+  game.paused = true;          // 게임을 잠깐 멈춰요
+  Input.setBlocked(true);      // 게임 조작도 잠깐 쉬어요
+}
+
+/* 덮개 창을 닫아요 */
+function closeOverlay() {
+  overlay.box.classList.remove('is-on');
+  overlayOpen = false;
+  game.paused = false;         // 다시 게임이 움직여요
+  Input.setBlocked(false);     // 게임 조작도 다시 켜요
+}
+
+
+/* ---------- 6번 버튼 : 잠깐 멈추기 ⏸️ ---------- */
+function togglePause() {
+  if (overlayOpen) { closeOverlay(); return; }   // 이미 열려 있으면 닫아요
+
+  const lv = Sound.level();
+  openOverlay('⏸️', '잠깐 멈춤',
+    '<p style="text-align:center">잠깐 쉬는 중이에요.<br>' +
+    '6번 버튼을 다시 누르면 이어서 해요!</p>' +
+    '<p style="text-align:center;margin-top:10px;opacity:.75;font-size:13px">' +
+    '지금 소리 : <b>' + lv.icon + ' ' + lv.label + '</b>' +
+    ' &nbsp;(5번 버튼으로 바꿔요)</p>',
+    [
+      { label: '이어서 하기', run: closeOverlay, big: true },
+    ]);
+}
+
+
+/* ---------- 조작 방법 보기 ❓ ----------
+   시작 화면의 '설명란'에서 볼 수 있어요. */
+function showHelp() {
+  if (overlayOpen) { closeOverlay(); return; }
+
+  openOverlay('❓', '조작 방법', buildControlRows(),
+    [{ label: '닫기', run: closeOverlay, big: true }]);
+}
+
+
+/* ---------- 7번 버튼 : 처음으로 🏠 ----------
+   잘못 눌러서 게임이 날아가면 속상하니까, 한 번 더 물어봐요. */
+function askGoHome() {
+  if (overlayOpen) { closeOverlay(); return; }
+
+  openOverlay('🏠', '처음으로 갈까요?',
+    '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>',
+    [
+      { label: '아니요, 계속할래요', run: closeOverlay, big: true },
+      { label: '네, 처음으로', run: function () { closeOverlay(); goTitle(); } },
+    ]);
+}
+
+
+/* ---------- 5~8번 버튼을 진짜로 연결해요 ----------
+   onSystem 으로 걸면 장이 바뀌어도 지워지지 않아요! */
+Input.onSystem('volume', changeVolume);   // 5번
+Input.onSystem('pause',  togglePause);    // 6번
+Input.onSystem('home',   askGoHome);      // 7번
 
 
 /* ------------------------------------------------------------------
@@ -310,6 +436,47 @@ function goTitle() {
 
 el.btnStart.addEventListener('click', startGame);
 el.btnRetry.addEventListener('click', goTitle);
+
+/* 시작 화면 왼쪽 아래 '설명란' ❓ 버튼이에요.
+   누르면 게임 이야기와 목표를 알려줘요. */
+document.getElementById('btn-info').addEventListener('click', function () {
+  openOverlay('📜', '게임 설명',
+    '<p>때는 <b>1940년대 일제강점기</b>.</p>' +
+    '<p>조선은 일본의 지배를 받고 있고,<br>' +
+    '사람들은 자유를 잃은 채 힘들게 살고 있어요.</p>' +
+    '<p>주인공은 학교에서 돌아오는 길에<br>' +
+    '독립운동가를 만나 비밀 임무를 맡게 돼요.</p>' +
+    '<p style="color:#ffe9a8;margin-top:10px">' +
+    '<b>목표는 단 하나, 독립!</b></p>' +
+    '<p style="margin-top:10px">임무 6개를 하나씩 해결하면 광복을 맞이해요.<br>' +
+    '일본 경찰에게 들키지 않게 조심하세요!</p>' +
+    '<h4 style="margin:16px 0 8px">조작 방법</h4>' +
+    buildControlRows(),
+    [{ label: '알겠어요', run: closeOverlay, big: true }]);
+});
+
+/* 조작 방법 표를 만들어요.
+   버튼 정보표를 그대로 읽어오니까, 버튼이 바뀌면 설명도 저절로 바뀌어요! */
+function buildControlRows() {
+  let rows = '<div class="help-row">' +
+               '<span class="no">🕹️</span><span>움직이기</span>' +
+               '<span class="keys">방향키 / 스틱</span>' +
+             '</div>';
+
+  Input.buttons.forEach(function (b) {
+    rows += '<div class="help-row">' +
+              '<span class="no">' + b.no + '</span>' +
+              '<span>' + b.emoji + ' ' + b.label + '</span>' +
+              '<span class="keys">' + b.keys.join(' / ') + '</span>' +
+            '</div>';
+  });
+  return rows;
+}
+
+/* 화면의 모든 버튼을 마우스로 누를 때도 '뽁' 소리가 나요 */
+document.addEventListener('click', function (e) {
+  if (e.target.closest('button') && !e.target.closest('.pad-btn')) Sound.pok();
+});
 
 // 게임이 켜지면 시작 화면부터 보여줘요
 goTitle();

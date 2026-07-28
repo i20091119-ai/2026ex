@@ -31,10 +31,10 @@ const Input = (function () {
     { no: 2, act: 'talk',   label: '말걸기', emoji: '💬', keys: ['AltLeft', 'KeyK'] },
     { no: 3, act: 'attack', label: '공격',   emoji: '✊', keys: ['Space', 'KeyL'] },
     { no: 4, act: 'next',   label: '다음',   emoji: '➡️', keys: ['ShiftLeft', 'Enter'] },
-    { no: 5, act: 'btn5',   label: '(비어둠)', emoji: '⬜', keys: ['KeyZ'] },
-    { no: 6, act: 'btn6',   label: '(비어둠)', emoji: '⬜', keys: ['KeyX'] },
-    { no: 7, act: 'btn7',   label: '(비어둠)', emoji: '⬜', keys: ['KeyC'] },
-    { no: 8, act: 'btn8',   label: '(비어둠)', emoji: '⬜', keys: ['KeyV'] },
+    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', keys: ['KeyZ'] },
+    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', keys: ['KeyX'] },
+    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', keys: ['KeyC'] },
+    { no: 8, act: 'btn8',   label: '(아직없음)', emoji: '⬜', keys: ['KeyV'] },
   ];
 
   /* 방향키 정보표예요. 방향 스틱도 이 방향들을 보내요. */
@@ -57,8 +57,16 @@ const Input = (function () {
   /* 누군가 "이 버튼 눌리면 알려줘!" 하고 부탁한 것들을 모아두는 곳 */
   const listeners = {};
 
+  /* 이건 장이 바뀌어도 지워지지 않는 특별한 부탁이에요.
+     5~8번 버튼(확대/멈추기/도움말/처음으로)처럼
+     게임 어디서나 항상 되어야 하는 것들이 여기에 들어가요. */
+  const systemListeners = {};
+
   /* 마지막으로 조종한 기기 이름 (화면에 보여줘요) */
   let deviceText = '키보드';
+
+  /* true 이면 게임 조작이 잠깐 멈춰요 (덮개 화면이 열렸을 때) */
+  let blocked = false;
 
 
   /* ----------------------------------------------------------------
@@ -80,6 +88,14 @@ const Input = (function () {
 
   /* "이 동작이 일어났어요!" 하고 부탁받은 사람들에게 알려줘요 */
   function fire(act) {
+    // 먼저 항상 되어야 하는 것들(5~8번 버튼)에게 알려요
+    if (systemListeners[act]) {
+      systemListeners[act].forEach(function (fn) { fn(); });
+    }
+    // 덮개 화면(멈추기·도움말)이 열려 있으면 게임 조작은 잠깐 쉬어요
+    if (blocked) return;
+
+    // 그다음 지금 장에서 부탁한 것들에게 알려요
     const list = listeners[act];
     if (!list) return;
     list.forEach(function (fn) { fn(); });
@@ -90,6 +106,11 @@ const Input = (function () {
     if (held[act]) return;      // 이미 누르고 있으면 또 세지 않아요
     held[act] = true;
     highlight(act, true);       // 안내판에 불을 켜요
+
+    // 뽁! 하고 버튼 소리가 나요
+    // (5번은 소리 크기를 바꾸면서 스스로 소리를 내니까 빼요)
+    if (act !== 'volume' && window.Sound) Sound.pok();
+
     fire(act);                  // 게임에 알려요
   }
 
@@ -300,7 +321,18 @@ const Input = (function () {
       listeners[act].push(fn);
     },
 
-    /* 부탁을 취소해요 (장이 바뀔 때 정리하려고 만들었어요) */
+    /* 장이 바뀌어도 지워지지 않는 부탁이에요 (5~8번 버튼에 써요) */
+    onSystem: function (act, fn) {
+      if (!systemListeners[act]) systemListeners[act] = [];
+      systemListeners[act].push(fn);
+    },
+
+    /* 게임 조작을 잠깐 멈추거나 다시 켜요.
+       (5~8번 버튼은 멈춰도 계속 눌러서 쓸 수 있어요) */
+    setBlocked: function (v) { blocked = v; },
+
+    /* 부탁을 취소해요 (장이 바뀔 때 정리하려고 만들었어요)
+       단, onSystem 으로 건 부탁은 지워지지 않아요! */
     clear: function () {
       for (const key in listeners) delete listeners[key];
     },
