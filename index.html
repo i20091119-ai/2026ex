@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <!-- 아케이드 기계 모니터, 노트북, 태블릿 어디서든 잘 보이게 하는 설정이에요 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>독립을 향하여 - 서진모둠</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ================================================================
+     이 게임은 화면이 3개예요.
+     1) 시작 화면  2) 게임 화면  3) 끝 화면
+     한 번에 하나씩만 보여주고 나머지는 숨겨둬요.
+     ================================================================ -->
+<div id="app">
+
+  <!-- ============ 1) 시작 화면 ============ -->
+  <section id="screen-title" class="screen is-on">
+    <div class="title-box">
+      <!-- 태극기 그림이에요. 동그란 태극 무늬를 직접 그렸어요 -->
+      <div class="taegeukgi" aria-label="태극기">
+        <div class="taegeuk"></div>
+        <span class="gwe gwe1"></span>
+        <span class="gwe gwe2"></span>
+        <span class="gwe gwe3"></span>
+        <span class="gwe gwe4"></span>
+      </div>
+
+      <h1 class="game-title">독립을 향하여</h1>
+      <p class="game-sub">일제로부터 독립하는 게임</p>
+
+      <!-- 게임 설명란이에요 -->
+      <div class="info-card">
+        <p>1940년대 일제강점기.</p>
+        <p>주인공은 학교에서 돌아오다가 독립운동가를 만나<br>비밀 임무를 맡게 돼요.</p>
+        <p class="info-goal">목표는 단 하나, <b>독립</b>!</p>
+      </div>
+
+      <button id="btn-start" class="big-btn">게임 시작</button>
+
+      <p class="team-name">만든 사람 : 서진모둠 (서진 · 조찬우 · 박윤진)</p>
+    </div>
+  </section>
+
+
+  <!-- ============ 2) 게임 화면 ============ -->
+  <section id="screen-game" class="screen">
+
+    <!-- 점수판이에요. 게임하는 동안 항상 위에 보여요 -->
+    <header id="hud">
+      <div class="hud-chapter">
+        <span class="hud-label">장</span>
+        <span id="hud-chapter-name">1장 · 비밀 편지</span>
+      </div>
+      <div class="hud-score">
+        <span class="hud-label">독립 포인트</span>
+        <span id="hud-score">0</span>
+      </div>
+    </header>
+
+    <!-- 게임이 실제로 펼쳐지는 무대예요 -->
+    <div id="stage">
+      <div id="stage-inner">
+        <!-- 각 장의 미션이 여기에 들어와요 (아직 만드는 중이에요) -->
+        <p class="todo-note">여기에 미션이 들어갈 거예요</p>
+      </div>
+    </div>
+
+    <!-- 미션을 알려주는 말풍선이에요 -->
+    <div id="bubble">
+      <div id="bubble-face">🧑</div>
+      <div id="bubble-text">말풍선 내용</div>
+    </div>
+
+  </section>
+
+
+  <!-- ============ 3) 끝 화면 ============ -->
+  <section id="screen-end" class="screen">
+    <div class="title-box">
+      <div id="end-emoji">🎉</div>
+      <h2 id="end-title">광복!</h2>
+      <p id="end-message">모든 임무를 마쳤어요!</p>
+
+      <div class="score-card">
+        <span class="hud-label">내 독립 포인트</span>
+        <strong id="end-score">0</strong>
+      </div>
+
+      <button id="btn-retry" class="big-btn">다시 하기</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="js/game.js"></script>
+</body>
+</html>

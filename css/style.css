@@ -1,0 +1,339 @@
+/* ==================================================================
+   독립을 향하여 - 꾸미기 파일 (CSS)
+   1~5장은 어두운 밤 느낌, 6장 광복은 환하게 바뀌어요.
+   ================================================================== */
+
+/* ---------- 색깔을 이름표에 저장해 둬요 ----------
+   이렇게 해두면 나중에 색을 바꿀 때 여기만 고치면 돼요! */
+:root {
+  --bg-1: #141a35;          /* 밤하늘 진한 남색 */
+  --bg-2: #232b57;          /* 밤하늘 조금 밝은 남색 */
+  --ink: #0d1128;           /* 아주 어두운 검정남색 */
+
+  --pastel-pink: #ffb3c6;   /* 연분홍 */
+  --pastel-blue: #a8d8ff;   /* 연하늘 */
+  --pastel-yellow: #ffe9a8; /* 연노랑 */
+  --pastel-mint: #a8e6cf;   /* 연민트 */
+  --cream: #fff6e9;         /* 부드러운 크림색 글자 */
+
+  --flag-red: #cd2e3a;      /* 태극기 빨강 */
+  --flag-blue: #0047a0;     /* 태극기 파랑 */
+
+  --round: 24px;            /* 둥근 모서리 크기 */
+}
+
+/* 6장 광복이 되면 body에 'liberation' 이름표를 붙여요.
+   그러면 색깔이 한꺼번에 환하게 바뀌어요! */
+body.liberation {
+  --bg-1: #bde3ff;          /* 환한 하늘색 */
+  --bg-2: #e8f6ff;
+  --cream: #2a3160;         /* 밝은 배경이니 글자는 어둡게 */
+}
+
+/* ---------- 기본 설정 ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR",
+               "Malgun Gothic", sans-serif;
+  background: var(--ink);
+  color: var(--cream);
+  overflow: hidden;              /* 아케이드 화면이라 스크롤은 막아요 */
+  -webkit-user-select: none;     /* 글자가 드래그로 선택되지 않게 해요 */
+  user-select: none;
+  /* 색이 바뀔 때 스르륵 부드럽게 변해요 */
+  transition: background 1.2s ease, color 1.2s ease;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;                /* 폰에서도 화면에 딱 맞게 */
+  position: relative;
+}
+
+/* ---------- 화면 3개 공통 ---------- */
+.screen {
+  position: absolute;
+  inset: 0;                      /* 화면 전체를 꽉 채워요 */
+  display: none;                 /* 평소에는 숨어 있어요 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3vh 4vw;
+  background: linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  transition: background 1.2s ease;
+}
+
+/* 'is-on' 이름표가 붙은 화면 하나만 보여요 */
+.screen.is-on {
+  display: flex;
+  animation: fadeIn 0.5s ease;   /* 스르륵 나타나요 */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ==================================================================
+   1) 시작 화면 & 끝 화면 꾸미기
+   ================================================================== */
+.title-box {
+  text-align: center;
+  max-width: 640px;
+  width: 100%;
+}
+
+.game-title {
+  font-size: clamp(38px, 7vw, 68px);
+  letter-spacing: 2px;
+  margin-top: 14px;
+  /* 글자 뒤에 은은한 빛이 나요 */
+  text-shadow: 0 0 18px rgba(168, 216, 255, 0.55);
+}
+
+.game-sub {
+  font-size: clamp(14px, 2.4vw, 19px);
+  color: var(--pastel-blue);
+  margin-top: 8px;
+}
+
+/* 설명이 적힌 둥근 카드예요 */
+.info-card {
+  margin: 22px auto 26px;
+  padding: 20px 22px;
+  border-radius: var(--round);
+  background: rgba(255, 255, 255, 0.09);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  line-height: 1.9;
+  font-size: clamp(13px, 2.2vw, 17px);
+}
+
+.info-goal { margin-top: 10px; color: var(--pastel-yellow); }
+.info-goal b { color: var(--pastel-pink); }
+
+.team-name {
+  margin-top: 20px;
+  font-size: clamp(11px, 1.8vw, 14px);
+  opacity: 0.75;
+}
+
+/* ---------- 큰 버튼 (둥글고 말랑말랑해요) ---------- */
+.big-btn {
+  font-family: inherit;
+  font-size: clamp(18px, 3vw, 25px);
+  font-weight: 700;
+  color: var(--ink);
+  padding: 15px 46px;
+  border: none;
+  border-radius: 999px;                    /* 완전 동그란 모서리 */
+  background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-yellow));
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.28); /* 아래에 그림자를 줘서 도톰해 보여요 */
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  animation: bounce 2.2s ease-in-out infinite; /* 통통 튀어요 */
+}
+
+.big-btn:hover { transform: translateY(-3px); }
+
+/* 버튼을 누르면 아래로 쏙 들어가요 */
+.big-btn:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+  animation: none;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+/* ==================================================================
+   태극기 그림 (그림 파일 없이 CSS로 직접 그렸어요!)
+   ================================================================== */
+.taegeukgi {
+  width: clamp(110px, 20vw, 160px);
+  aspect-ratio: 3 / 2;                 /* 태극기는 가로:세로가 3:2예요 */
+  margin: 0 auto;
+  position: relative;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+  animation: wave 3.5s ease-in-out infinite;  /* 바람에 살랑살랑 */
+}
+
+/* 가운데 동그란 태극 무늬 */
+.taegeuk {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) rotate(-33deg);
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  /* 위쪽 절반은 빨강, 아래쪽 절반은 파랑 */
+  background: linear-gradient(to bottom, var(--flag-red) 50%, var(--flag-blue) 50%);
+}
+
+/* 네 귀퉁이의 검은 막대(괘)예요 */
+.gwe {
+  position: absolute;
+  width: 17%;
+  height: 3.5px;
+  background: #1a1a1a;
+  border-radius: 2px;
+}
+.gwe1 { top: 22%; left: 12%; }
+.gwe2 { top: 22%; right: 12%; }
+.gwe3 { bottom: 22%; left: 12%; }
+.gwe4 { bottom: 22%; right: 12%; }
+
+@keyframes wave {
+  0%, 100% { transform: rotate(-2deg); }
+  50%      { transform: rotate(2deg); }
+}
+
+/* ==================================================================
+   2) 게임 화면 꾸미기
+   ================================================================== */
+#screen-game {
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* ---------- 점수판 (항상 위에 보여요) ---------- */
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+}
+
+.hud-chapter, .hud-score {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.11);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+}
+
+.hud-label {
+  font-size: clamp(10px, 1.5vw, 13px);
+  opacity: 0.8;
+}
+
+#hud-chapter-name {
+  font-size: clamp(13px, 2.2vw, 18px);
+  font-weight: 700;
+  color: var(--pastel-blue);
+}
+
+#hud-score {
+  font-size: clamp(19px, 3.2vw, 28px);
+  font-weight: 800;
+  color: var(--pastel-yellow);
+}
+
+/* 점수가 오르면 잠깐 커졌다 돌아와요 */
+#hud-score.pop { animation: pop 0.45s ease; }
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.5); color: var(--pastel-pink); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- 게임 무대 ---------- */
+#stage {
+  flex: 1;                      /* 남은 공간을 전부 차지해요 */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+#stage-inner {
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  border-radius: var(--round);
+  background: rgba(0, 0, 0, 0.22);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.todo-note { opacity: 0.5; font-size: 15px; }
+
+/* ---------- 미션 말풍선 ---------- */
+#bubble {
+  width: calc(100% - 28px);
+  max-width: 900px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: var(--round);
+  background: rgba(255, 255, 255, 0.93);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+#bubble-face {
+  font-size: clamp(28px, 5vw, 40px);
+  animation: bounce 2s ease-in-out infinite;
+}
+
+#bubble-text {
+  font-size: clamp(13px, 2.2vw, 18px);
+  line-height: 1.6;
+  font-weight: 600;
+}
+
+/* ==================================================================
+   3) 끝 화면 꾸미기
+   ================================================================== */
+#end-emoji {
+  font-size: clamp(56px, 11vw, 96px);
+  animation: bounce 1.6s ease-in-out infinite;
+}
+
+#end-title {
+  font-size: clamp(30px, 6vw, 52px);
+  margin-top: 8px;
+}
+
+#end-message {
+  margin-top: 10px;
+  font-size: clamp(13px, 2.2vw, 18px);
+  opacity: 0.9;
+}
+
+.score-card {
+  margin: 24px auto;
+  padding: 18px 30px;
+  border-radius: var(--round);
+  background: rgba(255, 255, 255, 0.11);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.score-card strong {
+  font-size: clamp(34px, 6vw, 52px);
+  color: var(--pastel-yellow);
+}
