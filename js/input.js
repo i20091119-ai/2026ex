@@ -234,6 +234,32 @@ const Input = (function () {
   const padWas = {};             // 방금 전에 눌려 있었는지 기억해요
   const STICK_LIMIT = 0.5;       // 스틱을 이만큼 기울여야 '눌렀다'고 쳐요
 
+  /* 조종기를 처음 연결했을 때 각 축이 어떤 값이었는지 적어둬요.
+     아무것도 안 건드렸을 때의 값이니까, 이 값에서 벗어나면
+     '움직였다'고 알 수 있어요. (조종기마다 기본값이 달라서 필요해요) */
+  let padRest = null;
+
+  /* 십자키(해트) 값을 방향으로 바꾸는 표예요.
+     DINPUT 모드에서는 십자키가 버튼이 아니라
+     이런 숫자 하나로 들어와요.
+     -1 부터 1 까지 여덟 칸으로 나뉘어 있어요. */
+  const HAT_DIRS = [
+    ['up'], ['up', 'right'], ['right'], ['down', 'right'],
+    ['down'], ['down', 'left'], ['left'], ['up', 'left'],
+  ];
+
+  /* 해트 값 하나를 방향 목록으로 바꿔줘요 */
+  function readHat(value, rest) {
+    if (value === undefined) return [];
+    // 가만히 있을 때와 거의 같으면 안 누른 거예요
+    if (rest !== undefined && Math.abs(value - rest) < 0.2) return [];
+    // -1 ~ 1 을 벗어나면 가운데(안 누름)를 뜻해요
+    if (value > 1.05 || value < -1.05) return [];
+
+    const index = Math.round((value + 1) * 3.5);   // 0 부터 7 까지
+    return HAT_DIRS[index] || [];
+  }
+
   window.addEventListener('gamepadconnected', function (e) {
     // mapping 이 'standard' 면 엑스인풋(XINPUT)으로 잘 연결된 거예요
     const kind = (e.gamepad.mapping === 'standard') ? 'XINPUT' : 'DINPUT';
@@ -243,6 +269,7 @@ const Input = (function () {
 
   window.addEventListener('gamepaddisconnected', function () {
     deviceText = '키보드';
+    padRest = null;              // 다음에 꽂을 때 다시 재요
     updateDeviceText();
   });
 
@@ -268,13 +295,19 @@ const Input = (function () {
          스틱은 숫자로 알려줘요.
          가로(axes[0])가 -1이면 왼쪽, +1이면 오른쪽
          세로(axes[1])가 -1이면 위,   +1이면 아래 */
-      /* 조종기 옆 스위치를 LS(왼쪽 스틱)로 두면 axes 0, 1 로,
-         RS(오른쪽 스틱)로 두면 axes 2, 3 으로 신호가 와요.
-         어느 쪽으로 두어도 되게 둘 다 확인해요! */
+      /* 조종기를 처음 봤으면, 안 건드렸을 때의 값을 적어둬요 */
+      if (!padRest) padRest = Array.prototype.slice.call(pad.axes);
+
+      /* ★ 아케이드 스틱은 옆 스위치에 따라 신호가 세 가지로 달라져요.
+           LS 로 두면  → axes 0, 1
+           RS 로 두면  → axes 2, 3
+           DP 로 두면  → 십자 버튼(12~15) 또는 해트 축
+         어느 쪽으로 두어도 되게 전부 확인해요! */
+
       const x = biggest(pad.axes[0], pad.axes[2]);
       const y = biggest(pad.axes[1], pad.axes[3]);
 
-      /* 십자 버튼(D-pad)이 있는 조종기도 있어서 같이 확인해요 */
+      /* 십자 버튼 (XINPUT 모드에서 DP 로 두었을 때) */
       const dpad = {
         up:    isDown(pad.buttons[12]),
         down:  isDown(pad.buttons[13]),
@@ -282,10 +315,19 @@ const Input = (function () {
         right: isDown(pad.buttons[15]),
       };
 
-      setPadDir('up',    y < -STICK_LIMIT || dpad.up);
-      setPadDir('down',  y >  STICK_LIMIT || dpad.down);
-      setPadDir('left',  x < -STICK_LIMIT || dpad.left);
-      setPadDir('right', x >  STICK_LIMIT || dpad.right);
+      /* 해트 축 (DINPUT 모드에서 DP 로 두었을 때)
+         네 번째 축부터 뒤쪽을 모두 살펴봐요. */
+      const hat = { up: false, down: false, left: false, right: false };
+      for (let a = 4; a < pad.axes.length; a++) {
+        readHat(pad.axes[a], padRest[a]).forEach(function (name) {
+          hat[name] = true;
+        });
+      }
+
+      setPadDir('up',    y < -STICK_LIMIT || dpad.up    || hat.up);
+      setPadDir('down',  y >  STICK_LIMIT || dpad.down  || hat.down);
+      setPadDir('left',  x < -STICK_LIMIT || dpad.left  || hat.left);
+      setPadDir('right', x >  STICK_LIMIT || dpad.right || hat.right);
 
       break;   // 조종기 1개만 쓰니까 첫 번째만 확인하고 끝내요
     }
@@ -357,6 +399,23 @@ const Input = (function () {
       b.label = label;
       if (emoji) b.emoji = emoji;
       drawGuide();
+    },
+
+    /* 지금 연결된 조종기의 속살을 그대로 보여줘요.
+       (조종기 확인 화면에서 써요) */
+    readPads: function () {
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const list = [];
+      for (let i = 0; i < pads.length; i++) {
+        if (!pads[i]) continue;
+        list.push({
+          id: pads[i].id,
+          mapping: pads[i].mapping,
+          axes: Array.prototype.slice.call(pads[i].axes),
+          buttons: pads[i].buttons.map(function (b) { return b.pressed; }),
+        });
+      }
+      return list;
     },
 
     /* 처음 한 번 안내판을 그려요 */

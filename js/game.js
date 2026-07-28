@@ -519,6 +519,98 @@ function buildControlRows() {
   return rows;
 }
 
+/* ==================================================================
+   조종기 확인 화면
+   ★ 아케이드 조종기를 꽂았을 때 신호가 제대로 들어오는지
+     눈으로 볼 수 있어요. 잘 안 될 때 원인을 찾는 데 써요.
+   ================================================================== */
+let padTestTimer = null;
+
+function openPadTest() {
+  openOverlay('확인', '조종기 확인',
+    '<p style="text-align:center;margin-bottom:12px">' +
+      '조종기의 스틱과 버튼을 하나씩 움직여 보세요.<br>' +
+      '들어오는 신호가 아래에 그대로 나타나요.</p>' +
+    '<div id="pad-test-body" class="pad-test"></div>',
+    [{ label: '닫기', run: closePadTest, big: true }]);
+
+  // 1초에 여러 번 다시 그려서 실시간으로 보여줘요
+  clearInterval(padTestTimer);
+  padTestTimer = setInterval(drawPadTest, 100);
+  drawPadTest();
+}
+
+function closePadTest() {
+  clearInterval(padTestTimer);
+  padTestTimer = null;
+  closeOverlay();
+}
+
+function drawPadTest() {
+  const box = document.getElementById('pad-test-body');
+  if (!box) { clearInterval(padTestTimer); return; }
+
+  const pads = Input.readPads();
+
+  /* --- 조종기가 아예 안 잡힐 때 --- */
+  if (pads.length === 0) {
+    box.innerHTML =
+      '<p class="pad-test-none">조종기가 잡히지 않았어요.</p>' +
+      '<ul class="pad-test-help">' +
+        '<li>조종기의 아무 버튼이나 한 번 눌러 보세요. ' +
+            '(브라우저는 버튼을 눌러야 조종기를 알아봐요)</li>' +
+        '<li>조종기 왼쪽 위 스위치를 <b>XINPUT / NS</b> 쪽으로 두세요. ' +
+            '설명서에 적힌 "PC (엑스인풋)" 방식이에요.</li>' +
+        '<li>USB 선을 뺐다가 다시 꽂아 보세요.</li>' +
+      '</ul>';
+    return;
+  }
+
+  /* --- 조종기가 잡혔을 때 : 신호를 그대로 보여줘요 --- */
+  const pad = pads[0];
+
+  // 방향이 지금 눌려 있는지
+  const dirText = ['up', 'down', 'left', 'right'].map(function (name) {
+    const on = Input.dir[name];
+    const mark = { up: '▲', down: '▼', left: '◀', right: '▶' }[name];
+    return '<span class="pt-dir' + (on ? ' is-on' : '') + '">' + mark + '</span>';
+  }).join('');
+
+  // 버튼 8개가 눌려 있는지
+  let btnText = '';
+  for (let i = 0; i < 8; i++) {
+    const on = pad.buttons[i];
+    btnText += '<span class="pt-btn' + (on ? ' is-on' : '') + '">' + (i + 1) + '</span>';
+  }
+
+  // 축(스틱) 값들
+  const axesText = pad.axes.map(function (v, i) {
+    const moved = Math.abs(v) > 0.3;
+    return '<span class="pt-axis' + (moved ? ' is-on' : '') + '">' +
+             i + ' : ' + v.toFixed(2) +
+           '</span>';
+  }).join('');
+
+  box.innerHTML =
+    '<div class="pt-row"><span class="pt-label">이름</span>' +
+      '<span class="pt-value">' + pad.id.slice(0, 42) + '</span></div>' +
+    '<div class="pt-row"><span class="pt-label">방식</span>' +
+      '<span class="pt-value">' +
+        (pad.mapping === 'standard' ? 'XINPUT (표준) — 좋아요' : 'DINPUT (표준 아님)') +
+      '</span></div>' +
+    '<div class="pt-row"><span class="pt-label">방향</span>' +
+      '<span class="pt-value">' + dirText + '</span></div>' +
+    '<div class="pt-row"><span class="pt-label">버튼</span>' +
+      '<span class="pt-value">' + btnText + '</span></div>' +
+    '<div class="pt-row"><span class="pt-label">축</span>' +
+      '<span class="pt-value pt-axes">' + axesText + '</span></div>' +
+    '<p class="pad-test-tip">스틱을 움직였는데 위 「방향」에 불이 안 들어오면, ' +
+      '어느 「축」 숫자가 바뀌는지 알려주세요.</p>';
+}
+
+document.getElementById('btn-pad-test').addEventListener('click', openPadTest);
+
+
 /* 화면의 모든 버튼을 마우스로 누를 때도 '뽁' 소리가 나요 */
 document.addEventListener('click', function (e) {
   if (e.target.closest('button') && !e.target.closest('.pad-btn')) Sound.pok();

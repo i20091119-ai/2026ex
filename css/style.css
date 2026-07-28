@@ -1300,21 +1300,23 @@ body {
 .m3-maze {
   position: relative;
   width: 100%;
-  max-width: 720px;
-  aspect-ratio: 15 / 9;
+  max-width: 860px;
+  aspect-ratio: 21 / 13;
   background: rgba(0, 0, 0, 0.3);
   border: 2px solid var(--line);
   overflow: hidden;
 }
 
 /* 미로 안의 모든 칸은 크기가 같아요 (가로 1/15, 세로 1/9) */
+/* 칸 하나의 크기는 미로 크기에 따라 저절로 정해져요
+   (--cols 와 --rows 는 자바스크립트가 넣어줘요) */
 .m3-wall,
 .m3-danger,
 .m3-item,
 .m3-actor {
   position: absolute;
-  width: calc(100% / 15);
-  height: calc(100% / 9);
+  width: calc(100% / var(--cols, 21));
+  height: calc(100% / var(--rows, 13));
 }
 
 /* 벽 */
@@ -2012,3 +2014,183 @@ body.liberation #end-emoji { color: #8a6420; }
 /* 덮개 화면은 밝은 화면에서도 어둡게 두어 잘 보이게 해요 */
 body.liberation .overlay-card { color: #f0e9d8; }
 body.liberation .overlay-card .help-row .no { color: #1a2340; }
+
+/* ==================================================================
+   조종기 확인 화면
+   ================================================================== */
+.corner-test {
+  position: absolute;
+  right: clamp(14px, 3vw, 34px);
+  top: clamp(14px, 3vh, 26px);
+  font-family: inherit;
+  font-size: clamp(10px, 1.5vw, 13px);
+  letter-spacing: 1px;
+  color: var(--paper-dim);
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.corner-test:hover { color: var(--ochre); border-color: var(--ochre); }
+
+.pad-test { font-size: 12px; }
+
+.pt-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.pt-label {
+  flex: none;
+  width: 42px;
+  color: var(--ochre);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.pt-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  word-break: break-all;
+}
+
+/* 방향 · 버튼 표시 (눌리면 불이 들어와요) */
+.pt-dir, .pt-btn {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+  transition: all 0.08s ease;
+}
+
+.pt-dir.is-on, .pt-btn.is-on {
+  background: var(--ochre);
+  color: var(--ink);
+  border-color: var(--ochre);
+}
+
+/* 축(스틱) 값 */
+.pt-axes { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+.pt-axis {
+  padding: 3px 7px;
+  font-size: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+}
+
+.pt-axis.is-on { background: var(--flag-red); border-color: var(--flag-red); color: #fff0f0; }
+
+.pad-test-none {
+  text-align: center;
+  color: var(--flag-red);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pad-test-help {
+  padding-left: 18px;
+  line-height: 1.8;
+  font-size: 12px;
+}
+
+.pad-test-help b { color: var(--ochre); }
+
+.pad-test-tip {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--paper-dim);
+  line-height: 1.6;
+}
+
+/* ---------- 1장 : 경찰이 두 명까지 나와요 ---------- */
+.m1-cops {
+  display: flex;
+  gap: clamp(20px, 6vw, 70px);
+  align-items: flex-end;
+  justify-content: center;
+  min-height: clamp(76px, 15vh, 116px);
+}
+
+/* 경찰 이름표 (첫 번째 / 두 번째) */
+.m1-copname {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(8px, 1.2vw, 10px);
+  letter-spacing: 1px;
+  color: var(--paper-dim);
+}
+
+/* 새로 나타난 경찰이 스르륵 등장해요 */
+.m1-cops .m1-police { animation: copIn 0.5s ease; }
+
+@keyframes copIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 두 번째 경찰이 왔을 때 뜨는 알림 */
+.m1-warn {
+  font-size: clamp(11px, 1.9vw, 15px);
+  font-weight: 700;
+  color: var(--flag-red);
+  text-align: center;
+  min-height: 1.4em;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.m1-warn.is-on { opacity: 1; }
+
+/* ---------- 3장 : 남은 태극기 개수 표시 ---------- */
+.m3-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  width: 100%;
+  max-width: 860px;
+}
+
+.m3-count { display: inline-flex; gap: 5px; }
+
+.m3-mark {
+  width: 17px;
+  height: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+/* 찾은 태극기는 색이 채워져요 */
+.m3-mark.is-got {
+  background: #f2ede2;
+  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 52% 78%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-color: transparent;
+}
+
+.m3-count-text {
+  font-size: clamp(10px, 1.6vw, 13px);
+  color: var(--paper-dim);
+}
+
+/* 미로가 커져서 사람과 물건도 조금 작게 그려요 */
+.m3-actor .fig { font-size: clamp(9px, 1.8vw, 15px); }

@@ -23,42 +23,55 @@ MISSIONS[3] = (function () {
         '#' 은 벽, '.' 은 지나갈 수 있는 길이에요.
      ---------------------------------------------------------------- */
   const MAZE = [
-    '###############',
-    '#.....#.......#',
-    '#.###.#.#####.#',
-    '#.#...#.#...#.#',
-    '#.#.###.#.#.#.#',
-    '#.#.....#.#...#',
-    '#.#####.#.###.#',
-    '#.......#.....#',
-    '###############',
+    '#####################',
+    '#.......#.....#.....#',
+    '#.#.#.#.###.#.#.#.#.#',
+    '#.....#.....#.......#',
+    '#.#.###.#.#.#####.#.#',
+    '#.#.#...............#',
+    '#.#.#.###.#####.#.#.#',
+    '#...#.#.............#',
+    '#.#.#.#.###.###.#.#.#',
+    '#.........#.........#',
+    '#.###.###.###.#.###.#',
+    '#.......#...........#',
+    '#####################',
   ];
 
-  const ROWS = MAZE.length;      // 세로 칸 수 (9)
-  const COLS = MAZE[0].length;   // 가로 칸 수 (15)
+  const ROWS = MAZE.length;      // 세로 칸 수 (13)
+  const COLS = MAZE[0].length;   // 가로 칸 수 (21)
 
-  const START = { r: 1, c: 1 };   // 주인공이 출발하는 곳
-  const FLAG  = { r: 1, c: 13 };  // 태극기가 숨겨진 곳
-  const SAFE  = { r: 7, c: 1 };   // 태극기를 가져가야 할 안전한 곳
+  const START = { r: 1, c: 1 };    // 주인공이 출발하는 곳
+  const SAFE  = { r: 11, c: 1 };   // 태극기를 모두 가져가야 할 안전한 곳
+
+  /* ★ 태극기 5장이 미로 곳곳에 따로 숨겨져 있어요!
+     다섯 장을 모두 찾아야 안전한 곳으로 갈 수 있어요. */
+  const FLAGS = [
+    { r: 1,  c: 9  },
+    { r: 1,  c: 19 },
+    { r: 7,  c: 13 },
+    { r: 11, c: 5  },
+    { r: 11, c: 19 },
+  ];
 
   /* 보초 경찰이 서 있는 자리예요.
-     이 자리와 바로 옆 칸이 '경계 구역'이 돼요. */
+     이 자리와 바로 옆 칸이 '경계 구역'이 돼요.
+     세 명 모두 피해도 태극기를 다 모을 수 있는지 미리 확인했어요. */
   const GUARDS = [
-    { r: 1, c: 3 },     // 출발하자마자 만나요. 오른쪽 길을 막아요
-    { r: 3, c: 4 },     // 가운데 지름길을 막아요
+    { r: 3,  c: 19 },
+    { r: 5,  c: 12 },
+    { r: 10, c: 15 },
   ];
 
   /* 순찰 경찰이 왔다 갔다 하는 길이에요.
-     이 지점들을 차례대로 계속 돌아요.
 
-     ★ 중요 : 순찰 경찰은 주인공이 꼭 지나가야 하는 좁은 복도를
-       따라 걷게 하면 안 돼요! 되돌아오기 때문에 피할 곳이 없어서
-       아무리 잘해도 부딪히게 되거든요.
-       그래서 옆길에 두고, 주인공의 길을 '가로지르게'만 했어요.
-       주인공은 옆에서 기다렸다가 지나가면 돼요. */
+     ★ 중요 : 순찰 경찰이 걷는 복도를 통째로 피해도
+       태극기 다섯 장과 안전한 곳에 모두 갈 수 있는지 확인했어요.
+       그래서 부딪힐 것 같으면 언제든 다른 길로 돌아가면 돼요! */
   const PATROLS = [
-    [ { r: 5, c: 3 }, { r: 5, c: 7 } ],   // 옆길. 주인공 길을 (5,7) 한 칸에서 가로질러요
-    [ { r: 2, c: 13 }, { r: 6, c: 13 } ], // 태극기 아래쪽 복도를 오르내려요
+    [ { r: 1, c: 2 },  { r: 1, c: 7 }  ],   // 출발 근처 위쪽 복도
+    [ { r: 2, c: 7 },  { r: 5, c: 7 }  ],   // 왼쪽 가운데 세로 복도
+    [ { r: 2, c: 19 }, { r: 7, c: 19 } ],   // 오른쪽 끝 세로 복도
   ];
 
   /* 게임 빠르기 (숫자가 작을수록 빨라요, 단위는 밀리초) */
@@ -70,7 +83,7 @@ MISSIONS[3] = (function () {
      2. 이 미션이 기억해야 할 것들
      ---------------------------------------------------------------- */
   let hero = { r: 0, c: 0 };
-  let hasFlag = false;        // 태극기를 주웠는지
+  let taken = [];             // 주운 태극기 번호들
   let patrols = [];           // 순찰 경찰들의 상태
   let dangerCells = [];       // 보초 경찰의 경계 구역
   let running = false;
@@ -167,7 +180,7 @@ MISSIONS[3] = (function () {
   function drawHero() {
     node.hero.style.left = (hero.c * 100 / COLS) + '%';
     node.hero.style.top  = (hero.r * 100 / ROWS) + '%';
-    node.hero.classList.toggle('has-flag', hasFlag);
+    node.hero.classList.toggle('has-flag', taken.length > 0);
   }
 
   /* 순찰 경찰들을 지금 칸으로 옮겨요 */
@@ -176,6 +189,17 @@ MISSIONS[3] = (function () {
       cop.node.style.left = (cop.pos.c * 100 / COLS) + '%';
       cop.node.style.top  = (cop.pos.r * 100 / ROWS) + '%';
     });
+  }
+
+  /* 위쪽에 남은 태극기 개수를 그려요 */
+  function drawCount() {
+    let html = '';
+    for (let i = 0; i < FLAGS.length; i++) {
+      html += '<span class="m3-mark' +
+              (taken.indexOf(i) !== -1 ? ' is-got' : '') + '"></span>';
+    }
+    node.count.innerHTML = html;
+    node.countText.textContent = '찾은 태극기 ' + taken.length + ' / ' + FLAGS.length;
   }
 
   /* 위쪽 안내 글을 바꿔요 */
@@ -212,21 +236,31 @@ MISSIONS[3] = (function () {
       return;
     }
 
-    /* --- 태극기가 있는 칸에 도착했나요? --- */
-    if (!hasFlag && same(hero, FLAG)) {
-      hasFlag = true;
-      node.flag.classList.add('is-taken');
-      node.safe.classList.add('is-active');
-      setNotice('태극기를 찾았다! 안전한 곳으로 옮겨라.', 'good');
-      if (window.Sound) Sound.ding();
-      drawHero();
-    }
+    /* --- 태극기가 숨겨진 칸에 도착했나요? --- */
+    FLAGS.forEach(function (flag, i) {
+      if (taken.indexOf(i) !== -1) return;      // 이미 주운 태극기예요
+      if (!same(hero, flag)) return;
 
-    /* --- 태극기를 들고 안전한 곳에 도착했나요? --- */
-    if (hasFlag && same(hero, SAFE)) {
+      taken.push(i);
+      node.flags[i].classList.add('is-taken');
+      drawCount();
+      if (window.Sound) Sound.ding();
+
+      const left = FLAGS.length - taken.length;
+      if (left > 0) {
+        setNotice('태극기를 찾았다!  아직 ' + left + '장 더 남았다.', 'good');
+      } else {
+        node.safe.classList.add('is-active');
+        setNotice('다섯 장을 모두 찾았다! 안전한 곳으로 옮겨라.', 'good');
+      }
+      drawHero();
+    });
+
+    /* --- 태극기를 모두 들고 안전한 곳에 도착했나요? --- */
+    if (taken.length >= FLAGS.length && same(hero, SAFE)) {
       running = false;
-      setNotice('태극기를 안전하게 지켜냈다!', 'good');
-      setTimeout(onSuccess, 800);
+      setNotice('태극기 다섯 장을 모두 안전하게 지켜냈다!', 'good');
+      setTimeout(onSuccess, 900);
     }
   }
 
@@ -305,7 +339,7 @@ MISSIONS[3] = (function () {
     onFail = fail;
 
     hero = { r: START.r, c: START.c };
-    hasFlag = false;
+    taken = [];
     running = true;
     heroTimer = 0;
     dangerCells = makeDangerCells();
@@ -325,8 +359,11 @@ MISSIONS[3] = (function () {
       html += '<div class="m3-danger" style="' + cellStyle(d) + '"></div>';
     });
 
-    /* --- 태극기와 안전한 곳 --- */
-    html += '<div class="m3-item m3-flagcell" style="' + cellStyle(FLAG) + '"></div>';
+    /* --- 태극기 5장과 안전한 곳 --- */
+    FLAGS.forEach(function (flag, i) {
+      html += '<div class="m3-item m3-flagcell" data-flag="' + i + '" style="' +
+              cellStyle(flag) + '"></div>';
+    });
     html += '<div class="m3-item m3-safecell" style="' + cellStyle(SAFE) + '"></div>';
 
     /* --- 보초 경찰 (가만히 서 있어요) --- */
@@ -347,8 +384,12 @@ MISSIONS[3] = (function () {
 
     const stage = MissionUtil.setStage(
       '<div class="m3-scene">' +
-        '<p class="m3-notice">숨겨진 태극기를 찾아라. 붉은 곳은 보초가 지키고 있다.</p>' +
-        '<div class="m3-maze">' + html + '</div>' +
+        '<div class="m3-head">' +
+          '<span class="m3-count"></span>' +
+          '<span class="m3-count-text"></span>' +
+        '</div>' +
+        '<p class="m3-notice">숨겨진 태극기 다섯 장을 모두 찾아라. 붉은 곳은 보초가 지키고 있다.</p>' +
+        '<div class="m3-maze" style="--cols:21;--rows:13">' + html + '</div>' +
         '<p class="m3-tip">' +
           '<span class="m3-key">스틱</span> 네 방향 이동 &nbsp;·&nbsp; ' +
           '<span class="m3-legend m3-legend-guard"></span> 보초(붉은 곳 금지) &nbsp;·&nbsp; ' +
@@ -358,10 +399,12 @@ MISSIONS[3] = (function () {
     );
 
     node = {
-      notice: stage.querySelector('.m3-notice'),
-      hero:   stage.querySelector('.m3-hero'),
-      flag:   stage.querySelector('.m3-flagcell'),
-      safe:   stage.querySelector('.m3-safecell'),
+      notice:    stage.querySelector('.m3-notice'),
+      hero:      stage.querySelector('.m3-hero'),
+      flags:     Array.prototype.slice.call(stage.querySelectorAll('.m3-flagcell')),
+      safe:      stage.querySelector('.m3-safecell'),
+      count:     stage.querySelector('.m3-count'),
+      countText: stage.querySelector('.m3-count-text'),
     };
 
     /* 순찰 경찰들의 처음 상태를 정해요 */
@@ -377,6 +420,7 @@ MISSIONS[3] = (function () {
 
     drawHero();
     drawPatrols();
+    drawCount();
 
     lastTime = performance.now();
     requestAnimationFrame(loop);
@@ -390,6 +434,6 @@ MISSIONS[3] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '태극기를 찾아 안전한 곳으로 옮겨라. 붉은 곳은 보초가 지키니 다른 길로 돌아가야 한다.',
+    hint: '미로에 숨겨진 태극기 다섯 장을 모두 찾아 안전한 곳으로 옮겨라. 붉은 곳은 보초가 지킨다.',
   };
 })();
