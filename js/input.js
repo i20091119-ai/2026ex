@@ -80,6 +80,29 @@ const Input = (function () {
   const MAP_KEY = 'dokrip.padmap';   // 저장할 때 쓰는 이름표
   let padMap = null;                 // { dirs:{up:규칙,...}, acts:{jump:규칙,...} }
 
+  /* ★ 조종기 목록을 안전하게 가져와요.
+
+     페이지가 '창 안의 창(iframe)' 안에서 열리면 브라우저가
+     조종기 사용을 막아서 여기서 에러가 날 수 있어요.
+     그러면 게임 전체가 멈춰버리니까, 에러를 잡아서 넘기고
+     '막혔다'고 기억해둬요. */
+  let padBlocked = false;
+
+  function getPads() {
+    try {
+      if (!navigator.getGamepads) return [];
+      return navigator.getGamepads() || [];
+    } catch (e) {
+      padBlocked = true;      // 브라우저가 조종기를 막았어요
+      return [];
+    }
+  }
+
+  /* 이 페이지가 창 안의 창(iframe) 안에 들어 있나요? */
+  function inFrame() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
+
   /* 저장해둔 설정을 불러와요 */
   function loadMap() {
     try {
@@ -334,7 +357,7 @@ const Input = (function () {
   });
 
   function checkGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pads = getPads();
 
     for (let i = 0; i < pads.length; i++) {
       const pad = pads[i];
@@ -416,6 +439,14 @@ const Input = (function () {
     requestAnimationFrame(checkGamepad);   // 다시 확인하러 가요
   }
 
+  /* 혹시 위에서 예상 못한 문제가 생겨도 게임이 멈추지 않도록
+     한 겹 더 감싸줘요. */
+  const rawCheck = checkGamepad;
+  checkGamepad = function (t) {
+    try { rawCheck(t); }
+    catch (e) { requestAnimationFrame(checkGamepad); }
+  };
+
   function isDown(btn) { return btn ? btn.pressed : false; }
 
   /* 두 숫자 중에 0에서 더 많이 벗어난 쪽을 골라줘요.
@@ -486,7 +517,7 @@ const Input = (function () {
 
     /* 지금 조종기 상태를 사진 찍듯 그대로 담아와요 */
     snapshot: function () {
-      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const pads = getPads();
       for (let i = 0; i < pads.length; i++) {
         if (!pads[i]) continue;
         return {
@@ -545,6 +576,12 @@ const Input = (function () {
     /* 지금 맞춘 설정이 있나요? */
     hasMap: function () { return !!padMap; },
 
+    /* 브라우저가 조종기를 막았나요? (창 안의 창일 때 그래요) */
+    isBlocked: function () { return padBlocked; },
+
+    /* 이 페이지가 창 안의 창 안에 들어 있나요? */
+    inFrame: inFrame,
+
     /* 어떤 동작이 조종기의 무엇에 연결됐는지 글자로 알려줘요 */
     sourceLabel: function (act) {
       if (!padMap || !padMap.acts[act]) return null;
@@ -554,7 +591,7 @@ const Input = (function () {
     /* 지금 연결된 조종기의 속살을 그대로 보여줘요.
        (조종기 확인 화면에서 써요) */
     readPads: function () {
-      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const pads = getPads();
       const list = [];
       for (let i = 0; i < pads.length; i++) {
         if (!pads[i]) continue;

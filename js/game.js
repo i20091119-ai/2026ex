@@ -570,17 +570,12 @@ function drawPadTest() {
 
   /* --- 조종기가 아예 안 잡힐 때 --- */
   if (pads.length === 0) {
-    box.innerHTML =
-      '<p class="pad-test-none">조종기가 잡히지 않았어요.</p>' +
-      '<ul class="pad-test-help">' +
-        '<li>조종기의 <b>아무 버튼이나 한 번</b> 눌러 보세요. ' +
-            '(브라우저는 버튼을 눌러야 조종기를 알아봐요)</li>' +
-        '<li>왼쪽 스위치(기종 선택)를 <b>XINPUT / NS</b> 쪽, ' +
-            '즉 <b>위쪽</b>으로 딸깍 미세요.</li>' +
-        '<li>오른쪽 스위치(스틱 신호)를 <b>DP</b>, ' +
-            '즉 <b>가운데</b>에 두세요.</li>' +
-        '<li>USB 선을 뺐다가 다시 꽂고, 이 화면을 새로고침하세요.</li>' +
-      '</ul>';
+    box.innerHTML = padMissingHtml() +
+      (Input.inFrame() ? '' :
+        '<ul class="pad-test-help">' +
+          '<li>왼쪽 스위치(기종 선택)를 <b>XINPUT / NS</b> (위쪽)에 두세요.</li>' +
+          '<li>오른쪽 스위치(스틱 신호)를 <b>DP</b> (가운데)에 두세요.</li>' +
+        '</ul>');
     return;
   }
 
@@ -724,31 +719,65 @@ function drawSetup() {
   if (!box) return;
 
   const step = SETUP_STEPS[setupIndex];
-  const pads = Input.readPads();
 
-  if (pads.length === 0) {
-    box.innerHTML =
-      '<p class="setup-none">조종기가 잡히지 않았어요.<br>' +
-      '조종기의 아무 버튼이나 한 번 눌러 보세요.</p>';
-    return;
-  }
-
-  // 지금까지 정한 것들을 보여줘요
-  let done = '';
-  for (let i = 0; i < setupIndex; i++) {
-    const s = SETUP_STEPS[i];
-    const rule = (s.kind === 'dir') ? setupMap.dirs[s.key] : setupMap.acts[s.key];
-    done += '<div class="setup-done">' +
-              '<span>' + (s.icon || SETUP_NAMES[s.key]) + '</span>' +
-              '<span>' + (rule ? rule.label : '건너뜀') + '</span>' +
-            '</div>';
-  }
-
-  box.innerHTML =
+  /* 무슨 일이 있어도 '지금 무엇을 해야 하는지'는 꼭 보이게 해요.
+     아래에서 문제가 생겨도 이 글은 이미 화면에 있어요. */
+  let html =
     '<p class="setup-count">' + (setupIndex + 1) + ' / ' + SETUP_STEPS.length + '</p>' +
-    '<p class="setup-ask">' + step.ask + '</p>' +
-    '<p class="setup-wait">기다리는 중…</p>' +
-    (done ? '<div class="setup-list">' + done + '</div>' : '');
+    '<p class="setup-ask">' + step.ask + '</p>';
+
+  try {
+    const pads = Input.readPads();
+
+    if (pads.length === 0) {
+      html += padMissingHtml();
+    } else {
+      html += '<p class="setup-wait">기다리는 중…</p>';
+
+      // 지금까지 정한 것들을 보여줘요
+      let done = '';
+      for (let i = 0; i < setupIndex; i++) {
+        const st = SETUP_STEPS[i];
+        const rule = (st.kind === 'dir') ? setupMap.dirs[st.key] : setupMap.acts[st.key];
+        done += '<div class="setup-done">' +
+                  '<span>' + (st.icon || SETUP_NAMES[st.key]) + '</span>' +
+                  '<span>' + (rule ? rule.label : '건너뜀') + '</span>' +
+                '</div>';
+      }
+      if (done) html += '<div class="setup-list">' + done + '</div>';
+    }
+  } catch (e) {
+    html += '<p class="setup-none">조종기를 읽는 중 문제가 생겼어요.<br>' +
+            '아래 「이 단계 건너뛰기」로 넘어갈 수 있어요.</p>';
+  }
+
+  box.innerHTML = html;
+}
+
+/* 조종기가 안 잡힐 때 보여줄 안내예요.
+   ★ 가장 흔한 원인은 이 페이지가 '창 안의 창' 안에서 열린 거예요. */
+function padMissingHtml() {
+  const framed = Input.inFrame() || Input.isBlocked();
+
+  let html = '<p class="setup-none">조종기가 잡히지 않았어요.</p>';
+
+  if (framed) {
+    html +=
+      '<div class="setup-frame">' +
+        '<p><b>이 페이지가 창 안의 창(iframe)에서 열려 있어요.</b></p>' +
+        '<p>브라우저는 이럴 때 조종기 사용을 막는 경우가 많아요.</p>' +
+        '<p class="setup-fix">주소창에 게임 주소를 <b>직접 붙여넣어 새 탭에서</b> 열어 주세요. ' +
+        '그러면 조종기가 잡혀요!</p>' +
+      '</div>';
+  } else {
+    html +=
+      '<ul class="pad-test-help">' +
+        '<li>조종기의 <b>아무 버튼이나 한 번</b> 눌러 보세요.</li>' +
+        '<li>왼쪽 스위치를 <b>XINPUT / NS</b> (위쪽)에 두세요.</li>' +
+        '<li>USB 를 뺐다 꽂고 새로고침하세요.</li>' +
+      '</ul>';
+  }
+  return html;
 }
 
 /* 동작 이름을 한글로 보여주려고 만든 표예요 */

@@ -2281,3 +2281,23 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
   border-color: var(--ochre);
   opacity: 1;
 }
+
+/* 창 안의 창(iframe) 때문에 조종기를 못 쓸 때 보여주는 안내 */
+.setup-frame {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--ochre);
+  border-radius: var(--round);
+  background: rgba(200, 162, 90, 0.1);
+  text-align: left;
+  line-height: 1.7;
+  font-size: 12px;
+}
+
+.setup-frame b { color: var(--ochre); }
+
+.setup-fix {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
