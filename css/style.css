@@ -1424,3 +1424,168 @@ body {
 
 .m3-legend-guard { background: rgba(205, 46, 58, 0.55); }
 .m3-legend-cop   { background: #9aa3b8; }
+
+/* ==================================================================
+   4장 · 만세운동 준비 (태극기 나누어 주기)
+   ================================================================== */
+.m4-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(5px, 1.2vh, 10px);
+  padding: clamp(8px, 1.6vw, 16px);
+}
+
+/* ---------- 위쪽 : 남은 태극기 ---------- */
+.m4-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.m4-count { display: inline-flex; gap: 5px; }
+
+/* 남은 태극기 한 장 */
+.m4-flagmark {
+  width: 18px;
+  height: 12px;
+  background: #f2ede2;
+  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 52% 78%;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.3s ease;
+}
+
+/* 이미 나눠준 태극기는 흐려져요 */
+.m4-flagmark.is-used { opacity: 0.16; }
+
+.m4-count-text {
+  font-size: clamp(10px, 1.6vw, 13px);
+  color: var(--paper-dim);
+}
+
+/* ---------- 가운데 : 광장 ---------- */
+.m4-field {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border: 2px solid var(--line);
+  /* 광장 바닥에 흙길 느낌의 은은한 무늬를 깔아요 */
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(200, 162, 90, 0.07), transparent 70%),
+    rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  transition: background 0.8s ease;
+}
+
+/* 다섯 명 모두에게 나눠주면 광장이 환해져요 */
+.m4-field.is-ready {
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(200, 162, 90, 0.3), transparent 75%),
+    rgba(0, 0, 0, 0.28);
+}
+
+/* ---------- 광장에 서 있는 사람들 ---------- */
+.m4-person,
+.m4-yu,
+.m4-hero {
+  position: absolute;
+  transform: translate(-50%, -50%);   /* 자리의 한가운데에 놓여요 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.m4-person .fig,
+.m4-yu .fig { font-size: clamp(17px, 3vw, 27px); }
+
+.m4-hero .fig {
+  font-size: clamp(19px, 3.3vw, 30px);
+  color: var(--paper);
+}
+
+/* 유관순 이름표 */
+.m4-name {
+  font-size: clamp(8px, 1.2vw, 10px);
+  letter-spacing: 2px;
+  color: var(--ochre);
+  margin-top: 3px;
+}
+
+/* 말을 걸 수 있을 때 머리 위에 뜨는 '2' 표시 */
+.m4-bubble {
+  position: absolute;
+  top: -1.5em;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--ochre);
+  border-radius: var(--round);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.m4-person.is-near .m4-bubble { opacity: 1; }
+
+/* 곁에 다가가면 그 사람이 밝아져요 */
+.m4-person.is-near .fig { color: var(--ochre); }
+
+/* 태극기를 받으면 손에 깃발이 생겨요 */
+.m4-gotflag {
+  position: absolute;
+  right: -0.3em;
+  top: 0;
+  width: 14px;
+  height: 10px;
+  background: #f2ede2;
+  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 52% 78%;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.m4-person.is-done .m4-gotflag { opacity: 1; }
+.m4-person.is-done .fig { color: var(--paper); }
+
+/* 마우스로 눌러도 되니까 손가락 모양이 나와요 */
+.m4-person { cursor: pointer; }
+
+/* ---------- 아래쪽 : 말과 설명 ---------- */
+.m4-talk {
+  font-size: clamp(11px, 1.9vw, 16px);
+  line-height: 1.5;
+  min-height: 1.5em;
+  text-align: center;
+}
+
+.m4-talk.is-good { color: var(--ochre); font-weight: 700; }
+
+.m4-tip {
+  font-size: clamp(9px, 1.4vw, 12px);
+  color: var(--paper-dim);
+  text-align: center;
+}
+
+/* 주인공이 누구인지 헷갈리지 않게 발밑에 표시를 넣어요 */
+.m4-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.7em;
+  height: 4px;
+  background: var(--ochre);
+}
+
+.m4-hero { z-index: 4; }
