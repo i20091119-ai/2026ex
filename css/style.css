@@ -213,7 +213,7 @@ body {
   backdrop-filter: blur(6px);
 }
 
-.hud-chapter, .hud-score {
+.hud-chapter, .hud-score, .hud-life {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -249,6 +249,23 @@ body {
   100% { transform: scale(1); }
 }
 
+/* ---------- 목숨(하트) ---------- */
+#hud-hearts {
+  font-size: clamp(14px, 2.4vw, 20px);
+  letter-spacing: 2px;
+}
+
+/* 하트가 줄어들 때 부르르 떨려요 */
+#hud-hearts.shake { animation: shake 0.5s ease; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-7px) scale(1.2); }
+  40%      { transform: translateX(7px) scale(1.2); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+
 /* ---------- 게임 무대 ---------- */
 #stage {
   flex: 1;                      /* 남은 공간을 전부 차지해요 */
@@ -277,6 +294,43 @@ body {
 
 .todo-note { opacity: 0.5; font-size: 15px; }
 
+/* ---------- 작은 버튼 ---------- */
+.small-btn {
+  display: block;
+  margin: 0 auto;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--cream);
+  padding: 8px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.small-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ---------- "들켰다!" 알림 ---------- */
+.caught-box {
+  text-align: center;
+  animation: fadeIn 0.35s ease;
+}
+
+.caught-emoji {
+  font-size: clamp(48px, 9vw, 78px);
+  animation: shake 0.6s ease;
+}
+
+.caught-box h3 {
+  font-size: clamp(24px, 4.5vw, 36px);
+  color: var(--pastel-pink);
+  margin: 8px 0;
+}
+
+.caught-box p { font-size: clamp(12px, 2vw, 16px); line-height: 1.7; }
+.caught-sub { opacity: 0.7; margin-top: 6px; }
+
 /* ---------- 미션 말풍선 ---------- */
 #bubble {
   width: calc(100% - 28px);
@@ -301,6 +355,109 @@ body {
   font-size: clamp(13px, 2.2vw, 18px);
   line-height: 1.6;
   font-weight: 600;
+}
+
+/* ==================================================================
+   조작 안내판
+   어떤 버튼이 무슨 일을 하는지 알려주고,
+   진짜로 누르면 그 칸에 불이 반짝 들어와요!
+   ================================================================== */
+#pad-guide {
+  width: calc(100% - 28px);
+  max-width: 900px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--round);
+  background: rgba(0, 0, 0, 0.32);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* 방향 스틱 안내 */
+.pad-stick {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.pad-stick .pad-key { font-size: 20px; }
+
+.pad-name {
+  font-size: clamp(9px, 1.4vw, 12px);
+  opacity: 0.9;
+}
+
+.pad-arrows { display: flex; gap: 3px; }
+
+.pad-arrows b {
+  width: 19px; height: 19px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+/* 버튼 8개가 들어가는 칸 */
+#pad-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pad-btn {
+  width: clamp(46px, 7vw, 60px);
+  padding: 6px 3px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pad-no {
+  font-size: 9px;
+  width: 15px; height: 15px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 800;
+}
+
+.pad-emoji { font-size: clamp(13px, 2vw, 17px); }
+
+/* ★ 버튼을 진짜로 누르면 여기에 불이 들어와요 ★ */
+.pad-btn.is-down,
+.pad-arrows b.is-down {
+  background: var(--pastel-yellow);
+  color: var(--ink);
+  border-color: #ffffff;
+  transform: scale(1.14);
+  box-shadow: 0 0 16px var(--pastel-yellow);
+}
+
+/* 지금 무엇으로 조작 중인지 알려주는 작은 글씨 */
+.pad-device {
+  font-size: clamp(9px, 1.3vw, 11px);
+  opacity: 0.65;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* ==================================================================

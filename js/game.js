@@ -11,9 +11,12 @@
 /* ------------------------------------------------------------------
    1. 게임이 기억해야 할 것들을 한곳에 모아뒀어요.
    ------------------------------------------------------------------ */
+const MAX_LIFE = 3;   // 목숨은 3개로 시작해요
+
 const game = {
-  score: 0,        // 지금까지 모은 독립 포인트
-  chapterIndex: 0, // 지금 몇 번째 장인지 (0부터 세요)
+  score: 0,           // 지금까지 모은 독립 포인트
+  chapterIndex: 0,    // 지금 몇 번째 장인지 (0부터 세요)
+  life: MAX_LIFE,     // 남은 목숨(하트) 개수
 };
 
 
@@ -90,6 +93,7 @@ const el = {
   },
   chapterName: document.getElementById('hud-chapter-name'),
   score:       document.getElementById('hud-score'),
+  hearts:      document.getElementById('hud-hearts'),
   stage:       document.getElementById('stage-inner'),
   bubbleFace:  document.getElementById('bubble-face'),
   bubbleText:  document.getElementById('bubble-text'),
@@ -139,6 +143,56 @@ function addScore(amount) {
 
 
 /* ------------------------------------------------------------------
+   5-2. 목숨(하트) 다루기
+   ------------------------------------------------------------------ */
+
+// 남은 목숨만큼 빨간 하트, 잃은 만큼 까만 하트를 그려요
+function drawHearts() {
+  let text = '';
+  for (let i = 0; i < MAX_LIFE; i++) {
+    text += (i < game.life) ? '❤️' : '🖤';
+  }
+  el.hearts.textContent = text;
+}
+
+// 일본 경찰에게 들켰을 때 부르는 함수예요
+function caught(reason) {
+  game.life -= 1;          // 하트가 하나 줄어요
+  drawHearts();
+
+  // 하트가 부르르 떨려요
+  el.hearts.classList.remove('shake');
+  void el.hearts.offsetWidth;
+  el.hearts.classList.add('shake');
+
+  // 하트를 다 잃으면 게임이 끝나요
+  if (game.life <= 0) {
+    gameOver(reason);
+    return;
+  }
+
+  // 아직 하트가 남았으면, 이번 장을 처음부터 다시 해요
+  showCaughtMessage(reason);
+}
+
+// "들켰다!" 알림을 보여주고, 잠시 뒤 이번 장을 다시 시작해요
+function showCaughtMessage(reason) {
+  Input.clear();   // 들킨 동안에는 버튼이 안 먹게 잠깐 꺼둬요
+
+  el.stage.innerHTML =
+    '<div class="caught-box">' +
+      '<div class="caught-emoji">👮</div>' +
+      '<h3>들켰다!</h3>' +
+      '<p>' + (reason || '일본 경찰에게 발각되었어요.') + '</p>' +
+      '<p class="caught-sub">이번 장을 처음부터 다시 해요</p>' +
+    '</div>';
+
+  // 2초 뒤에 같은 장을 다시 시작해요
+  setTimeout(startChapter, 2000);
+}
+
+
+/* ------------------------------------------------------------------
    6. 장(챕터) 진행하기
    ------------------------------------------------------------------ */
 
@@ -161,15 +215,25 @@ function startChapter() {
   // 6장(광복)이 되면 화면이 환하게 밝아져요! ☀️
   document.body.classList.toggle('liberation', ch.id === 6);
 
+  // 장이 바뀌면 예전에 걸어둔 버튼 약속은 모두 지워요
+  Input.clear();
+
   // 아직 미션 게임은 만드는 중이라, 임시 안내와 버튼을 보여줘요
   el.stage.innerHTML =
     '<div style="text-align:center">' +
       '<p class="todo-note">' + ch.id + '장 미션은 다음 단계에서 만들 거예요</p>' +
       '<button id="btn-next" class="big-btn" style="margin-top:18px">미션 성공 (연습용)</button>' +
+      '<button id="btn-fail" class="small-btn" style="margin-top:12px">들키기 (연습용)</button>' +
     '</div>';
 
-  // 연습용 버튼을 누르면 이번 장을 성공한 것으로 쳐요
+  // 연습용 버튼을 마우스로 눌러도 되고,
   document.getElementById('btn-next').addEventListener('click', clearChapter);
+  document.getElementById('btn-fail').addEventListener('click', function () {
+    caught('연습으로 들켜 봤어요!');
+  });
+
+  // 조종기 4번 버튼(다음)을 눌러도 넘어가요!
+  Input.on('next', clearChapter);
 }
 
 // 이번 장의 미션을 성공했을 때 부르는 함수예요
@@ -198,14 +262,17 @@ function clearChapter() {
 function startGame() {
   game.score = 0;
   game.chapterIndex = 0;
+  game.life = MAX_LIFE;
   document.body.classList.remove('liberation');
   drawScore();
+  drawHearts();
   showScreen('game');
   startChapter();
 }
 
-// 모든 임무를 마쳤을 때
+// 모든 임무를 마쳤을 때 (이겼어요!)
 function finishGame() {
+  Input.clear();
   el.endEmoji.textContent = '🎉';
   el.endTitle.textContent = '광복!';
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
@@ -213,12 +280,36 @@ function finishGame() {
   showScreen('end');
 }
 
+// 하트를 모두 잃었을 때 (졌어요)
+function gameOver(reason) {
+  Input.clear();
+  document.body.classList.remove('liberation');
+  el.endEmoji.textContent = '😢';
+  el.endTitle.textContent = '붙잡혔어요...';
+  el.endMessage.textContent = (reason || '일본 경찰에게 발각되었어요.') +
+                              ' 하지만 포기하지 말아요. 다시 도전!';
+  el.endScore.textContent = game.score;
+  showScreen('end');
+}
+
 
 /* ------------------------------------------------------------------
    8. 버튼에 기능을 연결해요
+      마우스로 눌러도 되고, 키보드나 조종기로 눌러도 돼요.
    ------------------------------------------------------------------ */
-el.btnStart.addEventListener('click', startGame);
-el.btnRetry.addEventListener('click', function () {
+
+// 시작 화면으로 돌아가요
+function goTitle() {
+  Input.clear();
   document.body.classList.remove('liberation');
   showScreen('title');
-});
+  // 시작 화면에서는 어느 버튼을 눌러도 게임이 시작돼요
+  Input.on('next', startGame);
+  Input.on('jump', startGame);
+}
+
+el.btnStart.addEventListener('click', startGame);
+el.btnRetry.addEventListener('click', goTitle);
+
+// 게임이 켜지면 시작 화면부터 보여줘요
+goTitle();

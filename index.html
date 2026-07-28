@@ -54,6 +54,13 @@
         <span class="hud-label">장</span>
         <span id="hud-chapter-name">1장 · 비밀 편지</span>
       </div>
+
+      <!-- 목숨(하트)이에요. 경찰에게 들키면 하나씩 줄어요 -->
+      <div class="hud-life">
+        <span class="hud-label">목숨</span>
+        <span id="hud-hearts">❤️❤️❤️</span>
+      </div>
+
       <div class="hud-score">
         <span class="hud-label">독립 포인트</span>
         <span id="hud-score">0</span>
@@ -72,6 +79,21 @@
     <div id="bubble">
       <div id="bubble-face">🧑</div>
       <div id="bubble-text">말풍선 내용</div>
+    </div>
+
+    <!-- ---- 조작 안내판 ----
+         어떤 버튼이 무슨 일을 하는지 알려줘요.
+         진짜로 버튼을 누르면 그 칸에 불이 반짝 들어와요! -->
+    <div id="pad-guide">
+      <div class="pad-stick" id="pad-stick">
+        <span class="pad-key">🕹️</span>
+        <span class="pad-name">움직이기</span>
+        <span class="pad-arrows">
+          <b data-dir="up">▲</b><b data-dir="left">◀</b><b data-dir="down">▼</b><b data-dir="right">▶</b>
+        </span>
+      </div>
+      <div id="pad-buttons"><!-- 버튼 8개가 자바스크립트로 여기에 그려져요 --></div>
+      <div class="pad-device" id="pad-device">조종기 연결 안 됨</div>
     </div>
 
   </section>
@@ -95,6 +117,7 @@
 
 </div>
 
+<script src="js/input.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>
