@@ -28,6 +28,27 @@ MISSIONS[4] = (function () {
   ];
 
   const YU = { x: 50, y: 47 };      // 유관순이 서 있는 자리
+
+  /* ★ 광장에 놓인 장애물이에요 (돌담과 수레).
+     가로지를 수 없어서 빙 돌아가야 해요.
+     x, y 는 왼쪽 위 모서리, w 는 너비, h 는 높이예요. */
+  const WALLS = [
+    { x: 10, y: 34, w: 26, h: 5, kind: 'wall' },   // 왼쪽 위 돌담
+    { x: 46, y: 30, w: 24, h: 5, kind: 'wall' },   // 오른쪽 위 돌담
+    { x: 60, y: 48, w: 5,  h: 22, kind: 'wall' },  // 오른쪽 세로 돌담
+    { x: 16, y: 52, w: 5,  h: 24, kind: 'cart' },  // 왼쪽에 세워둔 수레
+    { x: 34, y: 58, w: 20, h: 5,  kind: 'cart' },  // 가운데 아래 수레
+  ];
+
+  /* ★ 광장을 순찰하는 일본 경찰이에요.
+     이 지점들을 차례대로 돌아요. 부딪히면 들켜요! */
+  const COP_ROUTE = [
+    { x: 86, y: 55 }, { x: 86, y: 88 }, { x: 66, y: 88 },
+    { x: 66, y: 55 }, { x: 86, y: 55 },
+  ];
+
+  const COP_SPEED = 15;    // 경찰이 걷는 빠르기
+  const COP_REACH = 8;     // 이만큼 가까워지면 들켜요
   const POINT_PER_FLAG = 3;         // 태극기 하나를 전할 때마다 주는 점수
   const REACH = 11;                 // 이만큼 가까이 가야 말을 걸 수 있어요
 
@@ -45,7 +66,9 @@ MISSIONS[4] = (function () {
   let people = [];               // 사람 5명의 상태
   let given = 0;                 // 지금까지 나눠준 태극기 수
   let nearest = -1;              // 지금 가장 가까운 사람 번호 (없으면 -1)
+  let cop = null;                // 순찰하는 일본 경찰
   let running = false;
+  let onFail = null;             // 들켰을 때 부를 함수
   let lastTime = 0;
   let onSuccess = null;
   let node = {};
@@ -66,6 +89,18 @@ MISSIONS[4] = (function () {
   /* 숫자를 0~100 사이로 붙잡아 둬요 (광장 밖으로 못 나가게) */
   function inField(value) {
     return MissionUtil.clamp(value, 4, 96);
+  }
+
+  /* 그 자리가 장애물 안인가요?
+     주인공은 점이 아니라 조금 넓으니까 여유를 조금 둬요. */
+  const PAD_X = 3;
+  const PAD_Y = 5;
+
+  function hitsWall(x, y) {
+    return WALLS.some(function (w) {
+      return x + PAD_X > w.x && x - PAD_X < w.x + w.w &&
+             y + PAD_Y > w.y && y - PAD_Y < w.y + w.h;
+    });
   }
 
 
@@ -163,29 +198,84 @@ MISSIONS[4] = (function () {
       return;
     }
 
-    // 방향키를 누른 만큼 걸어가요 (네 방향 모두 돼요)
-    if (Input.dir.left)  hero.x = inField(hero.x - SPEED_X * delta);
-    if (Input.dir.right) hero.x = inField(hero.x + SPEED_X * delta);
-    if (Input.dir.up)    hero.y = inField(hero.y - SPEED_Y * delta);
-    if (Input.dir.down)  hero.y = inField(hero.y + SPEED_Y * delta);
+    /* 방향키를 누른 만큼 걸어가요 (네 방향 모두 돼요)
+       가로와 세로를 따로 옮겨요. 그러면 담에 부딪혀도
+       담을 따라 스르륵 미끄러져서 답답하지 않아요! */
+    let nx = hero.x;
+    let ny = hero.y;
+
+    if (Input.dir.left)  nx = inField(nx - SPEED_X * delta);
+    if (Input.dir.right) nx = inField(nx + SPEED_X * delta);
+    if (!hitsWall(nx, hero.y)) hero.x = nx;      // 가로로 갈 수 있으면 가요
+
+    if (Input.dir.up)    ny = inField(ny - SPEED_Y * delta);
+    if (Input.dir.down)  ny = inField(ny + SPEED_Y * delta);
+    if (!hitsWall(hero.x, ny)) hero.y = ny;      // 세로로 갈 수 있으면 가요
 
     drawHero();
     updateNearest();
+    moveCop(delta);
 
     requestAnimationFrame(loop);
   }
 
 
   /* ----------------------------------------------------------------
+     6-2. 순찰하는 일본 경찰
+     ---------------------------------------------------------------- */
+  function moveCop(delta) {
+    if (!cop) return;
+
+    const target = COP_ROUTE[cop.step];
+    const dx = target.x - cop.x;
+    const dy = target.y - cop.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 1.2) {
+      // 다음 지점으로 방향을 바꿔요
+      cop.step = (cop.step + 1) % COP_ROUTE.length;
+    } else {
+      // 목표 쪽으로 조금씩 걸어가요
+      cop.x += (dx / dist) * COP_SPEED * delta;
+      cop.y += (dy / dist) * COP_SPEED * delta * 1.7;
+    }
+
+    cop.node.style.left = cop.x + '%';
+    cop.node.style.top  = cop.y + '%';
+
+    // 주인공과 너무 가까워지면 들켜요!
+    if (distance(hero, cop) < COP_REACH) {
+      running = false;
+      cop.node.querySelector('.fig').classList.add('is-looking');
+      node.talk.textContent = '순찰하던 일본 경찰에게 들켰다!';
+      node.talk.className = 'm4-talk is-bad';
+      setTimeout(function () {
+        onFail('만세운동을 준비하다 일본 경찰에게 들켰어요!');
+      }, 800);
+    }
+  }
+
+
+  /* ----------------------------------------------------------------
      7. 미션 시작하기
      ---------------------------------------------------------------- */
-  function start(success) {
+  function start(success, fail) {
     onSuccess = success;
+    onFail = fail;
 
     hero = { x: 50, y: 88 };
     given = 0;
     nearest = -1;
     running = true;
+
+    /* --- 장애물(돌담과 수레)을 그려요 --- */
+    let wallsHtml = '';
+    WALLS.forEach(function (w) {
+      wallsHtml +=
+        '<div class="m4-wall is-' + w.kind + '" style="' +
+          'left:' + w.x + '%;top:' + w.y + '%;' +
+          'width:' + w.w + '%;height:' + w.h + '%"></div>';
+    });
 
     /* --- 사람 5명을 그려요 --- */
     let peopleHtml = '';
@@ -208,7 +298,10 @@ MISSIONS[4] = (function () {
         '</div>' +
 
         '<div class="m4-field">' +
+          wallsHtml +
           peopleHtml +
+          // 순찰하는 일본 경찰
+          '<div class="m4-cop">' + MissionUtil.figure('police') + '</div>' +
           // 유관순은 광장 가운데에 서 있어요
           '<div class="m4-yu" style="left:' + YU.x + '%;top:' + YU.y + '%">' +
             MissionUtil.figure('yu', 'is-looking') +
@@ -230,6 +323,7 @@ MISSIONS[4] = (function () {
 
     node = {
       field:     stage.querySelector('.m4-field'),
+      cop:       stage.querySelector('.m4-cop'),
       hero:      stage.querySelector('.m4-hero'),
       count:     stage.querySelector('.m4-count'),
       countText: stage.querySelector('.m4-count-text'),
@@ -243,6 +337,16 @@ MISSIONS[4] = (function () {
       };
     });
 
+    /* 순찰 경찰을 첫 자리에 세워요 */
+    cop = {
+      x: COP_ROUTE[0].x,
+      y: COP_ROUTE[0].y,
+      step: 1,
+      node: node.cop,
+    };
+    cop.node.style.left = cop.x + '%';
+    cop.node.style.top  = cop.y + '%';
+
     drawHero();
     drawCount();
 
@@ -250,15 +354,17 @@ MISSIONS[4] = (function () {
     Input.on('talk', giveFlag);
     Input.on('next', giveFlag);        // 4번 버튼으로도 돼요
 
-    // 마우스로 사람을 눌러도 태극기를 줄 수 있어요
+    /* 마우스로 사람을 눌러도 태극기를 줄 수 있어요.
+       단, 곁에 다가가 있을 때만요! (담을 뚫고 줄 수는 없어요) */
     people.forEach(function (person, i) {
       person.node.addEventListener('click', function () {
-        if (person.done) return;
-        // 그 사람 곁으로 순간 이동한 것처럼 처리해요
-        hero.x = PEOPLE[i].x;
-        hero.y = PEOPLE[i].y + 8;
-        drawHero();
-        updateNearest();
+        if (person.done || !running) return;
+        if (distance(hero, PEOPLE[i]) > REACH) {
+          node.talk.textContent = '너무 멀어요. 곁으로 다가가야 한다.';
+          node.talk.className = 'm4-talk';
+          return;
+        }
+        nearest = i;
         giveFlag();
       });
     });
@@ -275,6 +381,6 @@ MISSIONS[4] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '광장을 돌아다니며 사람들에게 태극기를 나누어 주어라. 곁에 서서 2번 버튼을 누른다.',
+    hint: '담과 수레를 돌아 사람들에게 태극기를 나누어 주어라. 순찰하는 일본 경찰을 조심할 것.',
   };
 })();

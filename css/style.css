@@ -2327,3 +2327,54 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 }
 
 .m1-count.is-on { opacity: 1; }
+
+/* ---------- 4장 : 광장의 장애물과 순찰 경찰 ---------- */
+
+/* 돌담과 수레 (지나갈 수 없어요) */
+.m4-wall {
+  position: absolute;
+  border-radius: 2px;
+}
+
+/* 돌담 : 돌을 쌓은 느낌 */
+.m4-wall.is-wall {
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(222, 213, 194, 0.26) 0 9px,
+      rgba(222, 213, 194, 0.14) 9px 11px);
+  border: 1px solid rgba(222, 213, 194, 0.3);
+}
+
+/* 수레 : 나무 느낌 */
+.m4-wall.is-cart {
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(200, 162, 90, 0.3) 0 7px,
+      rgba(200, 162, 90, 0.16) 7px 12px);
+  border: 1px solid rgba(200, 162, 90, 0.42);
+}
+
+/* 순찰하는 일본 경찰 */
+.m4-cop {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.m4-cop .fig { font-size: clamp(18px, 3.2vw, 29px); color: #9aa3b8; }
+
+/* 경찰 주위에 붉은 기운이 감돌아요 (가까이 가면 위험!) */
+.m4-cop::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 74px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(205, 46, 58, 0.3), transparent 70%);
+  pointer-events: none;
+}
+
+.m4-talk.is-bad { color: var(--flag-red); font-weight: 700; }

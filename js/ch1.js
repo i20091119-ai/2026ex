@@ -33,13 +33,13 @@ MISSIONS[1] = (function () {
   const SPEED = 17;
 
   /* 두 번째 경찰이 나타나는 지점이에요.
-     거의 다 왔을 때만 나와서, 앞부분은 편하게 갈 수 있어요. */
-  const SECOND_AT = 70;
+     절반을 조금 넘어서면 나와요. 그때부터 확 어려워져요! */
+  const SECOND_AT = 55;
 
   /* ★ 봐주는 시간 (초)
      경찰이 막 돌아본 순간에는 이만큼 안 잡아줘요.
      "앗!" 하고 손을 떼면 살 수 있어요. 어린 동생들에게 꼭 필요해요! */
-  const GRACE = 0.4;
+  const GRACE = 0.28;
 
 
   /* ----------------------------------------------------------------
@@ -55,8 +55,9 @@ MISSIONS[1] = (function () {
 
     if (cop.state === 'away') {
       cop.state = 'warning';
-      // '돌아본다!' 신호를 아주 넉넉히 보여줘서 멈출 시간을 충분히 줘요
-      cop.timer = MissionUtil.clamp(2.0 - hard * 0.3, 1.5, 2.1);
+      // '돌아본다!' 신호 시간이에요. 짧을수록 어려워져요.
+      // 도착에 가까워질수록 더 짧아져서 점점 긴장돼요.
+      cop.timer = MissionUtil.clamp(1.2 - hard * 0.35, 0.7, 1.25);
 
     } else if (cop.state === 'warning') {
       cop.state = 'watching';
@@ -67,7 +68,7 @@ MISSIONS[1] = (function () {
     } else {
       cop.state = 'away';
       // 달릴 수 있는 시간을 넉넉하게 줘요
-      cop.timer = MissionUtil.clamp(MissionUtil.random(3.2, 4.5) - hard * 0.7, 2.0, 4.5);
+      cop.timer = MissionUtil.clamp(MissionUtil.random(2.8, 4.0) - hard * 1.0, 1.6, 4.0);
     }
 
     cop.timerMax = cop.timer;    // 남은 시간 막대를 그리려고 기억해둬요
