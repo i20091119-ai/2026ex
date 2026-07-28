@@ -68,6 +68,51 @@ const Input = (function () {
   /* true 이면 게임 조작이 잠깐 멈춰요 (덮개 화면이 열렸을 때) */
   let blocked = false;
 
+  /* ================================================================
+     ★ 조종기 맞추기 (직접 배우기)
+
+     조종기는 종류마다 신호가 달라서, 미리 정해두면 안 맞을 수 있어요.
+     그래서 선생님이 조종기를 실제로 움직이면
+     그 신호를 그대로 기억해두고 쓰기로 했어요.
+
+     기억한 내용은 브라우저에 저장돼서 다음에 켜도 그대로예요.
+     ================================================================ */
+  const MAP_KEY = 'dokrip.padmap';   // 저장할 때 쓰는 이름표
+  let padMap = null;                 // { dirs:{up:규칙,...}, acts:{jump:규칙,...} }
+
+  /* 저장해둔 설정을 불러와요 */
+  function loadMap() {
+    try {
+      const raw = localStorage.getItem(MAP_KEY);
+      if (raw) padMap = JSON.parse(raw);
+    } catch (e) { padMap = null; }
+  }
+  loadMap();
+
+  /* 축(스틱·십자키) 신호가 배운 것과 같은지 확인해요 */
+  function axisMatches(rule, axes) {
+    const v = axes[rule.index];
+    if (v === undefined) return false;
+    if (Math.abs(v) > 1.05) return false;        // 가운데(안 누름)
+
+    if (Math.abs(rule.value) >= 0.85) {
+      // 끝까지 기울인 신호 → 방향만 같으면 인정해요
+      return rule.value > 0 ? v > 0.5 : v < -0.5;
+    }
+    // 십자키처럼 값이 딱 정해진 신호 → 그 값과 비슷해야 해요
+    return Math.abs(v - rule.value) < 0.18;
+  }
+
+  /* 배운 규칙 하나가 지금 눌려 있는지 확인해요 */
+  function ruleOn(rule, pad) {
+    if (!rule) return false;
+    if (rule.type === 'button') {
+      const b = pad.buttons[rule.index];
+      return b ? b.pressed : false;
+    }
+    return axisMatches(rule, pad.axes);
+  }
+
 
   /* ----------------------------------------------------------------
      3. 도우미 함수들
@@ -143,11 +188,13 @@ const Input = (function () {
     if (!box) return;
 
     box.innerHTML = BUTTONS.map(function (b) {
+      // 직접 맞춘 설정이 있으면 그걸 보여주고, 없으면 기본 이름을 보여줘요
+      const learned = padMap && padMap.acts[b.act] ? padMap.acts[b.act].label : null;
       return (
-        '<div class="pad-btn" data-act="' + b.act + '">' +
+        '<div class="pad-btn' + (learned ? ' is-learned' : '') + '" data-act="' + b.act + '">' +
           '<span class="pad-no">' + b.no + '</span>' +
           '<span class="pad-name">' + b.label + '</span>' +
-          '<span class="pad-arcade">' + b.arcade + '</span>' +
+          '<span class="pad-arcade">' + (learned || b.arcade) + '</span>' +
         '</div>'
       );
     }).join('');
@@ -298,6 +345,23 @@ const Input = (function () {
       /* 조종기를 처음 봤으면, 안 건드렸을 때의 값을 적어둬요 */
       if (!padRest) padRest = Array.prototype.slice.call(pad.axes);
 
+      /* ★ 직접 맞춘 설정이 있으면 그것만 써요 (제일 정확해요) */
+      if (padMap) {
+        ['up', 'down', 'left', 'right'].forEach(function (name) {
+          setPadDir(name, ruleOn(padMap.dirs[name], pad));
+        });
+
+        BUTTONS.forEach(function (b) {
+          const now = ruleOn(padMap.acts[b.act], pad);
+          const key = 'm:' + b.act;
+          if (now && !padWas[key]) pressButton(b.act);
+          if (!now && padWas[key]) releaseButton(b.act);
+          padWas[key] = now;
+        });
+
+        break;   // 배운 설정을 썼으니 아래 기본 방식은 건너뛰어요
+      }
+
       /* ★ 아케이드 스틱은 옆 스위치에 따라 신호가 세 가지로 달라져요.
            LS 로 두면  → axes 0, 1
            RS 로 두면  → axes 2, 3
@@ -399,6 +463,75 @@ const Input = (function () {
       b.label = label;
       if (emoji) b.emoji = emoji;
       drawGuide();
+    },
+
+    /* ---------- 조종기 맞추기에 쓰는 기능들 ---------- */
+
+    /* 지금 조종기 상태를 사진 찍듯 그대로 담아와요 */
+    snapshot: function () {
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let i = 0; i < pads.length; i++) {
+        if (!pads[i]) continue;
+        return {
+          axes: Array.prototype.slice.call(pads[i].axes),
+          buttons: pads[i].buttons.map(function (b) { return b.pressed; }),
+        };
+      }
+      return null;
+    },
+
+    /* 사진 찍어둔 때와 비교해서, 무엇이 새로 눌렸는지 찾아줘요.
+       찾으면 그 신호를 설명하는 '규칙'을 돌려줘요. */
+    findChange: function (before) {
+      const now = this.snapshot();
+      if (!now || !before) return null;
+
+      // (1) 새로 눌린 버튼이 있나요?
+      for (let i = 0; i < now.buttons.length; i++) {
+        if (now.buttons[i] && !before.buttons[i]) {
+          return { type: 'button', index: i, label: '버튼 ' + (i + 1) };
+        }
+      }
+
+      // (2) 크게 움직인 축(스틱·십자키)이 있나요?
+      let best = null;
+      let bestMove = 0.45;                 // 이만큼은 움직여야 인정해요
+      for (let i = 0; i < now.axes.length; i++) {
+        const moved = Math.abs(now.axes[i] - (before.axes[i] || 0));
+        if (moved > bestMove && Math.abs(now.axes[i]) <= 1.05) {
+          bestMove = moved;
+          best = {
+            type: 'axis',
+            index: i,
+            value: Math.round(now.axes[i] * 100) / 100,
+            label: '축 ' + i + ' (' + (Math.round(now.axes[i] * 100) / 100) + ')',
+          };
+        }
+      }
+      return best;
+    },
+
+    /* 다 맞춘 설정을 저장해요 */
+    saveMap: function (map) {
+      padMap = map;
+      try { localStorage.setItem(MAP_KEY, JSON.stringify(map)); } catch (e) {}
+      drawGuide();
+    },
+
+    /* 맞춘 설정을 지우고 기본값으로 되돌려요 */
+    clearMap: function () {
+      padMap = null;
+      try { localStorage.removeItem(MAP_KEY); } catch (e) {}
+      drawGuide();
+    },
+
+    /* 지금 맞춘 설정이 있나요? */
+    hasMap: function () { return !!padMap; },
+
+    /* 어떤 동작이 조종기의 무엇에 연결됐는지 글자로 알려줘요 */
+    sourceLabel: function (act) {
+      if (!padMap || !padMap.acts[act]) return null;
+      return padMap.acts[act].label;
     },
 
     /* 지금 연결된 조종기의 속살을 그대로 보여줘요.

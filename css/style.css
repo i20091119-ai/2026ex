@@ -2194,3 +2194,75 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 
 /* 미로가 커져서 사람과 물건도 조금 작게 그려요 */
 .m3-actor .fig { font-size: clamp(9px, 1.8vw, 15px); }
+
+/* ==================================================================
+   조종기 맞추기 화면
+   ================================================================== */
+.setup { text-align: center; }
+
+.setup-count {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+
+/* 지금 무엇을 눌러야 하는지 알려주는 큰 글씨 */
+.setup-ask {
+  font-size: clamp(15px, 2.6vw, 22px);
+  font-weight: 800;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* '기다리는 중' 이 깜빡여요 */
+.setup-wait {
+  font-size: 12px;
+  color: var(--paper-dim);
+  animation: blink 1.1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+/* 지금까지 정한 것들의 목록 */
+.setup-list {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  text-align: left;
+}
+
+.setup-done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--round);
+}
+
+.setup-done span:first-child {
+  flex: none;
+  width: 34px;
+  color: var(--ochre);
+  font-weight: 800;
+}
+
+.setup-done span:last-child { color: var(--paper-dim); }
+
+.setup-none {
+  color: var(--flag-red);
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+/* 직접 맞춘 버튼은 안내판에 놋쇠색 밑줄이 생겨요 */
+.pad-btn.is-learned { border-bottom: 2px solid var(--ochre); }
+.pad-btn.is-learned .pad-arcade { color: var(--ochre); opacity: 0.9; }
