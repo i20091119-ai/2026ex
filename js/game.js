@@ -217,8 +217,9 @@ function startChapter() {
   el.bubbleFace.innerHTML = MissionUtil.figure(ch.face);
   el.bubbleText.textContent = ch.story + ' ' + ch.mission;
 
-  // 6장(광복)이 되면 화면이 환하게 밝아져요! ☀️
-  document.body.classList.toggle('liberation', ch.id === 6);
+  // 6장은 어두운 밤에서 시작해요.
+  // 태극기를 흔들어야 새벽이 밝아와요! (ch6.js 에서 밝게 바꿔줘요)
+  document.body.classList.remove('liberation');
 
   // 장이 바뀌면 하던 미션과 버튼 약속을 깨끗이 정리해요
   stopMission();

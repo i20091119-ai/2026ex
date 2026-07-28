@@ -1771,3 +1771,244 @@ body {
   color: var(--paper-dim);
   text-align: center;
 }
+
+/* ==================================================================
+   6장 · 광복의 날
+   ★ --dawn 이라는 숫자(0~1)가 커질수록 하늘이 밝아져요.
+     태극기를 흔들 때마다 이 숫자가 커져요!
+   ================================================================== */
+.m6-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: clamp(5px, 1.2vh, 10px);
+  padding: clamp(10px, 2vw, 18px);
+}
+
+/* ---------- 하늘 (밤 → 새벽) ---------- */
+.m6-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, #0a0f22 0%, #16203f 60%, #24304f 100%);
+}
+
+/* 밝아진 만큼 새벽빛이 겹쳐 올라와요 */
+.m6-sky::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #7fa8d8 0%, #e8c98a 62%, #f4dcae 100%);
+  opacity: var(--dawn);
+  transition: opacity 0.25s ease;
+}
+
+/* ---------- 떠오르는 해 ---------- */
+.m6-sun {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  width: clamp(52px, 9vw, 92px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3d0 30%, #f0b45a 70%, rgba(240,180,90,0) 72%);
+  /* 밝아질수록 위로 떠올라요 */
+  bottom: calc(14% + var(--dawn) * 30%);
+  transform: translateX(-50%);
+  opacity: calc(var(--dawn) * 1.1);
+  transition: bottom 0.3s ease, opacity 0.3s ease;
+}
+
+/* ---------- 땅 ---------- */
+.m6-ground {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  height: 24%;
+  background: #05070f;
+}
+
+/* ---------- 사람들 ----------
+   해를 등지고 서 있어서 검은 실루엣으로 보여요 */
+.m6-crowd {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 22%;
+  z-index: 3;
+  height: 0;
+}
+
+.m6-person {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+}
+
+.m6-person .fig {
+  font-size: calc(clamp(30px, 5.6vw, 52px) * var(--size));
+  /* 하늘이 밝아질수록 더 까만 실루엣이 돼요 */
+  color: #05070f;
+  transition: color 0.4s ease;
+}
+
+/* ---------- 사람들이 든 태극기 ---------- */
+.m6-flag {
+  position: absolute;
+  left: 62%;
+  bottom: 68%;
+  width: clamp(15px, 2.6vw, 24px);
+  height: clamp(10px, 1.8vw, 16px);
+  background: #f2ede2;
+  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 52% 78%;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform-origin: left bottom;
+  /* 깃대 */
+  border-left: 2px solid #05070f;
+}
+
+/* 흔들 때마다 태극기가 펄럭여요 */
+.m6-scene.is-waving .m6-flag { animation: flagwave 0.34s ease; }
+
+@keyframes flagwave {
+  0%   { transform: rotate(0deg) scaleX(1); }
+  35%  { transform: rotate(-16deg) scaleX(0.86); }
+  70%  { transform: rotate(11deg) scaleX(1.06); }
+  100% { transform: rotate(0deg) scaleX(1); }
+}
+
+/* 광복이 이루어지면 모든 태극기가 계속 펄럭여요 */
+.m6-scene.is-free .m6-flag { animation: flagwave 0.7s ease infinite; }
+
+/* ---------- 이야기 자막 ---------- */
+.m6-story {
+  position: relative;
+  z-index: 5;
+  font-size: clamp(13px, 2.3vw, 20px);
+  font-weight: 700;
+  text-align: center;
+  color: #f4ecd8;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  min-height: 1.6em;
+}
+
+.m6-story.is-in { animation: storyIn 0.6s ease; }
+
+@keyframes storyIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 마지막 "대한 독립 만세!" 는 크게 보여요 */
+.m6-story.is-big {
+  font-size: clamp(20px, 4.2vw, 38px);
+  letter-spacing: 4px;
+  color: #fff8e8;
+}
+
+.m6-hint {
+  position: relative;
+  z-index: 5;
+  font-size: clamp(9px, 1.4vw, 12px);
+  color: rgba(244, 236, 216, 0.72);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  min-height: 1.3em;
+}
+
+/* ---------- 밝기 게이지 ---------- */
+.m6-gauge {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 420px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(244, 236, 216, 0.3);
+}
+
+.m6-gauge-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--flag-blue), var(--ochre), #fff3d0);
+  transition: width 0.2s ease;
+}
+
+/* ==================================================================
+   광복(밝은 화면)일 때 손보기
+   ★ 배경이 밝아지면, 어두운 배경에 맞춰 만든 반투명 상자들이
+     잘 안 보여요. 그래서 밝은 화면일 때는 따로 색을 정해줘요.
+   ================================================================== */
+
+/* 화면 가장자리를 어둡게 하던 효과를 약하게 해요 */
+body.liberation .screen {
+  background:
+    radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(90, 110, 150, 0.28) 100%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+}
+
+/* 점수판 */
+body.liberation #hud { background: rgba(255, 255, 255, 0.42); }
+
+body.liberation .hud-chapter,
+body.liberation .hud-score,
+body.liberation .hud-life {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(26, 35, 64, 0.18);
+}
+
+body.liberation #hud-chapter-name { color: var(--flag-blue); }
+body.liberation #hud-score { color: #8a6420; }
+
+/* 게임 무대 */
+body.liberation #stage-inner {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(26, 35, 64, 0.16);
+}
+
+/* 말풍선은 밝은 화면에서 반대로 어둡게 해서 잘 보이게 해요 */
+body.liberation #bubble {
+  background: #1a2340;
+  color: #f0e9d8;
+  border-left-color: var(--flag-red);
+}
+
+/* 조작 안내판 */
+body.liberation #pad-guide {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(26, 35, 64, 0.16);
+}
+
+body.liberation .pad-btn,
+body.liberation .pad-stick {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(26, 35, 64, 0.16);
+}
+
+body.liberation .pad-no,
+body.liberation .pad-arrows b {
+  background: rgba(26, 35, 64, 0.14);
+}
+
+body.liberation .pad-device { background: rgba(255, 255, 255, 0.6); }
+
+/* 끝 화면의 점수 상자 */
+body.liberation .score-card {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(26, 35, 64, 0.18);
+}
+
+body.liberation .score-card strong { color: #8a6420; }
+body.liberation #end-emoji { color: #8a6420; }
+
+/* 덮개 화면은 밝은 화면에서도 어둡게 두어 잘 보이게 해요 */
+body.liberation .overlay-card { color: #f0e9d8; }
+body.liberation .overlay-card .help-row .no { color: #1a2340; }
