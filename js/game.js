@@ -180,6 +180,7 @@ function caught(reason) {
 
 // "들켰다!" 알림을 보여주고, 잠시 뒤 이번 장을 다시 시작해요
 function showCaughtMessage(reason) {
+  stopMission();   // 하던 미션을 멈춰요
   Input.clear();   // 들킨 동안에는 버튼이 안 먹게 잠깐 꺼둬요
 
   el.stage.innerHTML =
@@ -218,25 +219,47 @@ function startChapter() {
   // 6장(광복)이 되면 화면이 환하게 밝아져요! ☀️
   document.body.classList.toggle('liberation', ch.id === 6);
 
-  // 장이 바뀌면 예전에 걸어둔 버튼 약속은 모두 지워요
+  // 장이 바뀌면 하던 미션과 버튼 약속을 깨끗이 정리해요
+  stopMission();
   Input.clear();
 
-  // 아직 미션 게임은 만드는 중이라, 임시 안내와 버튼을 보여줘요
-  el.stage.innerHTML =
-    '<div style="text-align:center">' +
-      '<p class="todo-note">' + ch.id + '장 미션은 다음 단계에서 만들 거예요</p>' +
-      '<button id="btn-next" class="big-btn" style="margin-top:18px">미션 성공 (연습용)</button>' +
-      '<button id="btn-fail" class="small-btn" style="margin-top:12px">들키기 (연습용)</button>' +
-    '</div>';
+  // 이번 장의 미션 게임을 찾아봐요
+  const mission = MISSIONS[ch.id];
 
-  // 연습용 버튼을 마우스로 눌러도 되고,
-  document.getElementById('btn-next').addEventListener('click', clearChapter);
-  document.getElementById('btn-fail').addEventListener('click', function () {
-    caught('연습으로 들켜 봤어요!');
-  });
+  if (mission) {
+    // 미션이 있으면 시작해요!
+    // 성공하면 clearChapter, 들키면 caught 를 불러달라고 부탁해요.
+    currentMission = mission;
+    if (mission.hint) el.bubbleText.textContent = mission.hint;
+    mission.start(clearChapter, caught);
 
-  // 조종기 4번 버튼(다음)을 눌러도 넘어가요!
-  Input.on('next', clearChapter);
+  } else {
+    // 아직 안 만든 장은 연습용 버튼을 보여줘요
+    currentMission = null;
+    el.stage.innerHTML =
+      '<div style="text-align:center">' +
+        '<p class="todo-note">' + ch.id + '장 미션은 다음에 만들 거예요</p>' +
+        '<button id="btn-next" class="big-btn" style="margin-top:18px">미션 성공 (연습용)</button>' +
+        '<button id="btn-fail" class="small-btn" style="margin-top:12px">들키기 (연습용)</button>' +
+      '</div>';
+
+    document.getElementById('btn-next').addEventListener('click', clearChapter);
+    document.getElementById('btn-fail').addEventListener('click', function () {
+      caught('연습으로 들켜 봤어요!');
+    });
+
+    // 조종기 4번 버튼(다음)을 눌러도 넘어가요!
+    Input.on('next', clearChapter);
+  }
+}
+
+/* 지금 하고 있는 미션을 기억해둬요 (장을 옮길 때 정리하려고요) */
+let currentMission = null;
+
+/* 하던 미션을 깨끗이 정리해요 */
+function stopMission() {
+  if (currentMission && currentMission.stop) currentMission.stop();
+  currentMission = null;
 }
 
 // 이번 장의 미션을 성공했을 때 부르는 함수예요
@@ -276,6 +299,7 @@ function startGame() {
 
 // 모든 임무를 마쳤을 때 (이겼어요!)
 function finishGame() {
+  stopMission();
   Input.clear();
   Sound.fanfare();            // 짜잔! 축하 소리
   el.endEmoji.textContent = '🎉';
@@ -287,6 +311,7 @@ function finishGame() {
 
 // 하트를 모두 잃었을 때 (졌어요)
 function gameOver(reason) {
+  stopMission();
   Input.clear();
   Sound.stopBgm();            // 배경음악을 멈춰요
   document.body.classList.remove('liberation');
@@ -303,6 +328,23 @@ function gameOver(reason) {
    7-2. 5~8번 버튼이 하는 일
         이 버튼들은 게임 어디서나 항상 눌러서 쓸 수 있어요.
    ================================================================== */
+
+/* ---------- 8번 버튼 : 글씨 크기 🔍 ----------
+   아케이드 화면이 멀리 있으면 글씨가 작아 보여요.
+   8번을 누를 때마다 글씨가 커지고, 제일 커지면 다시 처음 크기로 돌아와요. */
+const ZOOM_STEPS = [1, 1.15, 1.3];   // 100% → 115% → 130% → 다시 100%
+let zoomStep = 0;
+
+function toggleZoom() {
+  zoomStep = (zoomStep + 1) % ZOOM_STEPS.length;   // 다음 크기로 넘어가요
+  const size = ZOOM_STEPS[zoomStep];
+
+  // 화면 전체를 그만큼 크게 그려요
+  document.body.style.zoom = size;
+
+  showToast('🔍  글씨 크기 ' + Math.round(size * 100) + '%');
+}
+
 
 /* ---------- 5번 버튼 : 소리 크기 🔊 ----------
    누를 때마다 소리가 한 단계씩 바뀌어요.
@@ -417,6 +459,7 @@ function askGoHome() {
 Input.onSystem('volume', changeVolume);   // 5번
 Input.onSystem('pause',  togglePause);    // 6번
 Input.onSystem('home',   askGoHome);      // 7번
+Input.onSystem('zoom',   toggleZoom);     // 8번
 
 
 /* ------------------------------------------------------------------
@@ -426,6 +469,7 @@ Input.onSystem('home',   askGoHome);      // 7번
 
 // 시작 화면으로 돌아가요
 function goTitle() {
+  stopMission();
   Input.clear();
   document.body.classList.remove('liberation');
   showScreen('title');

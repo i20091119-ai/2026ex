@@ -700,3 +700,126 @@ body {
   font-size: clamp(34px, 6vw, 52px);
   color: var(--pastel-yellow);
 }
+
+/* 조작 안내판에 조종기에 진짜 적힌 이름도 보여줘요 (A/X, Y/△ 같은 것들) */
+.pad-arcade {
+  font-size: 8px;
+  opacity: 0.55;
+  letter-spacing: -0.3px;
+}
+
+/* ==================================================================
+   1장 · 비밀 편지  (무궁화 꽃이 피었습니다 놀이)
+   ================================================================== */
+.m1-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 14px;
+}
+
+/* ---------- 경찰 ---------- */
+.m1-police {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: transform 0.25s ease;
+}
+
+.m1-police .m1-face { font-size: clamp(40px, 8vw, 66px); }
+
+.m1-police .m1-word {
+  font-size: clamp(11px, 1.9vw, 15px);
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0d1128;
+}
+
+/* 뒤돌아 있을 때 : 안전해요 */
+.m1-police.is-away .m1-face { transform: scaleX(-1); }
+
+/* 돌아보려고 할 때 : 부르르 떨려요 */
+.m1-police.is-warning { animation: shake 0.45s ease infinite; }
+.m1-police.is-warning .m1-word { background: var(--pastel-yellow); }
+
+/* 이쪽을 볼 때 : 커지고 빨개져요 */
+.m1-police.is-watching { transform: scale(1.15); }
+.m1-police.is-watching .m1-word { background: #ff8fa3; }
+
+.m1-police.is-angry .m1-face { animation: shake 0.3s ease infinite; }
+
+/* ---------- 신호등 글씨 ---------- */
+.m1-light {
+  font-size: clamp(17px, 3.4vw, 28px);
+  font-weight: 900;
+  padding: 8px 26px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.m1-light.is-away     { background: #a8e6cf; color: #14421f; }  /* 초록 = 달려! */
+.m1-light.is-warning  { background: #ffe9a8; color: #4a3a00; }  /* 노랑 = 조심 */
+.m1-light.is-watching { background: #ff8fa3; color: #4a0010;
+                        animation: pop 0.4s ease; }             /* 빨강 = 멈춰! */
+
+/* ---------- 길 ---------- */
+.m1-road {
+  position: relative;
+  width: 100%;
+  height: clamp(56px, 11vh, 84px);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.13));
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+}
+
+/* 주인공 (왼쪽에서 오른쪽으로 가요) */
+.m1-hero {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  font-size: clamp(28px, 5.5vw, 44px);
+  /* left 값이 0~100% 라서, 오른쪽 끝에서도 안 잘리게 조금 당겨요 */
+  transform: translateX(-45%);
+  transition: none;
+}
+
+/* 달릴 때 통통 튀어요 */
+.m1-hero.is-running { animation: bounce 0.36s ease-in-out infinite; }
+
+/* 도착 지점 (비밀 아지트) */
+.m1-goal {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  font-size: clamp(30px, 6vw, 48px);
+}
+
+.m1-goal.is-clear { animation: pop 0.6s ease 2; }
+
+/* ---------- 얼마나 왔는지 보여주는 막대 ---------- */
+.m1-bar {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  overflow: hidden;
+}
+
+.m1-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pastel-blue), var(--pastel-mint));
+}
+
+.m1-tip {
+  font-size: clamp(10px, 1.7vw, 13px);
+  opacity: 0.75;
+  text-align: center;
+}

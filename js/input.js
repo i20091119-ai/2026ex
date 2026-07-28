@@ -27,14 +27,14 @@ const Input = (function () {
      뒤쪽 J/K/L 같은 키는 노트북으로 연습할 때 쓰라고 넣었어요.
      ---------------------------------------------------------------- */
   const BUTTONS = [
-    { no: 1, act: 'jump',   label: '점프',   emoji: '🦘', keys: ['ControlLeft', 'KeyJ'] },
-    { no: 2, act: 'talk',   label: '말걸기', emoji: '💬', keys: ['AltLeft', 'KeyK'] },
-    { no: 3, act: 'attack', label: '공격',   emoji: '✊', keys: ['Space', 'KeyL'] },
-    { no: 4, act: 'next',   label: '다음',   emoji: '➡️', keys: ['ShiftLeft', 'Enter'] },
-    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', keys: ['KeyZ'] },
-    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', keys: ['KeyX'] },
-    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', keys: ['KeyC'] },
-    { no: 8, act: 'btn8',   label: '(아직없음)', emoji: '⬜', keys: ['KeyV'] },
+    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A/X',   keys: ['ControlLeft', 'KeyJ'] },
+    { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B/○',   keys: ['AltLeft', 'KeyK'] },
+    { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X/□',   keys: ['Space', 'KeyL'] },
+    { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y/△',   keys: ['ShiftLeft', 'Enter'] },
+    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', arcade: 'LB/L1', keys: ['KeyZ'] },
+    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', arcade: 'RB/R1', keys: ['KeyX'] },
+    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', arcade: 'LT/L2', keys: ['KeyC'] },
+    { no: 8, act: 'zoom',   label: '글씨크기', emoji: '🔍', arcade: 'RT/R2', keys: ['KeyV'] },
   ];
 
   /* 방향키 정보표예요. 방향 스틱도 이 방향들을 보내요. */
@@ -148,6 +148,7 @@ const Input = (function () {
           '<span class="pad-no">' + b.no + '</span>' +
           '<span class="pad-emoji">' + b.emoji + '</span>' +
           '<span class="pad-name">' + b.label + '</span>' +
+          '<span class="pad-arcade">' + b.arcade + '</span>' +
         '</div>'
       );
     }).join('');
@@ -235,7 +236,9 @@ const Input = (function () {
   const STICK_LIMIT = 0.5;       // 스틱을 이만큼 기울여야 '눌렀다'고 쳐요
 
   window.addEventListener('gamepadconnected', function (e) {
-    deviceText = '조종기 연결됨 (' + e.gamepad.id.slice(0, 18) + ')';
+    // mapping 이 'standard' 면 엑스인풋(XINPUT)으로 잘 연결된 거예요
+    const kind = (e.gamepad.mapping === 'standard') ? 'XINPUT' : 'DINPUT';
+    deviceText = '🕹️ 조종기 연결됨 (' + kind + ')';
     updateDeviceText();
   });
 
@@ -266,8 +269,11 @@ const Input = (function () {
          스틱은 숫자로 알려줘요.
          가로(axes[0])가 -1이면 왼쪽, +1이면 오른쪽
          세로(axes[1])가 -1이면 위,   +1이면 아래 */
-      const x = pad.axes[0] || 0;
-      const y = pad.axes[1] || 0;
+      /* 조종기 옆 스위치를 LS(왼쪽 스틱)로 두면 axes 0, 1 로,
+         RS(오른쪽 스틱)로 두면 axes 2, 3 으로 신호가 와요.
+         어느 쪽으로 두어도 되게 둘 다 확인해요! */
+      const x = biggest(pad.axes[0], pad.axes[2]);
+      const y = biggest(pad.axes[1], pad.axes[3]);
 
       /* 십자 버튼(D-pad)이 있는 조종기도 있어서 같이 확인해요 */
       const dpad = {
@@ -289,6 +295,14 @@ const Input = (function () {
   }
 
   function isDown(btn) { return btn ? btn.pressed : false; }
+
+  /* 두 숫자 중에 0에서 더 많이 벗어난 쪽을 골라줘요.
+     (스틱을 LS 로 두든 RS 로 두든 움직인 쪽 값을 쓰려고요) */
+  function biggest(a, b) {
+    a = a || 0;
+    b = b || 0;
+    return Math.abs(a) >= Math.abs(b) ? a : b;
+  }
 
   function setPadDir(name, now) {
     const key = 'd:' + name;

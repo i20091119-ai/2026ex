@@ -119,6 +119,13 @@ const Sound = (function () {
     tone(260, 0.28, 'triangle', 0.14, null, 0.3);
   }
 
+  /* 삐빅! - 경찰이 돌아볼 때 나는 조심하라는 소리 */
+  function alert() {
+    if (!wake()) return;
+    tone(760, 0.09, 'square', 0,    null, 0.22);
+    tone(760, 0.09, 'square', 0.13, null, 0.22);
+  }
+
   /* 짜잔! - 광복을 맞이했을 때 나는 축하 소리 */
   function fanfare() {
     if (!wake()) return;
@@ -203,6 +210,7 @@ const Sound = (function () {
     pok: pok,
     ding: ding,
     ppyong: ppyong,
+    alert: alert,
     fanfare: fanfare,
 
     startBgm: startBgm,
