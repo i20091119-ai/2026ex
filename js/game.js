@@ -428,6 +428,7 @@ function togglePause() {
     ' &nbsp;(5번 버튼으로 바꿔요)</p>',
     [
       { label: '이어서 하기', run: closeOverlay, big: true },
+      { label: '조종기 확인·맞추기', run: function () { closeOverlay(); openPadTest(); } },
     ]);
 }
 
@@ -550,6 +551,17 @@ function closePadTest() {
   closeOverlay();
 }
 
+/* 조종기 확인 화면이 열려 있는 동안에도 화면이 계속 새로 그려지도록,
+   덮개를 닫을 때 시계를 확실히 멈춰요 */
+const _closeOverlay = closeOverlay;
+closeOverlay = function () {
+  clearInterval(padTestTimer);
+  padTestTimer = null;
+  clearInterval(setupTimer);
+  setupTimer = null;
+  _closeOverlay();
+};
+
 function drawPadTest() {
   const box = document.getElementById('pad-test-body');
   if (!box) { clearInterval(padTestTimer); return; }
@@ -619,6 +631,10 @@ function drawPadTest() {
 }
 
 document.getElementById('btn-pad-test').addEventListener('click', openPadTest);
+
+/* 게임 화면 아래쪽 '조종기 연결됨' 칸을 눌러도 확인 화면이 열려요.
+   (게임 도중에 조종기를 맞추고 싶을 때 쓰라고 만들었어요) */
+document.getElementById('pad-device').addEventListener('click', openPadTest);
 
 
 /* ==================================================================

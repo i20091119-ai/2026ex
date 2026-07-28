@@ -2266,3 +2266,18 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 /* 직접 맞춘 버튼은 안내판에 놋쇠색 밑줄이 생겨요 */
 .pad-btn.is-learned { border-bottom: 2px solid var(--ochre); }
 .pad-btn.is-learned .pad-arcade { color: var(--ochre); opacity: 0.9; }
+
+/* 화면 아래 '조종기 연결됨' 칸을 눌러서 확인 화면을 열 수 있어요 */
+.pad-device {
+  font-family: inherit;
+  color: var(--paper);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pad-device:hover {
+  color: var(--ochre);
+  border-color: var(--ochre);
+  opacity: 1;
+}
