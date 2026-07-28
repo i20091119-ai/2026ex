@@ -19,10 +19,10 @@ const Sound = (function () {
         5번 버튼을 누를 때마다 이 순서대로 바뀌어요.
      ---------------------------------------------------------------- */
   const LEVELS = [
-    { value: 0.0, label: '소리 꺼짐', icon: '🔇' },
-    { value: 0.3, label: '소리 작게', icon: '🔈' },
-    { value: 0.6, label: '소리 보통', icon: '🔉' },
-    { value: 1.0, label: '소리 크게', icon: '🔊' },
+    { value: 0.0, label: '소리 꺼짐', icon: '□□□' },
+    { value: 0.3, label: '소리 작게', icon: '■□□' },
+    { value: 0.6, label: '소리 보통', icon: '■■□' },
+    { value: 1.0, label: '소리 크게', icon: '■■■' },
   ];
 
   let levelIndex = 2;      // 처음에는 '보통'으로 시작해요

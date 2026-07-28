@@ -34,7 +34,7 @@ const CHAPTERS = [
   {
     id: 1,
     name: '1장 · 비밀 편지',
-    face: '🧑',
+    face: 'mate',      // 독립운동가 동료
     story: '학교에서 돌아오는 길, 독립운동가 동료를 만났어요.',
     mission: '일본 경찰에게 들키지 않고 비밀 편지를 전달하세요!',
     point: 10,
@@ -42,7 +42,7 @@ const CHAPTERS = [
   {
     id: 2,
     name: '2장 · 김구 선생님과의 만남',
-    face: '👴',
+    face: 'kimgu',     // 김구 선생님
     story: '비밀 아지트에서 김구 선생님을 만났어요.',
     mission: '"나라를 되찾으려면 많은 사람의 용기가 필요하단다." 역사 퀴즈 3개를 맞혀 보세요!',
     point: 0, // ❓ 기획서에 점수가 안 적혀 있어요. 선생님께 여쭤볼 부분이에요.
@@ -50,7 +50,7 @@ const CHAPTERS = [
   {
     id: 3,
     name: '3장 · 태극기 지키기',
-    face: '🇰🇷',
+    face: 'hero',      // 주인공
     story: '동료가 숨겨둔 태극기를 일본 경찰보다 먼저 찾아야 해요.',
     mission: '미로를 통과해서 태극기를 찾으세요! (경찰 조심!)',
     point: 10,
@@ -58,7 +58,7 @@ const CHAPTERS = [
   {
     id: 4,
     name: '4장 · 만세운동 준비',
-    face: '👧',
+    face: 'yu',        // 유관순
     story: '유관순을 만나 만세운동을 준비해요.',
     mission: '사람들에게 태극기 5개를 나누어 주세요!',
     point: 0, // ❓ '+3포인트'가 1개당인지 전체인지 아직 안 정해졌어요.
@@ -66,7 +66,7 @@ const CHAPTERS = [
   {
     id: 5,
     name: '5장 · 독립을 향하여',
-    face: '⚔️',
+    face: 'captain',   // 일본 헌병대장
     story: '주인공과 김구 선생님, 독립군이 마지막 싸움을 준비해요.',
     mission: '일본군과의 싸움에서 승리하세요!',
     point: 30,
@@ -74,7 +74,7 @@ const CHAPTERS = [
   {
     id: 6,
     name: '6장 · 광복의 날',
-    face: '🎉',
+    face: 'hero',      // 광복을 맞은 주인공
     story: '드디어 일본의 지배에서 벗어났어요!',
     mission: '사람들이 태극기를 흔들며 기뻐해요. 대한 독립 만세!',
     point: 0,
@@ -150,11 +150,12 @@ function addScore(amount) {
 
 // 남은 목숨만큼 빨간 하트, 잃은 만큼 까만 하트를 그려요
 function drawHearts() {
-  let text = '';
+  let html = '';
   for (let i = 0; i < MAX_LIFE; i++) {
-    text += (i < game.life) ? '❤️' : '🖤';
+    // 남아 있으면 붉은 마름모, 잃었으면 흐린 마름모
+    html += '<span class="life-mark' + (i < game.life ? '' : ' is-lost') + '"></span>';
   }
-  el.hearts.textContent = text;
+  el.hearts.innerHTML = html;
 }
 
 // 일본 경찰에게 들켰을 때 부르는 함수예요
@@ -185,7 +186,7 @@ function showCaughtMessage(reason) {
 
   el.stage.innerHTML =
     '<div class="caught-box">' +
-      '<div class="caught-emoji">👮</div>' +
+      '<div class="caught-emoji">' + MissionUtil.figure('police', 'is-looking') + '</div>' +
       '<h3>들켰다!</h3>' +
       '<p>' + (reason || '일본 경찰에게 발각되었어요.') + '</p>' +
       '<p class="caught-sub">이번 장을 처음부터 다시 해요</p>' +
@@ -213,7 +214,7 @@ function startChapter() {
   el.chapterName.textContent = ch.name;
 
   // 말풍선에 이야기와 미션을 써요
-  el.bubbleFace.textContent = ch.face;
+  el.bubbleFace.innerHTML = MissionUtil.figure(ch.face);
   el.bubbleText.textContent = ch.story + ' ' + ch.mission;
 
   // 6장(광복)이 되면 화면이 환하게 밝아져요! ☀️
@@ -302,8 +303,8 @@ function finishGame() {
   stopMission();
   Input.clear();
   Sound.fanfare();            // 짜잔! 축하 소리
-  el.endEmoji.textContent = '🎉';
-  el.endTitle.textContent = '광복!';
+  el.endEmoji.innerHTML = '광복';
+  el.endTitle.textContent = '대한 독립 만세';
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
   el.endScore.textContent = game.score;
   showScreen('end');
@@ -315,8 +316,8 @@ function gameOver(reason) {
   Input.clear();
   Sound.stopBgm();            // 배경음악을 멈춰요
   document.body.classList.remove('liberation');
-  el.endEmoji.textContent = '😢';
-  el.endTitle.textContent = '붙잡혔어요...';
+  el.endEmoji.innerHTML = MissionUtil.figure('police', 'is-looking');
+  el.endTitle.textContent = '붙잡히고 말았다';
   el.endMessage.textContent = (reason || '일본 경찰에게 발각되었어요.') +
                               ' 하지만 포기하지 말아요. 다시 도전!';
   el.endScore.textContent = game.score;
@@ -342,7 +343,7 @@ function toggleZoom() {
   // 화면 전체를 그만큼 크게 그려요
   document.body.style.zoom = size;
 
-  showToast('🔍  글씨 크기 ' + Math.round(size * 100) + '%');
+  showToast('글씨 크기 ' + Math.round(size * 100) + '%');
 }
 
 
@@ -351,7 +352,7 @@ function toggleZoom() {
    꺼짐 → 작게 → 보통 → 크게 → 다시 꺼짐 ... */
 function changeVolume() {
   const level = Sound.cycleVolume();
-  showToast(level.icon + '  ' + level.label);
+  showToast(level.label);
   if (level.value > 0) Sound.pok();   // 바뀐 크기를 소리로 확인시켜줘요
 }
 
@@ -418,7 +419,7 @@ function togglePause() {
   if (overlayOpen) { closeOverlay(); return; }   // 이미 열려 있으면 닫아요
 
   const lv = Sound.level();
-  openOverlay('⏸️', '잠깐 멈춤',
+  openOverlay('멈춤', '잠깐 멈춤',
     '<p style="text-align:center">잠깐 쉬는 중이에요.<br>' +
     '6번 버튼을 다시 누르면 이어서 해요!</p>' +
     '<p style="text-align:center;margin-top:10px;opacity:.75;font-size:13px">' +
@@ -435,7 +436,7 @@ function togglePause() {
 function showHelp() {
   if (overlayOpen) { closeOverlay(); return; }
 
-  openOverlay('❓', '조작 방법', buildControlRows(),
+  openOverlay('조작', '조작 방법', buildControlRows(),
     [{ label: '닫기', run: closeOverlay, big: true }]);
 }
 
@@ -445,7 +446,7 @@ function showHelp() {
 function askGoHome() {
   if (overlayOpen) { closeOverlay(); return; }
 
-  openOverlay('🏠', '처음으로 갈까요?',
+  openOverlay('처음', '처음으로 갈까요?',
     '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>',
     [
       { label: '아니요, 계속할래요', run: closeOverlay, big: true },
@@ -484,7 +485,7 @@ el.btnRetry.addEventListener('click', goTitle);
 /* 시작 화면 왼쪽 아래 '설명란' ❓ 버튼이에요.
    누르면 게임 이야기와 목표를 알려줘요. */
 document.getElementById('btn-info').addEventListener('click', function () {
-  openOverlay('📜', '게임 설명',
+  openOverlay('설명', '게임 설명',
     '<p>때는 <b>1940년대 일제강점기</b>.</p>' +
     '<p>조선은 일본의 지배를 받고 있고,<br>' +
     '사람들은 자유를 잃은 채 힘들게 살고 있어요.</p>' +

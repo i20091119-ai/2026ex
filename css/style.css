@@ -6,28 +6,35 @@
 /* ---------- 색깔을 이름표에 저장해 둬요 ----------
    이렇게 해두면 나중에 색을 바꿀 때 여기만 고치면 돼요! */
 :root {
-  --bg-1: #141a35;          /* 밤하늘 진한 남색 */
-  --bg-2: #232b57;          /* 밤하늘 조금 밝은 남색 */
-  --ink: #0d1128;           /* 아주 어두운 검정남색 */
+  --bg-1: #10152a;          /* 먹빛 남색 (한밤의 조선) */
+  --bg-2: #1a2340;          /* 조금 밝은 먹빛 남색 */
+  --ink: #080b16;           /* 거의 검정에 가까운 먹색 */
 
-  --pastel-pink: #ffb3c6;   /* 연분홍 */
-  --pastel-blue: #a8d8ff;   /* 연하늘 */
-  --pastel-yellow: #ffe9a8; /* 연노랑 */
-  --pastel-mint: #a8e6cf;   /* 연민트 */
-  --cream: #fff6e9;         /* 부드러운 크림색 글자 */
+  --paper: #ded5c2;         /* 오래된 한지 색 (글자에 써요) */
+  --paper-dim: #9d9város;   /* (아래에서 다시 정해요) */
+  --ochre: #c8a25a;         /* 놋쇠 · 황토색 (강조할 때) */
+  --moss: #6f8f6a;          /* 낡은 국방색 (안전 표시) */
 
   --flag-red: #cd2e3a;      /* 태극기 빨강 */
   --flag-blue: #0047a0;     /* 태극기 파랑 */
+  --red-lit: #d94452;       /* 어두운 배경에서도 보이는 빨강 */
+  --blue-lit: #5b93d6;      /* 어두운 배경에서도 보이는 파랑 */
 
-  --round: 24px;            /* 둥근 모서리 크기 */
+  --line: rgba(222, 213, 194, 0.18);   /* 은은한 선 */
+  --round: 4px;             /* 모서리를 각지게! */
 }
 
+/* 낡은 한지색 글자 (조금 흐린 것) */
+:root { --paper-dim: rgba(222, 213, 194, 0.62); }
+
 /* 6장 광복이 되면 body에 'liberation' 이름표를 붙여요.
-   그러면 색깔이 한꺼번에 환하게 바뀌어요! */
+   그러면 어둡던 화면이 새벽처럼 밝아져요. */
 body.liberation {
-  --bg-1: #bde3ff;          /* 환한 하늘색 */
-  --bg-2: #e8f6ff;
-  --cream: #2a3160;         /* 밝은 배경이니 글자는 어둡게 */
+  --bg-1: #cfd9e6;          /* 새벽 하늘 */
+  --bg-2: #eae4d6;          /* 밝은 한지 */
+  --paper: #1a2340;         /* 밝은 배경이니 글자는 먹색으로 */
+  --paper-dim: rgba(26, 35, 64, 0.66);
+  --line: rgba(26, 35, 64, 0.22);
 }
 
 /* ---------- 기본 설정 ---------- */
@@ -37,7 +44,7 @@ body {
   font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR",
                "Malgun Gothic", sans-serif;
   background: var(--ink);
-  color: var(--cream);
+  color: var(--paper);
   overflow: hidden;              /* 아케이드 화면이라 스크롤은 막아요 */
   -webkit-user-select: none;     /* 글자가 드래그로 선택되지 않게 해요 */
   user-select: none;
@@ -61,7 +68,10 @@ body {
   align-items: center;
   justify-content: center;
   padding: 3vh 4vw;
-  background: linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  background:
+    /* 가장자리를 어둡게 해서 화면에 무게감을 줘요 */
+    radial-gradient(ellipse at 50% 40%, transparent 35%, rgba(0, 0, 0, 0.45) 100%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
   transition: background 1.2s ease;
 }
 
@@ -102,13 +112,13 @@ body {
 }
 
 .t-red {
-  color: #ff8fa3;                                   /* 태극기 빨강을 밝게 */
-  text-shadow: 0 0 20px rgba(255, 100, 130, 0.6);
+  color: var(--red-lit);                            /* 태극기 빨강 */
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .t-blue {
-  color: #7fc4ff;                                   /* 태극기 파랑을 밝게 */
-  text-shadow: 0 0 20px rgba(90, 170, 255, 0.6);
+  color: var(--blue-lit);                           /* 태극기 파랑 */
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- 가운데 큰 Start 글씨 ---------- */
@@ -126,10 +136,9 @@ body {
   letter-spacing: 3px;
   color: #ffffff;
   /* 그림처럼 글자 테두리를 두껍게 그려요 */
-  -webkit-text-stroke: 4px var(--flag-blue);
+  -webkit-text-stroke: 3px var(--ink);
   paint-order: stroke fill;
-  text-shadow: 5px 6px 0 rgba(0, 71, 160, 0.55);
-  animation: bounce 2.6s ease-in-out infinite;
+  text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* 동그란 ▶ 재생 버튼 */
@@ -138,32 +147,26 @@ body {
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   font-size: clamp(22px, 3.6vw, 32px);
-  color: var(--flag-blue);
-  background: #ffffff;
-  border: 4px solid var(--flag-blue);
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
   cursor: pointer;
   display: grid;
   place-items: center;
   padding-left: 5px;                    /* ▶ 모양이 가운데 오게 살짝 밀어요 */
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.32),
-              0 0 26px rgba(127, 196, 255, 0.55);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: background 0.15s ease, transform 0.08s ease;
 }
 
-.play-btn:hover { transform: scale(1.09); }
-
-.play-btn:active {
-  transform: translateY(5px) scale(1.03);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.32);
-}
+.play-btn:hover { background: var(--ochre); }
+.play-btn:active { transform: translateY(2px); }
 
 /* ---------- 팀 이름 ---------- */
 .team-name {
   margin-top: clamp(14px, 3vh, 28px);
   font-size: clamp(19px, 3.4vw, 30px);
   font-weight: 800;
-  color: #7fc4ff;
-  letter-spacing: 4px;
+  color: var(--paper-dim);
+  letter-spacing: 6px;
 }
 
 .team-members {
@@ -196,16 +199,16 @@ body {
   font-family: inherit;
   font-size: clamp(16px, 2.6vw, 22px);
   font-weight: 800;
-  color: var(--flag-red);
-  background: rgba(255, 255, 255, 0.94);
-  border: 3px solid var(--flag-red);
+  color: var(--paper);
+  background: transparent;
+  border: 2px solid var(--line);
+  border-radius: var(--round);
   cursor: pointer;
-  transition: transform 0.12s ease;
-  animation: bounce 3s ease-in-out infinite;
+  transition: all 0.15s ease;
 }
 
-.round-btn:hover { transform: scale(1.13); }
-.round-btn:active { transform: scale(0.94); }
+.round-btn:hover { border-color: var(--ochre); color: var(--ochre); }
+.round-btn:active { transform: translateY(2px); }
 
 /* ---------- 오른쪽 아래 : 태극기 ---------- */
 .corner-flag {
@@ -218,32 +221,22 @@ body {
 /* ---------- 큰 버튼 (둥글고 말랑말랑해요) ---------- */
 .big-btn {
   font-family: inherit;
-  font-size: clamp(18px, 3vw, 25px);
+  font-size: clamp(16px, 2.6vw, 22px);
   font-weight: 700;
+  letter-spacing: 3px;
   color: var(--ink);
-  padding: 15px 46px;
+  padding: 14px 40px;
   border: none;
-  border-radius: 999px;                    /* 완전 동그란 모서리 */
-  background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-yellow));
-  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.28); /* 아래에 그림자를 줘서 도톰해 보여요 */
+  border-radius: var(--round);
+  background: var(--ochre);              /* 놋쇠빛 한 가지 색 */
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-  animation: bounce 2.2s ease-in-out infinite; /* 통통 튀어요 */
+  transition: background 0.15s ease, transform 0.08s ease;
 }
 
-.big-btn:hover { transform: translateY(-3px); }
+.big-btn:hover { background: #d9b573; }
 
-/* 버튼을 누르면 아래로 쏙 들어가요 */
-.big-btn:active {
-  transform: translateY(5px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
-  animation: none;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-7px); }
-}
+/* 누르면 살짝 눌리기만 해요 (통통 튀지 않아요) */
+.big-btn:active { transform: translateY(2px); }
 
 /* ==================================================================
    태극기 그림 (그림 파일 없이 CSS로 직접 그렸어요!)
@@ -253,10 +246,9 @@ body {
   aspect-ratio: 3 / 2;                 /* 태극기는 가로:세로가 3:2예요 */
   margin: 0 auto;
   position: relative;
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
-  animation: wave 3.5s ease-in-out infinite;  /* 바람에 살랑살랑 */
+  background: #f2ede2;                 /* 살짝 바랜 흰색 */
+  border-radius: 2px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
 
 /* 가운데 동그란 태극 무늬 */
@@ -284,10 +276,7 @@ body {
 .gwe3 { bottom: 22%; left: 12%; }
 .gwe4 { bottom: 22%; right: 12%; }
 
-@keyframes wave {
-  0%, 100% { transform: rotate(-2deg); }
-  50%      { transform: rotate(2deg); }
-}
+
 
 /* ==================================================================
    2) 게임 화면 꾸미기
@@ -314,7 +303,7 @@ body {
   align-items: center;
   gap: 9px;
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--round);
   background: rgba(255, 255, 255, 0.11);
   border: 2px solid rgba(255, 255, 255, 0.16);
 }
@@ -327,13 +316,13 @@ body {
 #hud-chapter-name {
   font-size: clamp(13px, 2.2vw, 18px);
   font-weight: 700;
-  color: var(--pastel-blue);
+  color: var(--blue-lit);
 }
 
 #hud-score {
   font-size: clamp(19px, 3.2vw, 28px);
   font-weight: 800;
-  color: var(--pastel-yellow);
+  color: var(--ochre);
 }
 
 /* 점수가 오르면 잠깐 커졌다 돌아와요 */
@@ -341,7 +330,7 @@ body {
 
 @keyframes pop {
   0%   { transform: scale(1); }
-  40%  { transform: scale(1.5); color: var(--pastel-pink); }
+  40%  { transform: scale(1.5); color: var(--red-lit); }
   100% { transform: scale(1); }
 }
 
@@ -396,10 +385,10 @@ body {
   margin: 0 auto;
   font-family: inherit;
   font-size: 13px;
-  color: var(--cream);
+  color: var(--paper);
   padding: 8px 20px;
   border: 2px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
+  border-radius: var(--round);
   background: rgba(255, 255, 255, 0.09);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -415,13 +404,13 @@ body {
 
 .caught-emoji {
   font-size: clamp(48px, 9vw, 78px);
-  animation: shake 0.6s ease;
 }
 
 .caught-box h3 {
   font-size: clamp(24px, 4.5vw, 36px);
-  color: var(--pastel-pink);
-  margin: 8px 0;
+  color: var(--flag-red);
+  letter-spacing: 4px;
+  margin: 12px 0 8px;
 }
 
 .caught-box p { font-size: clamp(12px, 2vw, 16px); line-height: 1.7; }
@@ -437,14 +426,14 @@ body {
   gap: 14px;
   padding: 14px 20px;
   border-radius: var(--round);
-  background: rgba(255, 255, 255, 0.93);
+  background: var(--paper);
   color: var(--ink);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  border-left: 5px solid var(--flag-red);
 }
 
 #bubble-face {
-  font-size: clamp(28px, 5vw, 40px);
-  animation: bounce 2s ease-in-out infinite;
+  font-size: clamp(20px, 3.4vw, 28px);
+  flex: none;
 }
 
 #bubble-text {
@@ -540,11 +529,11 @@ body {
 /* ★ 버튼을 진짜로 누르면 여기에 불이 들어와요 ★ */
 .pad-btn.is-down,
 .pad-arrows b.is-down {
-  background: var(--pastel-yellow);
+  background: var(--ochre);
   color: var(--ink);
   border-color: #ffffff;
   transform: scale(1.14);
-  box-shadow: 0 0 16px var(--pastel-yellow);
+  box-shadow: 0 0 16px var(--ochre);
 }
 
 /* 지금 무엇으로 조작 중인지 알려주는 작은 글씨 */
@@ -552,7 +541,7 @@ body {
   font-size: clamp(9px, 1.3vw, 11px);
   opacity: 0.65;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--round);
   background: rgba(255, 255, 255, 0.07);
 }
 
@@ -584,15 +573,17 @@ body {
   text-align: center;
   padding: 26px 24px;
   border-radius: var(--round);
-  background: linear-gradient(160deg, #2a3160, #1b2145);
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
-  color: #fff6e9;
+  background: var(--bg-2);
+  border: 2px solid var(--line);
+  border-top: 4px solid var(--ochre);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  color: var(--paper);
 }
 
 #overlay-emoji {
-  font-size: clamp(38px, 7vw, 58px);
-  animation: bounce 2s ease-in-out infinite;
+  font-size: clamp(11px, 1.7vw, 14px);
+  letter-spacing: 6px;
+  color: var(--ochre);
 }
 
 #overlay-title {
@@ -630,8 +621,8 @@ body {
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--pastel-yellow);
+  border-radius: var(--round);
+  background: var(--ochre);
   color: var(--ink);
   font-weight: 800;
   font-size: 11px;
@@ -651,8 +642,8 @@ body {
   transform: translateX(-50%) translateY(20px);
   z-index: 60;
   padding: 11px 26px;
-  border-radius: 999px;
-  background: var(--pastel-yellow);
+  border-radius: var(--round);
+  background: var(--ochre);
   color: #0d1128;
   font-weight: 800;
   font-size: 15px;
@@ -670,8 +661,9 @@ body {
    3) 끝 화면 꾸미기
    ================================================================== */
 #end-emoji {
-  font-size: clamp(56px, 11vw, 96px);
-  animation: bounce 1.6s ease-in-out infinite;
+  font-size: clamp(14px, 2.4vw, 20px);
+  letter-spacing: 10px;
+  color: var(--ochre);
 }
 
 #end-title {
@@ -698,7 +690,7 @@ body {
 
 .score-card strong {
   font-size: clamp(34px, 6vw, 52px);
-  color: var(--pastel-yellow);
+  color: var(--ochre);
 }
 
 /* 조작 안내판에 조종기에 진짜 적힌 이름도 보여줘요 (A/X, Y/△ 같은 것들) */
@@ -736,9 +728,9 @@ body {
   font-size: clamp(11px, 1.9vw, 15px);
   font-weight: 800;
   padding: 5px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #0d1128;
+  border-radius: var(--round);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 /* 뒤돌아 있을 때 : 안전해요 */
@@ -746,11 +738,11 @@ body {
 
 /* 돌아보려고 할 때 : 부르르 떨려요 */
 .m1-police.is-warning { animation: shake 0.45s ease infinite; }
-.m1-police.is-warning .m1-word { background: var(--pastel-yellow); }
+.m1-police.is-warning .m1-word { background: var(--ochre); }
 
 /* 이쪽을 볼 때 : 커지고 빨개져요 */
 .m1-police.is-watching { transform: scale(1.15); }
-.m1-police.is-watching .m1-word { background: #ff8fa3; }
+.m1-police.is-watching .m1-word { background: var(--flag-red); color: #fff0f0; }
 
 .m1-police.is-angry .m1-face { animation: shake 0.3s ease infinite; }
 
@@ -759,20 +751,19 @@ body {
   font-size: clamp(17px, 3.4vw, 28px);
   font-weight: 900;
   padding: 8px 26px;
-  border-radius: 999px;
+  border-radius: var(--round);
   transition: all 0.2s ease;
 }
 
-.m1-light.is-away     { background: #a8e6cf; color: #14421f; }  /* 초록 = 달려! */
-.m1-light.is-warning  { background: #ffe9a8; color: #4a3a00; }  /* 노랑 = 조심 */
-.m1-light.is-watching { background: #ff8fa3; color: #4a0010;
-                        animation: pop 0.4s ease; }             /* 빨강 = 멈춰! */
+.m1-light.is-away     { background: var(--moss);    color: #0d1a0b; }  /* 국방색 = 달려 */
+.m1-light.is-warning  { background: var(--ochre);   color: #2a1e00; }  /* 놋쇠색 = 조심 */
+.m1-light.is-watching { background: var(--flag-red); color: #fff0f0; } /* 태극기 빨강 = 멈춰 */
 
 /* ---------- 길 ---------- */
 .m1-road {
   position: relative;
   width: 100%;
-  height: clamp(56px, 11vh, 84px);
+  height: clamp(62px, 12vh, 92px);
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.13));
   border: 2px dashed rgba(255, 255, 255, 0.22);
@@ -784,13 +775,14 @@ body {
   bottom: 8px;
   left: 0;
   font-size: clamp(28px, 5.5vw, 44px);
-  /* left 값이 0~100% 라서, 오른쪽 끝에서도 안 잘리게 조금 당겨요 */
+  /* 길 안쪽으로 조금 들여서, 양 끝에서도 안 잘리게 해요 */
+  margin-left: 12px;
   transform: translateX(-45%);
   transition: none;
 }
 
 /* 달릴 때 통통 튀어요 */
-.m1-hero.is-running { animation: bounce 0.36s ease-in-out infinite; }
+.m1-hero.is-running { animation: walk 0.42s steps(2) infinite; }
 
 /* 도착 지점 (비밀 아지트) */
 .m1-goal {
@@ -806,7 +798,7 @@ body {
 .m1-bar {
   width: 100%;
   height: 12px;
-  border-radius: 999px;
+  border-radius: var(--round);
   background: rgba(255, 255, 255, 0.13);
   overflow: hidden;
 }
@@ -814,8 +806,8 @@ body {
 .m1-bar-fill {
   height: 100%;
   width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--pastel-blue), var(--pastel-mint));
+  border-radius: var(--round);
+  background: linear-gradient(90deg, var(--blue-lit), var(--moss));
 }
 
 .m1-tip {
@@ -823,3 +815,311 @@ body {
   opacity: 0.75;
   text-align: center;
 }
+
+/* ==================================================================
+   실루엣 캐릭터
+   ★ 이모지를 안 쓰고, CSS로 사람 그림자 모양을 직접 그렸어요.
+     동그라미(머리) + 사다리꼴(몸) + 모자 를 겹쳐서 만들어요.
+
+   쓰는 방법 :
+     <span class="fig fig--police"><i class="f-hat"></i><i class="f-head">
+       <i class="f-eyes"></i></i><i class="f-body"></i></span>
+
+   크기는 font-size 로 조절해요. 글자 크기처럼 커지고 작아져요.
+   ================================================================== */
+.fig {
+  position: relative;
+  display: inline-block;
+  width: 1.1em;
+  height: 1.55em;
+  color: var(--paper);        /* 실루엣 색 */
+  vertical-align: bottom;
+}
+
+/* 머리 (동그라미) */
+.fig .f-head {
+  position: absolute;
+  left: 50%;
+  top: 0.06em;
+  transform: translateX(-50%);
+  width: 0.52em;
+  height: 0.52em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* 몸 (어깨가 넓은 사다리꼴) */
+.fig .f-body {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 0.9em;
+  height: 0.9em;
+  background: currentColor;
+  border-radius: 0.36em 0.36em 0.04em 0.04em;
+}
+
+/* 눈 (뒤돌아 있을 때는 안 보이고, 이쪽을 볼 때 반짝 나타나요) */
+.fig .f-eyes {
+  position: absolute;
+  left: 50%;
+  top: 0.19em;
+  transform: translateX(-50%);
+  width: 0.3em;
+  height: 0.08em;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  /* 점 두 개를 그려요 */
+  background:
+    radial-gradient(circle at 20% 50%, var(--red-lit) 45%, transparent 46%),
+    radial-gradient(circle at 80% 50%, var(--red-lit) 45%, transparent 46%);
+}
+
+.fig.is-looking .f-eyes { opacity: 1; }
+
+/* ---------- 주인공 (짧은 머리 학생) ---------- */
+.fig--hero .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.02em;
+  transform: translateX(-50%);
+  width: 0.58em;
+  height: 0.26em;
+  background: currentColor;
+  border-radius: 0.29em 0.29em 0 0;
+}
+
+/* ---------- 일본 경찰 (챙 넓은 제모) ---------- */
+.fig--police { color: #9aa3b8; }
+
+.fig--police .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.26em;                /* 넓은 챙 (머리 앞으로 튀어나옴) */
+  transform: translateX(-50%);
+  width: 0.9em;
+  height: 0.09em;
+  background: currentColor;
+  z-index: 2;
+}
+
+/* 모자의 윗부분 (각진 제모) */
+.fig--police .f-hat::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.07em;
+  transform: translateX(-50%);
+  width: 0.56em;
+  height: 0.26em;
+  background: currentColor;
+  border-radius: 0.03em 0.03em 0 0;
+}
+
+.fig--police .f-head { top: 0.2em; }
+.fig--police .f-eyes { top: 0.36em; }
+
+/* ---------- 김구 선생님 (중절모 + 두루마기) ---------- */
+.fig--kimgu { color: #cfc7b4; }
+
+.fig--kimgu .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 0.78em;
+  height: 0.09em;
+  background: currentColor;
+  border-radius: 0.04em;
+}
+
+.fig--kimgu .f-hat::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.07em;
+  transform: translateX(-50%);
+  width: 0.42em;
+  height: 0.22em;
+  background: currentColor;
+  border-radius: 0.08em 0.08em 0 0;
+}
+
+.fig--kimgu .f-head { top: 0.13em; }
+
+/* 김구 선생님의 동그란 안경 */
+.fig--kimgu .f-head::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.2em;
+  transform: translateX(-50%);
+  width: 0.4em;
+  height: 0.12em;
+  border-radius: 0.06em;
+  background:
+    radial-gradient(circle at 18% 50%, var(--ink) 42%, transparent 43%),
+    radial-gradient(circle at 82% 50%, var(--ink) 42%, transparent 43%);
+}
+
+/* ---------- 유관순 (댕기머리) ---------- */
+.fig--yu { color: #e3dac6; }
+
+.fig--yu .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.04em;
+  transform: translateX(-50%);
+  width: 0.64em;
+  height: 0.72em;             /* 길게 늘어뜨린 머리 */
+  background: currentColor;
+  border-radius: 0.32em 0.32em 0.1em 0.1em;
+}
+
+/* 머리는 머리카락 위에 그려요 */
+.fig--yu .f-head { z-index: 1; }
+
+/* ---------- 독립운동가 동료 (갓 쓴 어른) ---------- */
+.fig--mate { color: #c3bba8; }
+
+.fig--mate .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.02em;
+  transform: translateX(-50%);
+  width: 0.98em;              /* 갓은 챙이 가장 넓어요 */
+  height: 0.08em;
+  background: currentColor;
+  border-radius: 0.04em;
+}
+
+.fig--mate .f-hat::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.06em;
+  transform: translateX(-50%);
+  width: 0.34em;
+  height: 0.24em;
+  background: currentColor;
+  border-radius: 0.06em 0.06em 0 0;
+}
+
+.fig--mate .f-head { top: 0.14em; }
+
+/* ---------- 일본 헌병대장 (별이 달린 전투모) ---------- */
+.fig--captain { color: #8c93a8; }
+
+.fig--captain .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 0.72em;
+  height: 0.26em;
+  background: currentColor;
+  border-radius: 0.1em 0.1em 0 0;
+}
+
+/* 모자에 붙은 붉은 별 */
+.fig--captain .f-hat::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.09em;
+  transform: translateX(-50%);
+  width: 0.1em;
+  height: 0.1em;
+  background: var(--flag-red);
+  border-radius: 50%;
+}
+
+.fig--captain .f-head { top: 0.2em; }
+
+/* ---------- 걸을 때 살짝 흔들려요 (통통 튀지 않아요) ---------- */
+@keyframes walk {
+  0%, 100% { transform: translateX(-45%) translateY(0); }
+  50%      { transform: translateX(-45%) translateY(-2px); }
+}
+
+/* ==================================================================
+   목숨 표시 (하트 대신 각진 표식)
+   ================================================================== */
+#hud-hearts { display: inline-flex; gap: 5px; }
+
+.life-mark {
+  width: 13px;
+  height: 13px;
+  background: var(--flag-red);
+  transform: rotate(45deg);      /* 마름모 모양 */
+  transition: background 0.3s ease;
+}
+
+.life-mark.is-lost { background: rgba(222, 213, 194, 0.18); }
+
+/* ==================================================================
+   1장 미션에 새로 필요한 것들
+   ================================================================== */
+
+/* 실루엣 캐릭터 크기를 정해줘요 */
+.m1-police .m1-face { font-size: clamp(38px, 7vw, 58px); }
+.m1-hero .fig       { font-size: clamp(26px, 5vw, 40px); }
+
+/* 뒤돌아 있을 때는 조금 흐릿하게 (어둠 속에 있는 느낌) */
+.m1-police.is-away .fig { opacity: 0.55; }
+
+/* 돌아보려 할 때는 살짝 밝아져요 */
+.m1-police.is-warning .fig { opacity: 0.8; }
+
+/* 이쪽을 볼 때는 또렷하게 */
+.m1-police.is-watching .fig { opacity: 1; }
+
+/* 들켰을 때 주인공이 붉게 물들어요 */
+.m1-hero.is-caught .fig { color: var(--flag-red); }
+
+/* ---------- 비밀 아지트 (한옥 대문 모양) ---------- */
+.m1-goal {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  width: clamp(30px, 5.5vw, 44px);
+  height: clamp(38px, 7vw, 56px);
+  /* 문짝 : 위가 둥근 기와지붕 아래 두 짝 문 */
+  background: rgba(222, 213, 194, 0.22);
+  border: 2px solid var(--line);
+  border-bottom: none;
+  transition: all 0.4s ease;
+}
+
+/* 기와지붕 */
+.m1-goal::before {
+  content: '';
+  position: absolute;
+  left: -18%;
+  top: -9px;
+  width: 136%;
+  height: 9px;
+  background: var(--paper-dim);
+}
+
+/* 문 가운데 선 */
+.m1-goal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  width: 2px;
+  height: 88%;
+  background: var(--line);
+}
+
+/* 도착하면 문이 열린 듯 밝아져요 */
+.m1-goal.is-clear {
+  background: var(--ochre);
+  border-color: var(--ochre);
+  box-shadow: 0 0 30px rgba(200, 162, 90, 0.7);
+}
+
+/* ---------- 경찰이 화났을 때 ---------- */
+.m1-police.is-angry { animation: shake 0.3s ease 2; }

@@ -36,4 +36,16 @@ const MissionUtil = {
   clamp: function (value, min, max) {
     return Math.max(min, Math.min(max, value));
   },
+
+  /* 실루엣 캐릭터 한 명을 그려요.
+     who : 'hero'(주인공) 'police'(경찰) 'kimgu'(김구)
+           'yu'(유관순) 'mate'(동료) 'captain'(헌병대장)
+     extra : 덧붙일 이름표 (예: 'm1-hero') */
+  figure: function (who, extra) {
+    return '<span class="fig fig--' + who + ' ' + (extra || '') + '">' +
+             '<i class="f-hat"></i>' +
+             '<i class="f-head"><i class="f-eyes"></i></i>' +
+             '<i class="f-body"></i>' +
+           '</span>';
+  },
 };

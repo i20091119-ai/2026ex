@@ -146,7 +146,6 @@ const Input = (function () {
       return (
         '<div class="pad-btn" data-act="' + b.act + '">' +
           '<span class="pad-no">' + b.no + '</span>' +
-          '<span class="pad-emoji">' + b.emoji + '</span>' +
           '<span class="pad-name">' + b.label + '</span>' +
           '<span class="pad-arcade">' + b.arcade + '</span>' +
         '</div>'

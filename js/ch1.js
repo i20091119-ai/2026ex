@@ -73,11 +73,11 @@ MISSIONS[1] = (function () {
   function drawPolice() {
     if (!node.police) return;
 
-    const faces = { away: '🙈', warning: '🤔', watching: '👀' };
-    const words = { away: '...', warning: '음?', watching: '누구냐!' };
-
-    node.policeFace.textContent = faces[policeState];
+    const words = { away: '......', warning: '음?', watching: '누구냐!' };
     node.policeWord.textContent = words[policeState];
+
+    // 이쪽을 볼 때만 실루엣에 눈이 반짝 나타나요
+    node.policeFig.classList.toggle('is-looking', policeState === 'watching');
 
     // 상태에 따라 색이 바뀌어요 (초록=안전, 노랑=조심, 빨강=위험)
     node.police.className = 'm1-police is-' + policeState;
@@ -146,14 +146,13 @@ MISSIONS[1] = (function () {
      5. 들켰을 때 / 성공했을 때
      ---------------------------------------------------------------- */
   function showCaughtEffect() {
-    node.hero.textContent = '😱';
+    node.hero.classList.add('is-caught');   // 주인공이 붉게 물들어요
     node.police.classList.add('is-angry');
     setTimeout(function () { onFail('움직이는 걸 경찰이 봤어요!'); }, 700);
   }
 
   function showSuccessEffect() {
-    node.hero.textContent = '😄';
-    node.goal.classList.add('is-clear');
+    node.goal.classList.add('is-clear');    // 아지트 문이 밝게 빛나요
     setTimeout(function () { onSuccess(); }, 700);
   }
 
@@ -176,10 +175,10 @@ MISSIONS[1] = (function () {
     const stage = MissionUtil.setStage(
       '<div class="m1-scene">' +
 
-        // 위쪽 : 경찰
+        // 위쪽 : 일본 경찰 (실루엣으로 그렸어요)
         '<div class="m1-police is-away">' +
           '<span class="m1-word"></span>' +
-          '<span class="m1-face">🙈</span>' +
+          '<span class="m1-face">' + MissionUtil.figure('police') + '</span>' +
         '</div>' +
 
         // 가운데 : 신호등처럼 알려주는 글씨
@@ -187,13 +186,13 @@ MISSIONS[1] = (function () {
 
         // 아래쪽 : 길과 주인공
         '<div class="m1-road">' +
-          '<div class="m1-goal">🏠</div>' +
-          '<div class="m1-hero">🧒</div>' +
+          '<div class="m1-goal"></div>' +          // 비밀 아지트 (대문 모양)
+          '<div class="m1-hero">' + MissionUtil.figure('hero') + '</div>' +
         '</div>' +
 
         // 맨 아래 : 얼마나 왔는지 보여주는 막대
         '<div class="m1-bar"><div class="m1-bar-fill"></div></div>' +
-        '<p class="m1-tip">➡️ 오른쪽 방향키를 <b>꾹</b> 누르면 달려요 ' +
+        '<p class="m1-tip">오른쪽 방향키를 <b>꾹</b> 누르면 달려요 ' +
         '(마우스로 화면을 눌러도 돼요)</p>' +
 
       '</div>'
@@ -203,6 +202,8 @@ MISSIONS[1] = (function () {
     node = {
       police:     stage.querySelector('.m1-police'),
       policeFace: stage.querySelector('.m1-face'),
+      policeFig:  stage.querySelector('.m1-face .fig'),
+      heroFig:    stage.querySelector('.m1-hero .fig'),
       policeWord: stage.querySelector('.m1-word'),
       light:      stage.querySelector('.m1-light'),
       hero:       stage.querySelector('.m1-hero'),
@@ -242,6 +243,6 @@ MISSIONS[1] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '경찰이 🙈 뒤돌았을 때만 달려요! 👀 이쪽을 볼 때 움직이면 들켜요.',
+    hint: '경찰이 뒤돌았을 때만 달려라. 눈이 보이면 그 자리에 멈춰야 한다.',
   };
 })();
