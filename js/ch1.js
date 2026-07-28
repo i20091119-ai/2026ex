@@ -30,11 +30,16 @@ MISSIONS[1] = (function () {
 
   /* 주인공이 달리는 빠르기 (1초에 몇 칸 가는지)
      숫자를 줄이면 길이 길어져서 게임이 오래 걸려요. */
-  const SPEED = 12;
+  const SPEED = 17;
 
-  /* 절반쯤 왔을 때 두 번째 경찰이 나타나요.
-     그때부터는 두 경찰이 모두 뒤돌아야 달릴 수 있어요! */
-  const SECOND_AT = 45;
+  /* 두 번째 경찰이 나타나는 지점이에요.
+     거의 다 왔을 때만 나와서, 앞부분은 편하게 갈 수 있어요. */
+  const SECOND_AT = 70;
+
+  /* ★ 봐주는 시간 (초)
+     경찰이 막 돌아본 순간에는 이만큼 안 잡아줘요.
+     "앗!" 하고 손을 떼면 살 수 있어요. 어린 동생들에게 꼭 필요해요! */
+  const GRACE = 0.4;
 
 
   /* ----------------------------------------------------------------
@@ -50,26 +55,37 @@ MISSIONS[1] = (function () {
 
     if (cop.state === 'away') {
       cop.state = 'warning';
-      // 갈수록 '돌아본다!' 신호가 짧아져서 더 급해져요
-      cop.timer = MissionUtil.clamp(0.78 - hard * 0.3, 0.34, 0.85);
+      // '돌아본다!' 신호를 아주 넉넉히 보여줘서 멈출 시간을 충분히 줘요
+      cop.timer = MissionUtil.clamp(2.0 - hard * 0.3, 1.5, 2.1);
 
     } else if (cop.state === 'warning') {
       cop.state = 'watching';
-      cop.timer = MissionUtil.random(1.1, 2.1) + hard * 0.5;
+      cop.watched = 0;                       // 이제 막 돌아봤어요 (봐주는 시간 시작)
+      cop.timer = MissionUtil.random(0.9, 1.5) + hard * 0.25;
       if (window.Sound) Sound.alert();       // 삐빅! 조심하라는 소리
 
     } else {
       cop.state = 'away';
-      // 갈수록 달릴 수 있는 시간이 짧아져요
-      cop.timer = MissionUtil.clamp(MissionUtil.random(2.6, 3.8) - hard * 1.3, 1.0, 3.8);
+      // 달릴 수 있는 시간을 넉넉하게 줘요
+      cop.timer = MissionUtil.clamp(MissionUtil.random(3.2, 4.5) - hard * 0.7, 2.0, 4.5);
     }
 
+    cop.timerMax = cop.timer;    // 남은 시간 막대를 그리려고 기억해둬요
     drawPolice();
   }
 
-  /* 지금 달려도 되나요?  경찰이 한 명이라도 보고 있으면 안 돼요! */
+  /* 지금 경찰이 이쪽을 보고 있나요? (신호등 색을 정할 때 써요) */
   function isWatched() {
     return cops.some(function (cop) { return cop.state === 'watching'; });
+  }
+
+  /* 지금 움직이면 진짜로 들키나요?
+     ★ 막 돌아본 순간(GRACE 동안)에는 봐줘요.
+       "멈춰!" 가 뜬 뒤 얼른 손을 떼면 살 수 있어요. */
+  function isCaught() {
+    return cops.some(function (cop) {
+      return cop.state === 'watching' && cop.watched > GRACE;
+    });
   }
 
   /* 곧 돌아보려는 경찰이 있나요? */
@@ -104,6 +120,23 @@ MISSIONS[1] = (function () {
       { away: '지금 달려!', warning: '멈출 준비!', watching: '멈춰!' }[light];
   }
 
+  /* '돌아본다!' 신호가 얼마나 남았는지 막대로 보여줘요.
+     막대가 다 줄어들면 경찰이 이쪽을 봐요! */
+  function drawCountdown() {
+    if (!node.count) return;
+
+    // 곧 돌아보려는 경찰 중에 가장 급한 사람을 찾아요
+    let left = 0;
+    cops.forEach(function (cop) {
+      if (cop.state !== 'warning') return;
+      const ratio = cop.timer / (cop.timerMax || 1);
+      if (left === 0 || ratio < left) left = ratio;
+    });
+
+    node.count.style.width = Math.max(0, Math.min(1, left)) * 100 + '%';
+    node.count.classList.toggle('is-on', left > 0);
+  }
+
   /* 주인공을 지금 위치로 옮겨요 */
   function drawHero(moving) {
     node.hero.style.left = hero + '%';
@@ -131,6 +164,8 @@ MISSIONS[1] = (function () {
     // (1) 경찰들의 상태를 시간에 따라 바꿔요
     cops.forEach(function (cop) {
       cop.timer -= delta;
+      // 이쪽을 보고 있는 동안 시간을 세요 (봐주는 시간 계산에 써요)
+      if (cop.state === 'watching') cop.watched += delta;
       if (cop.timer <= 0) nextState(cop);
     });
 
@@ -143,8 +178,9 @@ MISSIONS[1] = (function () {
     const wantMove = Input.dir.right || Input.dir.up || mouseHold;
 
     if (wantMove) {
-      // 경찰이 한 명이라도 보고 있는데 움직이면 들켜요!
-      if (isWatched()) {
+      // 경찰이 보고 있는데 계속 움직이면 들켜요!
+      // (막 돌아본 순간에는 봐줘서, 얼른 멈추면 살 수 있어요)
+      if (isCaught()) {
         running = false;
         showCaughtEffect();
         return;
@@ -154,8 +190,9 @@ MISSIONS[1] = (function () {
     }
 
     drawHero(wantMove);
+    drawCountdown();
 
-    // (3) 도착했으면 성공!
+    // (4) 도착했으면 성공!
     if (hero >= 100) {
       running = false;
       showSuccessEffect();
@@ -205,8 +242,11 @@ MISSIONS[1] = (function () {
         // (처음엔 한 명, 절반쯤 가면 한 명이 더 나와요)
         '<div class="m1-cops"></div>' +
 
-        // 가운데 : 신호등처럼 알려주는 글씨
-        '<div class="m1-light is-away">지금 달려!</div>' +
+        // 가운데 : 신호등처럼 알려주는 글씨와 남은 시간 막대
+        '<div class="m1-signal">' +
+          '<div class="m1-light is-away">지금 달려!</div>' +
+          '<div class="m1-count-bar"><div class="m1-count"></div></div>' +
+        '</div>' +
 
         // 아래쪽 : 길과 주인공
         '<div class="m1-road">' +
@@ -219,8 +259,8 @@ MISSIONS[1] = (function () {
 
         // 맨 아래 : 얼마나 왔는지 보여주는 막대
         '<div class="m1-bar"><div class="m1-bar-fill"></div></div>' +
-        '<p class="m1-tip">오른쪽 방향키를 <b>꾹</b> 누르면 달려요 ' +
-        '(마우스로 화면을 눌러도 돼요)</p>' +
+        '<p class="m1-tip">오른쪽 방향키를 <b>꾹</b> 누르면 달려요 · ' +
+        '「멈춰!」 가 뜨면 <b>얼른 손을 떼면</b> 살 수 있어요</p>' +
 
       '</div>'
     );
@@ -229,13 +269,14 @@ MISSIONS[1] = (function () {
     node = {
       copsBox: stage.querySelector('.m1-cops'),
       light:   stage.querySelector('.m1-light'),
+      count:   stage.querySelector('.m1-count'),
       hero:    stage.querySelector('.m1-hero'),
       goal:    stage.querySelector('.m1-goal'),
       barFill: stage.querySelector('.m1-bar-fill'),
       warn:    stage.querySelector('.m1-warn'),
     };
 
-    addCop('첫 번째 경찰', 2.6);   // 첫 경찰이 서 있어요
+    addCop('첫 번째 경찰', 3.4);   // 처음엔 넉넉히 달릴 수 있어요
     drawPolice();
     drawHero(false);
 
@@ -270,6 +311,7 @@ MISSIONS[1] = (function () {
     cops.push({
       state: 'away',
       timer: firstTimer,
+      watched: 0,          // 이쪽을 본 지 얼마나 됐는지 (봐주는 시간에 써요)
       node: box,
       wordNode: box.querySelector('.m1-word'),
       figNode: box.querySelector('.fig'),
@@ -280,7 +322,7 @@ MISSIONS[1] = (function () {
      이제 두 경찰이 모두 뒤돌아야만 달릴 수 있어요! */
   function addSecondCop() {
     secondCame = true;
-    addCop('두 번째 경찰', 1.4);
+    addCop('두 번째 경찰', 2.2);
 
     node.warn.textContent = '경찰이 한 명 더 왔다! 둘 다 뒤돌아야 달릴 수 있다.';
     node.warn.classList.add('is-on');
@@ -305,6 +347,6 @@ MISSIONS[1] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '경찰이 뒤돌았을 때만 달려라. 눈이 보이면 그 자리에 멈춰야 한다.',
+    hint: '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 얼른 손을 떼면 된다.',
   };
 })();

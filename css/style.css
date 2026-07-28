@@ -2301,3 +2301,29 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
+
+/* ---------- 1장 : 돌아보기까지 남은 시간 막대 ---------- */
+.m1-signal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.m1-count-bar {
+  width: clamp(150px, 26vw, 240px);
+  height: 8px;
+  background: rgba(222, 213, 194, 0.14);
+  overflow: hidden;
+}
+
+/* 막대가 줄어들수록 돌아볼 때가 가까워져요 */
+.m1-count {
+  height: 100%;
+  width: 0%;
+  background: var(--ochre);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.m1-count.is-on { opacity: 1; }
