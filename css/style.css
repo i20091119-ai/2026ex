@@ -1589,3 +1589,185 @@ body {
 }
 
 .m4-hero { z-index: 4; }
+
+/* ==================================================================
+   5장 · 독립을 향하여 (일본 헌병대장과의 마지막 싸움)
+   ================================================================== */
+.m5-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(5px, 1.2vh, 10px);
+  padding: clamp(8px, 1.6vw, 16px);
+}
+
+/* ---------- 위쪽 : 양쪽 기력 막대 ---------- */
+.m5-bars {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.m5-side { display: flex; align-items: center; gap: 9px; }
+
+.m5-who {
+  font-size: clamp(9px, 1.4vw, 12px);
+  letter-spacing: 2px;
+  color: var(--paper-dim);
+}
+
+.m5-hp { display: inline-flex; gap: 4px; }
+
+/* 기력 한 칸 */
+.m5-pip {
+  width: 15px;
+  height: 11px;
+  background: var(--flag-red);
+  transition: background 0.25s ease;
+}
+
+.m5-pip.is-mine { background: var(--ochre); }   /* 주인공 기력은 놋쇠색 */
+.m5-pip.is-lost { background: rgba(222, 213, 194, 0.14); }
+
+/* ---------- 가운데 : 싸움터 ---------- */
+.m5-arena {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border: 2px solid var(--line);
+  background:
+    radial-gradient(ellipse at 50% 90%, rgba(205, 46, 58, 0.12), transparent 65%),
+    rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* 바닥 선 */
+.m5-ground {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 16%;
+  height: 2px;
+  background: var(--line);
+}
+
+/* ---------- 알림 글씨 (준비 / 공격 / 빈틈) ---------- */
+.m5-signal {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
+  font-size: clamp(13px, 2.4vw, 21px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 7px 20px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.m5-signal.is-idle   { color: var(--paper-dim); }
+.m5-signal.is-ready  { background: var(--ochre);    color: var(--ink); }
+.m5-signal.is-strike { background: var(--flag-red); color: #fff0f0; }
+.m5-signal.is-open   { background: var(--moss);     color: #0d1a0b; }
+
+/* ---------- 주인공 (왼쪽) ---------- */
+.m5-hero {
+  position: absolute;
+  left: 22%;
+  bottom: 16%;
+  transform: translateX(-50%);
+  transition: bottom 0.16s ease;
+}
+
+.m5-hero .fig {
+  font-size: clamp(34px, 6.5vw, 58px);
+  color: var(--paper);
+  transition: color 0.15s ease;
+}
+
+/* 점프하면 위로 올라가요 */
+.m5-hero.is-jumping { bottom: 40%; }
+
+/* 헛손질하면 굳어서 흐려져요 */
+.m5-hero.is-stiff .fig { color: var(--paper-dim); }
+
+/* 맞으면 붉게 번쩍여요 */
+.m5-hero.is-hurt .fig { color: var(--flag-red); }
+
+/* ---------- 일본 헌병대장 (오른쪽) ---------- */
+.m5-boss {
+  position: absolute;
+  right: 22%;
+  bottom: 16%;
+  transform: translateX(50%);
+  transition: transform 0.15s ease, opacity 0.5s ease;
+}
+
+.m5-boss .fig {
+  font-size: clamp(40px, 7.5vw, 68px);
+  transition: color 0.15s ease;
+}
+
+/* 준비 자세 : 살짝 뒤로 젖혀요 */
+.m5-boss.is-ready { transform: translateX(50%) rotate(6deg); }
+
+/* 공격 : 앞으로 확 숙여요 */
+.m5-boss.is-strike { transform: translateX(50%) translateX(-14px) rotate(-10deg); }
+
+/* 빈틈 : 자세가 무너져요 */
+.m5-boss.is-open { transform: translateX(50%) rotate(-4deg); opacity: 0.75; }
+
+.m5-boss.is-hurt .fig { color: var(--flag-red); }
+
+/* 쓰러지면 옆으로 넘어가요 */
+.m5-boss.is-down {
+  transform: translateX(50%) rotate(80deg);
+  opacity: 0.3;
+}
+
+/* ---------- 헌병대장의 칼 ---------- */
+.m5-blade {
+  position: absolute;
+  left: -0.5em;
+  top: 0.1em;
+  width: 3px;
+  height: 1.1em;
+  background: var(--paper-dim);
+  transform-origin: bottom center;
+  opacity: 0;
+  transition: all 0.14s ease;
+}
+
+/* 준비할 때 칼을 들어올려요 */
+.m5-boss.is-ready .m5-blade {
+  opacity: 1;
+  transform: rotate(-40deg);
+  background: var(--ochre);
+}
+
+/* 공격할 때 칼을 내려쳐요 */
+.m5-boss.is-strike .m5-blade {
+  opacity: 1;
+  transform: rotate(55deg) scaleY(1.35);
+  background: var(--flag-red);
+}
+
+/* ---------- 아래쪽 말과 설명 ---------- */
+.m5-talk {
+  font-size: clamp(11px, 1.9vw, 16px);
+  text-align: center;
+  min-height: 1.5em;
+}
+
+.m5-talk.is-good { color: var(--ochre); font-weight: 700; }
+.m5-talk.is-bad  { color: var(--flag-red); }
+
+.m5-tip {
+  font-size: clamp(9px, 1.4vw, 12px);
+  color: var(--paper-dim);
+  text-align: center;
+}
