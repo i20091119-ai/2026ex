@@ -1270,3 +1270,157 @@ body {
   .m2-person { flex-direction: row; justify-content: center; gap: 12px; }
   .m2-name { border-top: none; padding-top: 0; }
 }
+
+/* ==================================================================
+   3장 · 태극기 지키기 (미로)
+   ================================================================== */
+.m3-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.4vh, 12px);
+  padding: clamp(8px, 1.6vw, 16px);
+}
+
+.m3-notice {
+  font-size: clamp(11px, 1.9vw, 16px);
+  font-weight: 700;
+  text-align: center;
+  min-height: 1.4em;
+}
+
+.m3-notice.is-good { color: var(--ochre); }
+.m3-notice.is-bad  { color: var(--flag-red); }
+
+/* ---------- 미로판 ----------
+   가로 15칸 × 세로 9칸 이라서 3:1.8 비율로 만들어요 */
+.m3-maze {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 15 / 9;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--line);
+  overflow: hidden;
+}
+
+/* 미로 안의 모든 칸은 크기가 같아요 (가로 1/15, 세로 1/9) */
+.m3-wall,
+.m3-danger,
+.m3-item,
+.m3-actor {
+  position: absolute;
+  width: calc(100% / 15);
+  height: calc(100% / 9);
+}
+
+/* 벽 */
+.m3-wall { background: rgba(222, 213, 194, 0.13); }
+
+/* 보초의 경계 구역 (여기 들어가면 들켜요!) */
+.m3-danger {
+  background: rgba(205, 46, 58, 0.28);
+  border: 1px solid rgba(205, 46, 58, 0.5);
+}
+
+/* ---------- 태극기 ---------- */
+.m3-flagcell::after {
+  content: '';
+  position: absolute;
+  left: 18%; top: 24%;
+  width: 64%; height: 46%;
+  background: #f2ede2;
+  /* 가운데 작은 태극 무늬 */
+  background-image:
+    linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 52% 52%;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 12px rgba(242, 237, 226, 0.5);
+}
+
+/* 태극기를 주우면 그 자리는 비어요 */
+.m3-flagcell.is-taken::after { opacity: 0; }
+
+/* ---------- 안전한 곳 ---------- */
+.m3-safecell::after {
+  content: '';
+  position: absolute;
+  left: 22%; top: 22%;
+  width: 56%; height: 56%;
+  border: 2px dashed var(--paper-dim);
+  opacity: 0.45;
+}
+
+/* 태극기를 주우면 안전한 곳이 밝게 빛나요 */
+.m3-safecell.is-active::after {
+  border-color: var(--ochre);
+  background: rgba(200, 162, 90, 0.25);
+  opacity: 1;
+}
+
+/* ---------- 사람들 ---------- */
+.m3-actor {
+  display: grid;
+  place-items: center;
+  z-index: 3;
+}
+
+.m3-actor .fig { font-size: clamp(11px, 2.4vw, 20px); }
+
+/* 주인공은 부드럽게 미끄러지듯 움직여요 */
+.m3-hero {
+  transition: left 0.12s linear, top 0.12s linear;
+  z-index: 5;
+}
+
+.m3-hero .fig { color: var(--paper); }
+
+/* 태극기를 들면 표시가 나요 */
+.m3-hero.has-flag::after {
+  content: '';
+  position: absolute;
+  right: 6%; top: 4%;
+  width: 34%; height: 26%;
+  background: #f2ede2;
+  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
+  background-size: 56% 56%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* 들켰을 때 주인공이 붉게 물들어요 */
+.m3-hero.is-caught .fig { color: var(--flag-red); }
+
+/* 순찰 경찰 : 천천히 미끄러지듯 */
+.m3-cop { transition: left 0.38s linear, top 0.38s linear; }
+.m3-cop .fig { color: #9aa3b8; }
+
+/* 보초 경찰 : 가만히 서 있고 눈이 늘 켜져 있어요 */
+.m3-guard .fig { color: #b9505c; }
+
+/* ---------- 아래쪽 설명 ---------- */
+.m3-tip {
+  font-size: clamp(9px, 1.4vw, 12px);
+  color: var(--paper-dim);
+  text-align: center;
+}
+
+.m3-key {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+}
+
+/* 설명에 쓰는 작은 색 네모 */
+.m3-legend {
+  display: inline-block;
+  width: 9px; height: 9px;
+  vertical-align: middle;
+}
+
+.m3-legend-guard { background: rgba(205, 46, 58, 0.55); }
+.m3-legend-cop   { background: #9aa3b8; }
