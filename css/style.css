@@ -1123,3 +1123,150 @@ body {
 
 /* ---------- 경찰이 화났을 때 ---------- */
 .m1-police.is-angry { animation: shake 0.3s ease 2; }
+
+/* ==================================================================
+   2장 · 김구 선생님과의 만남 (역사 퀴즈)
+   ================================================================== */
+.m2-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2.5vw, 26px);
+  padding: clamp(10px, 2vw, 20px);
+}
+
+/* ---------- 왼쪽 : 김구 선생님 ---------- */
+.m2-person {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.m2-person .fig { font-size: clamp(46px, 8vw, 74px); }
+
+.m2-name {
+  font-size: clamp(10px, 1.6vw, 13px);
+  letter-spacing: 3px;
+  color: var(--paper-dim);
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- 오른쪽 : 문제판 ---------- */
+.m2-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(7px, 1.4vh, 13px);
+}
+
+.m2-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.m2-label {
+  font-size: clamp(10px, 1.5vw, 12px);
+  letter-spacing: 4px;
+  color: var(--ochre);
+}
+
+.m2-count {
+  font-size: clamp(11px, 1.7vw, 14px);
+  color: var(--paper-dim);
+}
+
+.m2-question {
+  font-size: clamp(14px, 2.4vw, 21px);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+/* ---------- 보기 3개 ---------- */
+.m2-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.m2-choice {
+  font-family: inherit;
+  font-size: clamp(12px, 2vw, 17px);
+  color: var(--paper);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: clamp(8px, 1.4vh, 13px) 15px;
+  border: 2px solid var(--line);
+  border-radius: var(--round);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+/* 지금 고르고 있는 보기 */
+.m2-choice.is-on {
+  border-color: var(--ochre);
+  background: rgba(200, 162, 90, 0.14);
+}
+
+.m2-num {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--round);
+  background: var(--line);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.m2-choice.is-on .m2-num { background: var(--ochre); color: var(--ink); }
+
+/* 맞았을 때 / 틀렸을 때 */
+.m2-choice.is-right {
+  border-color: var(--moss);
+  background: rgba(111, 143, 106, 0.3);
+}
+
+.m2-choice.is-wrong {
+  border-color: var(--flag-red);
+  background: rgba(205, 46, 58, 0.25);
+}
+
+/* 틀렸을 때 진짜 정답을 알려줘요 */
+.m2-choice.is-answer {
+  border-color: var(--ochre);
+  border-style: dashed;
+}
+
+/* ---------- 김구 선생님의 말 ---------- */
+.m2-talk {
+  font-size: clamp(11px, 1.8vw, 15px);
+  line-height: 1.6;
+  min-height: 1.6em;
+}
+
+.m2-talk.is-right { color: var(--moss); font-weight: 700; }
+.m2-talk.is-wrong { color: var(--ochre); }
+
+.m2-tip {
+  font-size: clamp(9px, 1.4vw, 12px);
+  color: var(--paper-dim);
+}
+
+/* 화면이 좁으면 김구 선생님을 위로 올려요 */
+@media (max-width: 620px) {
+  .m2-scene { flex-direction: column; align-items: stretch; }
+  .m2-person { flex-direction: row; justify-content: center; gap: 12px; }
+  .m2-name { border-top: none; padding-top: 0; }
+}
