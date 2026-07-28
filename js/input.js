@@ -295,13 +295,26 @@ const Input = (function () {
     ['down'], ['down', 'left'], ['left'], ['up', 'left'],
   ];
 
-  /* 해트 값 하나를 방향 목록으로 바꿔줘요 */
+  /* 해트 값 하나를 방향 목록으로 바꿔줘요.
+
+     ★ 조종기마다 '아무것도 안 누른 상태'의 값이 달라요.
+       -1 ~ 1 을 벗어난 값(예: 3.29)으로 알려주는 조종기도 있고,
+       0 으로 알려주는 조종기도 있어요. 둘 다 처리해요. */
   function readHat(value, rest) {
     if (value === undefined) return [];
-    // 가만히 있을 때와 거의 같으면 안 누른 거예요
-    if (rest !== undefined && Math.abs(value - rest) < 0.2) return [];
-    // -1 ~ 1 을 벗어나면 가운데(안 누름)를 뜻해요
+
+    // (1) -1 ~ 1 을 벗어나면 확실히 가운데(안 누름)예요
     if (value > 1.05 || value < -1.05) return [];
+
+    // (2) 0 에 아주 가까우면 가운데예요
+    //     (해트 값은 0.14 부터 시작하니까 0.08 이면 안 겹쳐요)
+    if (Math.abs(value) < 0.08) return [];
+
+    // (3) 가운데 값이 -1~1 안에 있는 조종기라면,
+    //     그 값과 아주 비슷할 때만 안 누른 것으로 봐요.
+    //     (해트 값은 0.28 씩 떨어져 있어서 0.08 이면 넉넉해요)
+    if (rest !== undefined && Math.abs(rest) <= 1.05 &&
+        Math.abs(value - rest) < 0.08) return [];
 
     const index = Math.round((value + 1) * 3.5);   // 0 부터 7 까지
     return HAT_DIRS[index] || [];
@@ -327,10 +340,12 @@ const Input = (function () {
       const pad = pads[i];
       if (!pad) continue;
 
-      /* --- 버튼 8개 확인하기 --- */
+      /* --- 버튼 8개 확인하기 ---
+         배운 설정이 있으면 그 버튼을, 없으면 순서대로 1~8번을 봐요. */
       BUTTONS.forEach(function (b, index) {
-        const btn = pad.buttons[index];
-        const now = btn ? btn.pressed : false;
+        const byOrder = pad.buttons[index] ? pad.buttons[index].pressed : false;
+        const byMap = padMap ? ruleOn(padMap.acts[b.act], pad) : false;
+        const now = byMap || byOrder;
         const key = 'b' + index;
 
         if (now && !padWas[key]) pressButton(b.act);     // 방금 눌렸어요
@@ -345,21 +360,15 @@ const Input = (function () {
       /* 조종기를 처음 봤으면, 안 건드렸을 때의 값을 적어둬요 */
       if (!padRest) padRest = Array.prototype.slice.call(pad.axes);
 
-      /* ★ 직접 맞춘 설정이 있으면 그것만 써요 (제일 정확해요) */
+      /* ★ 직접 맞춘 설정이 있으면 먼저 확인해요.
+         단, 기본 방식도 함께 살펴봐요. 그래야 조종기 옆 스위치를
+         (LS ↔ DP ↔ RS) 바꿔도 다시 맞추지 않고 그냥 쓸 수 있어요. */
+      const learned = { up: false, down: false, left: false, right: false };
+
       if (padMap) {
         ['up', 'down', 'left', 'right'].forEach(function (name) {
-          setPadDir(name, ruleOn(padMap.dirs[name], pad));
+          learned[name] = ruleOn(padMap.dirs[name], pad);
         });
-
-        BUTTONS.forEach(function (b) {
-          const now = ruleOn(padMap.acts[b.act], pad);
-          const key = 'm:' + b.act;
-          if (now && !padWas[key]) pressButton(b.act);
-          if (!now && padWas[key]) releaseButton(b.act);
-          padWas[key] = now;
-        });
-
-        break;   // 배운 설정을 썼으니 아래 기본 방식은 건너뛰어요
       }
 
       /* ★ 아케이드 스틱은 옆 스위치에 따라 신호가 세 가지로 달라져요.
@@ -383,15 +392,23 @@ const Input = (function () {
          네 번째 축부터 뒤쪽을 모두 살펴봐요. */
       const hat = { up: false, down: false, left: false, right: false };
       for (let a = 4; a < pad.axes.length; a++) {
-        readHat(pad.axes[a], padRest[a]).forEach(function (name) {
+        const v = pad.axes[a];
+
+        /* 값이 -1~1 을 벗어나면 확실히 손을 뗀 상태예요.
+           그때를 '가운데'로 다시 기억해두면,
+           게임을 켤 때 스틱이 밀려 있었어도 저절로 고쳐져요! */
+        if (v !== undefined && Math.abs(v) > 1.05) padRest[a] = v;
+
+        readHat(v, padRest[a]).forEach(function (name) {
           hat[name] = true;
         });
       }
 
-      setPadDir('up',    y < -STICK_LIMIT || dpad.up    || hat.up);
-      setPadDir('down',  y >  STICK_LIMIT || dpad.down  || hat.down);
-      setPadDir('left',  x < -STICK_LIMIT || dpad.left  || hat.left);
-      setPadDir('right', x >  STICK_LIMIT || dpad.right || hat.right);
+      /* 배운 설정이든 기본 방식이든, 하나라도 눌렸으면 움직여요 */
+      setPadDir('up',    learned.up    || y < -STICK_LIMIT || dpad.up    || hat.up);
+      setPadDir('down',  learned.down  || y >  STICK_LIMIT || dpad.down  || hat.down);
+      setPadDir('left',  learned.left  || x < -STICK_LIMIT || dpad.left  || hat.left);
+      setPadDir('right', learned.right || x >  STICK_LIMIT || dpad.right || hat.right);
 
       break;   // 조종기 1개만 쓰니까 첫 번째만 확인하고 끝내요
     }

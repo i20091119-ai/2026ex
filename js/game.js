@@ -561,11 +561,13 @@ function drawPadTest() {
     box.innerHTML =
       '<p class="pad-test-none">조종기가 잡히지 않았어요.</p>' +
       '<ul class="pad-test-help">' +
-        '<li>조종기의 아무 버튼이나 한 번 눌러 보세요. ' +
+        '<li>조종기의 <b>아무 버튼이나 한 번</b> 눌러 보세요. ' +
             '(브라우저는 버튼을 눌러야 조종기를 알아봐요)</li>' +
-        '<li>조종기 왼쪽 위 스위치를 <b>XINPUT / NS</b> 쪽으로 두세요. ' +
-            '설명서에 적힌 "PC (엑스인풋)" 방식이에요.</li>' +
-        '<li>USB 선을 뺐다가 다시 꽂아 보세요.</li>' +
+        '<li>왼쪽 스위치(기종 선택)를 <b>XINPUT / NS</b> 쪽, ' +
+            '즉 <b>위쪽</b>으로 딸깍 미세요.</li>' +
+        '<li>오른쪽 스위치(스틱 신호)를 <b>DP</b>, ' +
+            '즉 <b>가운데</b>에 두세요.</li>' +
+        '<li>USB 선을 뺐다가 다시 꽂고, 이 화면을 새로고침하세요.</li>' +
       '</ul>';
     return;
   }
@@ -608,8 +610,12 @@ function drawPadTest() {
       '<span class="pt-value">' + btnText + '</span></div>' +
     '<div class="pt-row"><span class="pt-label">축</span>' +
       '<span class="pt-value pt-axes">' + axesText + '</span></div>' +
-    '<p class="pad-test-tip">스틱을 움직였는데 위 「방향」에 불이 안 들어오면, ' +
-      '어느 「축」 숫자가 바뀌는지 알려주세요.</p>';
+    '<p class="pad-test-tip">' +
+      '<b>스위치 두 개를 이렇게 두세요</b><br>' +
+      '· 왼쪽(기종 선택) → <b>XINPUT / NS</b> (위쪽)<br>' +
+      '· 오른쪽(스틱 신호) → <b>DP</b> (가운데)<br><br>' +
+      '스틱을 움직였는데 위 「방향」에 불이 안 들어오면 ' +
+      '「조종기 맞추기」를 해보세요.</p>';
 }
 
 document.getElementById('btn-pad-test').addEventListener('click', openPadTest);
