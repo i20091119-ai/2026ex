@@ -46,7 +46,17 @@
 
     <!-- 오른쪽 위 : 조종기 확인
          아케이드 조종기가 제대로 연결됐는지 확인하는 곳이에요 -->
-    <button id="btn-pad-test" class="corner-test">조종기 확인</button>
+    <div class="corner-pad">
+      <button id="btn-pad-test" class="corner-test">조종기 확인</button>
+      <!-- 지금 조종기가 잡혔는지 항상 보여줘요 -->
+      <p id="title-pad-status" class="pad-status">조종기 확인 중…</p>
+    </div>
+
+    <!-- 창 안의 창으로 열렸을 때만 보여요 (조종기가 막히니까 알려줘요) -->
+    <p id="frame-warning" class="frame-warning" hidden>
+      ⚠️ 이 화면은 다른 페이지 안에 끼워져 있어서 <b>조이스틱이 막혀요.</b>
+      조이스틱으로 하려면 <b>i20091119-ai.github.io/2026ex</b> 를 주소창에 직접 입력하세요.
+    </p>
 
     <!-- 오른쪽 아래 : 태극기 (CSS로 직접 그렸어요) -->
     <div class="corner-flag">

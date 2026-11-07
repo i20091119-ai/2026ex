@@ -127,6 +127,12 @@ const Input = (function () {
     if (v === undefined) return false;
     if (Math.abs(v) > 1.05) return false;        // 가운데(안 누름)
 
+    // 가만히 있을 때와 거의 같으면 안 누른 거예요.
+    // (손을 안 대도 -1 에 머무는 축을 '누름'으로 잘못 배워 저장했더라도
+    //  방향이 계속 눌린 채로 굳지 않게 해줘요)
+    const rest = (padRest && Math.abs(padRest[rule.index]) <= 1.05) ? padRest[rule.index] : 0;
+    if (Math.abs(v - rest) < 0.4) return false;
+
     if (Math.abs(rule.value) >= 0.85) {
       // 끝까지 기울인 신호 → 방향만 같으면 인정해요
       return rule.value > 0 ? v > 0.5 : v < -0.5;
@@ -326,6 +332,14 @@ const Input = (function () {
         그래서 1초에 60번씩 "지금 뭐 눌렸어?" 하고 확인해요.
      ---------------------------------------------------------------- */
   const padWas = {};             // 방금 전에 눌려 있었는지 기억해요
+
+  /* 게임 버튼 1~8번이 조종기의 몇 번째 신호인지 적어둔 표예요.
+     게임 순서 : 1 A/×  2 B/○  3 X/□  4 Y/△  5 LB/L1  6 RB/R1  7 LT/L2  8 RT/R2
+
+     XINPUT : 조종기가 A, B, X, Y, LB, RB, LT, RT 순서로 보내요
+     DINPUT : 플레이스테이션3 방식이라 □, ×, ○, △, L1, R1, L2, R2 순서로 보내요 */
+  const XINPUT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7];
+  const DINPUT_ORDER = [1, 2, 0, 3, 4, 5, 6, 7];
   const STICK_LIMIT = 0.5;       // 스틱을 이만큼 기울여야 '눌렀다'고 쳐요
 
   /* 조종기를 처음 연결했을 때 각 축이 어떤 값이었는지 적어둬요.
@@ -380,8 +394,26 @@ const Input = (function () {
     updateDeviceText();
   });
 
+  /* 시작 화면에 '조종기 : 연결됨 / 안 됨' 을 보여줘요 */
+  let lastStatus = '';
+  function drawPadStatus(pads) {
+    let pad = null;
+    for (let i = 0; i < pads.length; i++) if (pads[i]) { pad = pads[i]; break; }
+
+    let text, kind;
+    if (padBlocked)  { text = '조종기 : 이 화면에서는 막혀 있어요'; kind = 'bad'; }
+    else if (!pad)   { text = '조종기 : 안 보여요 — 버튼을 한 번 눌러 보세요'; kind = 'bad'; }
+    else             { text = '조종기 : 연결됨 (' + (pad.mapping === 'standard' ? 'XINPUT' : 'DINPUT') + ')'; kind = 'good'; }
+
+    if (text === lastStatus) return;          // 바뀐 게 없으면 그냥 둬요
+    lastStatus = text;
+    const node = document.getElementById('title-pad-status');
+    if (node) { node.textContent = text; node.className = 'pad-status is-' + kind; }
+  }
+
   function checkGamepad() {
     const pads = getPads();
+    drawPadStatus(pads);
 
     for (let i = 0; i < pads.length; i++) {
       const pad = pads[i];
@@ -389,8 +421,14 @@ const Input = (function () {
 
       /* --- 버튼 8개 확인하기 ---
          배운 설정이 있으면 그 버튼을, 없으면 순서대로 1~8번을 봐요. */
+      /* ★ DINPUT(PS3) 모드에서는 조종기가 버튼을 보내는 순서가 달라요.
+           그래서 조종기에 적힌 이름에 맞춰 순서를 바꿔 읽어요.
+           (XINPUT 이면 순서 그대로) */
+      const order = (pad.mapping === 'standard') ? XINPUT_ORDER : DINPUT_ORDER;
+
       BUTTONS.forEach(function (b, index) {
-        const byOrder = pad.buttons[index] ? pad.buttons[index].pressed : false;
+        const real = pad.buttons[order[index]];
+        const byOrder = real ? real.pressed : false;
         const byMap = padMap ? ruleOn(padMap.acts[b.act], pad) : false;
         const now = byMap || byOrder;
         const key = 'b' + index;

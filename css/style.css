@@ -2577,3 +2577,44 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   line-height: 1.1;
   margin-bottom: 8px;
 }
+
+/* ---------- 시작 화면 : 조종기 상태 ---------- */
+.corner-pad {
+  position: absolute;
+  right: clamp(14px, 3vw, 34px);
+  top: clamp(14px, 3vh, 26px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* 원래 따로 떠 있던 조종기 확인 버튼은 이제 상자 안에 들어가요 */
+.corner-pad .corner-test { position: static; }
+
+.pad-status {
+  font-size: clamp(10px, 1.4vw, 12px);
+  color: var(--paper-dim);
+}
+
+.pad-status.is-good { color: #9fd08f; }
+.pad-status.is-bad  { color: #ff8a93; }
+
+/* ---------- 창 안의 창 경고 ---------- */
+.frame-warning {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(70px, 14vh, 120px);
+  transform: translateX(-50%);
+  width: min(92%, 640px);
+  padding: 10px 14px;
+  font-size: clamp(11px, 1.6vw, 13px);
+  line-height: 1.6;
+  text-align: center;
+  color: var(--paper);
+  background: rgba(205, 46, 58, 0.18);
+  border: 1px solid var(--flag-red);
+  border-radius: var(--round);
+}
+
+.frame-warning b { color: #ff8a93; }

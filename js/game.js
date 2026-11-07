@@ -663,6 +663,7 @@ function openPadTest() {
     '<div id="pad-test-body" class="pad-test"></div>',
     [
       { label: '조종기 맞추기', run: function () { closePadTest(); startSetup(); }, big: true },
+      { label: '자세한 진단', run: function () { location.href = 'pad-test.html'; } },
       { label: '기본값으로', run: function () { Input.clearMap(); drawPadTest(); } },
       { label: '닫기', run: closePadTest },
     ]);
@@ -756,6 +757,9 @@ function drawPadTest() {
 }
 
 document.getElementById('btn-pad-test').addEventListener('click', openPadTest);
+
+/* 창 안의 창으로 열렸으면 시작 화면에 경고를 보여줘요 */
+if (Input.inFrame()) document.getElementById('frame-warning').hidden = false;
 
 /* 게임 화면 아래쪽 '조종기 연결됨' 칸을 눌러도 확인 화면이 열려요.
    (게임 도중에 조종기를 맞추고 싶을 때 쓰라고 만들었어요) */

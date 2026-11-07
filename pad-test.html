@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>조종기 진단 — 독립을 향하여</title>
+  <style>
+    /* ==============================================================
+       조종기 진단 페이지
+       ★ 조종기가 보내는 신호를 날것 그대로 보여줘요.
+         게임에서 조종기가 안 먹을 때, 이 화면을 사진 찍어 보내면
+         무엇이 문제인지 바로 알 수 있어요.
+       ============================================================== */
+    :root {
+      --bg: #10152a; --panel: #1a2340; --ink: #080b16;
+      --paper: #ded5c2; --dim: rgba(222, 213, 194, 0.6);
+      --ochre: #c8a25a; --red: #cd2e3a; --moss: #6f8f6a;
+      --line: rgba(222, 213, 194, 0.18);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      background: var(--bg); color: var(--paper);
+      padding: 18px; line-height: 1.5;
+    }
+    h1 { font-size: 22px; letter-spacing: 2px; margin-bottom: 4px; }
+    .sub { color: var(--dim); font-size: 13px; margin-bottom: 14px; }
+
+    /* 맨 위 큰 결과 */
+    #verdict {
+      font-size: 20px; font-weight: 800; padding: 14px 18px;
+      border-radius: 4px; margin-bottom: 14px;
+      background: var(--panel); border-left: 6px solid var(--dim);
+    }
+    #verdict.good { border-left-color: var(--moss); }
+    #verdict.bad  { border-left-color: var(--red); }
+    #verdict small { display: block; font-size: 14px; font-weight: 500; color: var(--dim); margin-top: 4px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; }
+    .card h2 { font-size: 13px; letter-spacing: 3px; color: var(--ochre); margin-bottom: 8px; }
+
+    .row { display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .row:last-child { border-bottom: none; }
+    .row b { flex: none; width: 92px; color: var(--dim); font-weight: 500; }
+    .row span { word-break: break-all; }
+    .ok  { color: #9fd08f; } .no { color: #ff8a93; }
+
+    /* 축 막대 */
+    .axis { display: grid; grid-template-columns: 34px 1fr 54px; gap: 8px; align-items: center; margin: 3px 0; font-size: 12px; }
+    .bar { position: relative; height: 14px; background: rgba(0,0,0,0.35); border: 1px solid var(--line); }
+    .bar::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line); }
+    .fill { position: absolute; top: 0; bottom: 0; background: var(--ochre); }
+    .axis.moved .fill { background: var(--red); }
+    .num { font-family: ui-monospace, Consolas, monospace; text-align: right; }
+
+    /* 버튼 칸 */
+    .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+    .btn { width: 40px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; font-weight: 800; }
+    .btn.on { background: var(--ochre); color: var(--ink); border-color: var(--ochre); }
+
+    /* 방향 */
+    .dirs { display: grid; grid-template-columns: repeat(3, 38px); gap: 4px; }
+    .dir { height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 4px; }
+    .dir.on { background: var(--moss); color: var(--ink); }
+
+    #log { font-family: ui-monospace, Consolas, monospace; font-size: 12px; max-height: 180px; overflow-y: auto; white-space: pre-wrap; }
+    .back { display: inline-block; margin-top: 16px; color: var(--ochre); }
+  </style>
+</head>
+<body>
+  <h1>조종기 진단</h1>
+  <p class="sub">조종기의 스틱을 이리저리 밀고, 버튼 8개를 하나씩 눌러 보세요. 그다음 이 화면 전체를 사진 찍어 보내 주세요.</p>
+
+  <div id="verdict">확인하는 중…</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>이 페이지가 열린 곳</h2>
+      <div id="env"></div>
+    </div>
+
+    <div class="card">
+      <h2>조종기</h2>
+      <div id="pad"></div>
+    </div>
+
+    <div class="card">
+      <h2>방향 (게임이 알아들은 것)</h2>
+      <div class="dirs">
+        <span></span><div class="dir" id="d-up">▲</div><span></span>
+        <div class="dir" id="d-left">◀</div><span></span><div class="dir" id="d-right">▶</div>
+        <span></span><div class="dir" id="d-down">▼</div><span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>버튼 (번호는 조종기가 보내는 순서)</h2>
+      <div class="btns" id="btns"></div>
+    </div>
+
+    <div class="card">
+      <h2>축 (스틱·십자키 신호)</h2>
+      <div id="axes"></div>
+    </div>
+
+    <div class="card">
+      <h2>기록 (최근에 들어온 신호)</h2>
+      <div id="log">아직 아무 신호도 없어요.</div>
+    </div>
+  </div>
+
+  <a class="back" href="index.html">← 게임으로 돌아가기</a>
+
+  <script>
+    /* ==============================================================
+       조종기 진단 — 쉬운 설명
+       1) 이 페이지가 '창 안의 창'인지, 보안 연결인지 확인해요
+       2) 조종기가 보이면 축과 버튼 값을 실시간으로 그려요
+       3) 키보드 신호(조종기가 키보드처럼 굴 때)도 함께 적어요
+       ============================================================== */
+    const $ = function (id) { return document.getElementById(id); };
+    const logLines = [];
+    let firstAxes = null;          // 처음 본 축 값 (가만히 있을 때)
+    let blockedError = '';         // 조종기 읽기가 막혔을 때의 에러
+
+    function log(text) {
+      const t = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      logLines.unshift(t + '  ' + text);
+      if (logLines.length > 40) logLines.pop();
+      $('log').textContent = logLines.join('\n');
+    }
+
+    /* ---------- 1. 페이지가 열린 곳 ---------- */
+    let inFrame = false;
+    try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+
+    function row(name, value, good) {
+      const cls = good === undefined ? '' : (good ? 'ok' : 'no');
+      return '<div class="row"><b>' + name + '</b><span class="' + cls + '">' + value + '</span></div>';
+    }
+
+    function drawEnv() {
+      const ua = navigator.userAgent;
+      const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' :
+                      /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '모름';
+      $('env').innerHTML =
+        row('창 안의 창', inFrame ? '예 — 조종기가 막혀요!' : '아니요 (좋아요)', !inFrame) +
+        row('보안 연결', window.isSecureContext ? '예 (좋아요)' : '아니요 — 조종기가 막힐 수 있어요', window.isSecureContext) +
+        row('조종기 기능', navigator.getGamepads ? '있음' : '없음 — 브라우저를 바꿔야 해요', !!navigator.getGamepads) +
+        row('읽기 막힘', blockedError ? blockedError : '없음 (좋아요)', !blockedError) +
+        row('브라우저', browser) +
+        row('주소', location.href);
+    }
+
+    /* ---------- 2. 조종기 읽기 ---------- */
+    function getPads() {
+      try {
+        return navigator.getGamepads ? Array.prototype.slice.call(navigator.getGamepads()) : [];
+      } catch (e) {
+        if (!blockedError) { blockedError = e.name + ': ' + e.message; drawEnv(); }
+        return [];
+      }
+    }
+
+    window.addEventListener('gamepadconnected', function (e) {
+      log('조종기 연결됨 : ' + e.gamepad.id + ' (방식: ' + (e.gamepad.mapping || '표준 아님') + ')');
+    });
+    window.addEventListener('gamepaddisconnected', function (e) {
+      log('조종기 빠짐 : ' + e.gamepad.id);
+      firstAxes = null;
+    });
+
+    const lastButtons = [];
+    const lastAxisBig = [];
+
+    function tick() {
+      const pads = getPads().filter(Boolean);
+      const pad = pads[0];
+
+      /* --- 맨 위 결과 --- */
+      const v = $('verdict');
+      if (inFrame || blockedError) {
+        v.className = 'bad';
+        v.innerHTML = '❌ 이 화면에서는 브라우저가 조종기를 막고 있어요' +
+          '<small>주소창에 https://i20091119-ai.github.io/2026ex/pad-test.html 을 직접 입력해서 새 탭으로 여세요.</small>';
+      } else if (!pad) {
+        v.className = 'bad';
+        v.innerHTML = '⏳ 조종기가 아직 안 보여요 — 조종기 버튼을 아무거나 한 번 눌러 보세요' +
+          '<small>그래도 안 보이면 USB 를 뺐다 꽂고 이 페이지를 새로고침하세요. (조종기 위쪽 빨간 불이 켜져 있어야 해요)</small>';
+      } else {
+        v.className = 'good';
+        v.innerHTML = '✅ 조종기 신호가 들어와요 : ' + pad.id +
+          '<small>방식 : ' + (pad.mapping === 'standard' ? 'XINPUT (표준) — 게임과 가장 잘 맞아요' :
+                              'DINPUT (표준 아님) — 스위치를 XINPUT/NS 로 바꾸면 더 확실해요') +
+          ' · 축 ' + pad.axes.length + '개 · 버튼 ' + pad.buttons.length + '개</small>';
+      }
+
+      /* --- 조종기 정보 --- */
+      $('pad').innerHTML = pad ?
+        row('이름', pad.id) +
+        row('방식', pad.mapping === 'standard' ? 'standard (XINPUT)' : '"' + pad.mapping + '" (DINPUT)', pad.mapping === 'standard') +
+        row('연결 번호', pad.index) +
+        row('축 개수', pad.axes.length) +
+        row('버튼 개수', pad.buttons.length) +
+        (pads.length > 1 ? row('다른 조종기', (pads.length - 1) + '개 더 있음') : '')
+        : row('상태', '안 보임', false);
+
+      if (pad) {
+        if (!firstAxes) firstAxes = pad.axes.slice();
+
+        /* --- 버튼 --- */
+        let html = '';
+        pad.buttons.forEach(function (b, i) {
+          const on = b.pressed || b.value > 0.5;
+          html += '<div class="btn' + (on ? ' on' : '') + '">' + i + '</div>';
+          if (on && !lastButtons[i]) log('버튼 ' + i + ' 눌림');
+          lastButtons[i] = on;
+        });
+        $('btns').innerHTML = html;
+
+        /* --- 축 --- */
+        html = '';
+        pad.axes.forEach(function (a, i) {
+          const rest = firstAxes[i] || 0;
+          const moved = Math.abs(a - rest) > 0.3 && Math.abs(a) <= 1.05;
+          const clamped = Math.max(-1, Math.min(1, a));
+          const left = clamped < 0 ? 50 + clamped * 50 : 50;
+          const width = Math.abs(clamped) * 50;
+          html += '<div class="axis' + (moved ? ' moved' : '') + '">' +
+                    '<span>축 ' + i + '</span>' +
+                    '<div class="bar"><div class="fill" style="left:' + left + '%;width:' + width + '%"></div></div>' +
+                    '<span class="num">' + a.toFixed(2) + '</span>' +
+                  '</div>';
+          if (moved && !lastAxisBig[i]) log('축 ' + i + ' 움직임 : ' + a.toFixed(2) + '  (가만히 있을 때 ' + rest.toFixed(2) + ')');
+          lastAxisBig[i] = moved;
+        });
+        $('axes').innerHTML = html;
+      } else {
+        $('btns').innerHTML = '<span class="no">조종기가 안 보여요</span>';
+        $('axes').innerHTML = '<span class="no">조종기가 안 보여요</span>';
+      }
+
+      /* --- 게임이 알아들은 방향 (게임과 같은 방식으로 계산) --- */
+      const dir = { up: false, down: false, left: false, right: false };
+      if (pad) {
+        const mv = function (i) {
+          const a = pad.axes[i];
+          if (a === undefined || Math.abs(a) > 1.05) return 0;
+          const r = (firstAxes && Math.abs(firstAxes[i]) <= 1.05) ? firstAxes[i] : 0;
+          return a - r;
+        };
+        const pick = function () { let b = 0; for (let k = 0; k < arguments.length; k++) if (Math.abs(arguments[k]) > Math.abs(b)) b = arguments[k]; return b; };
+        const x = pick(mv(0), mv(2));
+        const y = pick(mv(1), mv(3), mv(5));
+        const btn = function (i) { return pad.buttons[i] ? pad.buttons[i].pressed : false; };
+        dir.up = y < -0.5 || btn(12);   dir.down = y > 0.5 || btn(13);
+        dir.left = x < -0.5 || btn(14); dir.right = x > 0.5 || btn(15);
+        for (let a = 4; a < pad.axes.length; a++) {
+          const h = pad.axes[a];
+          if (!firstAxes || !(Math.abs(firstAxes[a]) > 1.05)) continue;
+          if (h === undefined || Math.abs(h) > 1.05) continue;
+          const idx = Math.round((h + 1) * 3.5);
+          if ([7, 0, 1].indexOf(idx) >= 0) dir.up = true;
+          if ([1, 2, 3].indexOf(idx) >= 0) dir.right = true;
+          if ([3, 4, 5].indexOf(idx) >= 0) dir.down = true;
+          if ([5, 6, 7].indexOf(idx) >= 0) dir.left = true;
+        }
+      }
+      ['up', 'down', 'left', 'right'].forEach(function (d) {
+        $('d-' + d).classList.toggle('on', dir[d]);
+      });
+
+      requestAnimationFrame(tick);
+    }
+
+    /* ---------- 3. 키보드 신호도 적어요 ----------
+       (아케이드 기판 중에는 키보드처럼 신호를 보내는 것도 있어요) */
+    window.addEventListener('keydown', function (e) {
+      log('키보드 : ' + e.code + '  (' + e.key + ')');
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].indexOf(e.code) >= 0) e.preventDefault();
+    });
+
+    drawEnv();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
