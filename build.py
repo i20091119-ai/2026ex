@@ -15,6 +15,7 @@ JS_FILES = [
     'js/sound.js',     # 소리
     'js/input.js',     # 조작
     'js/missions.js',  # 미션 보관함
+    'js/story.js',     # 장 사이 이야기
     'js/ch1.js',       # 1장
     'js/ch2.js',       # 2장
     'js/ch3.js',       # 3장

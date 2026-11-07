@@ -2448,6 +2448,133 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   width: min(100%, 860px, calc((100cqh - 108px) * 21 / 13));
 }
 
+/* ==================================================================
+   장 사이 이야기 (대사를 한 줄씩 넘기기)
+   ================================================================== */
+
+/* 이야기 동안은 아래 말풍선을 숨겨요 (이야기 상자가 그 일을 해요).
+   그 자리만큼 이야기 화면이 넓어져요. */
+#screen-game.is-story #bubble { display: none; }
+
+.story {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 2vh, 18px);
+  padding: clamp(12px, 2.4vw, 26px);
+  cursor: pointer;
+  /* 위에서 아래로 은은하게 어두워지는 배경 */
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+/* ---------- 맨 위 : 장 제목 ----------
+   제목이 맨 위 자리를 차지하고, 그 아래 남은 곳에 사람이 서요.
+   그래서 사람이 커져도 제목을 가리지 않아요. */
+.story-chapter {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.story-chapter span {
+  font-size: clamp(10px, 1.5vw, 13px);
+  letter-spacing: 6px;
+  color: var(--ochre);
+}
+
+.story-chapter b {
+  font-size: clamp(18px, 3.4vw, 30px);
+  letter-spacing: 6px;
+  font-weight: 800;
+}
+
+/* ---------- 가운데 : 말하는 사람 ---------- */
+.story-cast {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.story-cast .fig {
+  /* 남은 높이에 맞춰 크기가 정해져요 (cqh = 이 칸 높이의 1%) */
+  font-size: min(clamp(56px, 11vw, 118px), 62cqh);
+  animation: storyIn 0.35s ease;
+}
+
+.story-cast { container-type: size; width: 100%; }
+
+/* 일본 헌병대장·경찰이 말할 때는 대사 상자 줄이 더 붉어져요 */
+.story.is-enemy .story-name { color: var(--ink); }
+.story.is-enemy .story-box { border-left-color: var(--ink); }
+
+/* 해설일 때는 사람 자리를 비워요 */
+.story.is-narr .story-cast { flex: 1; }
+
+/* ---------- 아래 : 대사 상자 ---------- */
+.story-box {
+  width: 100%;
+  max-width: 760px;
+  padding: clamp(12px, 2vh, 18px) clamp(14px, 2.4vw, 24px);
+  background: var(--paper);
+  color: var(--ink);
+  border-left: 5px solid var(--flag-red);
+  border-radius: var(--round);
+}
+
+.story-name {
+  font-size: clamp(11px, 1.7vw, 14px);
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--flag-red);
+  min-height: 1.2em;
+  margin-bottom: 4px;
+}
+
+.story-text {
+  font-size: clamp(14px, 2.4vw, 20px);
+  font-weight: 700;
+  line-height: 1.6;
+  min-height: 3.2em;                 /* 두 줄 자리를 미리 잡아서 상자가 출렁이지 않게 */
+}
+
+/* 해설은 이름 없이, 조금 차분하게 */
+.story.is-narr .story-box { border-left-color: var(--ochre); }
+.story.is-narr .story-text { font-weight: 500; font-style: italic; }
+
+.story-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: clamp(9px, 1.3vw, 11px);
+  color: rgba(13, 17, 40, 0.55);
+}
+
+.story-keys { margin-left: auto; }
+
+/* ▼ 다음으로 넘어갈 수 있다는 표시 (깜빡여요) */
+.story-more {
+  color: var(--flag-red);
+  opacity: 0;
+}
+
+.story-more.is-on { animation: blink 1s ease-in-out infinite; }
+
+/* 움직임을 줄이고 싶은 사람을 위해 깜빡임을 꺼요 */
+@media (prefers-reduced-motion: reduce) {
+  .story-more.is-on { animation: none; opacity: 1; }
+  .story-cast .fig { animation: none; }
+}
+
 </style>
 </head>
 <body>
@@ -3509,6 +3636,211 @@ const MissionUtil = {
            '</span>';
   },
 };
+
+
+/* ===== js/story.js ===== */
+/* ==================================================================
+   독립을 향하여 - 장 사이 이야기 (story.js)
+
+   ★ 각 장이 시작하기 전에 등장인물이 한 줄씩 이야기해요.
+     4번 버튼을 누르면 다음 줄로 넘어가요.
+     (글자가 나오는 중에 누르면 그 줄이 한꺼번에 다 나와요)
+     1번 버튼을 누르면 이야기를 모두 넘기고 바로 시작해요.
+
+   대사는 서진모둠 기획서의 이야기를 그대로 살려서 썼어요.
+
+   who  : 누가 말하는지 (실루엣 모양)
+          'hero' 주인공 / 'mate' 독립운동가 동료 / 'kimgu' 김구
+          'yu' 유관순 / 'police' 일본 경찰 / 'captain' 일본 헌병대장
+          'narr' 해설 (사람 없이 이야기만 나와요)
+   name : 이름표에 쓸 이름
+   text : 하는 말
+   ================================================================== */
+
+const STORIES = {
+
+  /* ---------- 1장 · 비밀 편지 ---------- */
+  1: [
+    { who: 'narr', text: '1940년대 일제강점기. 조선은 일본의 지배를 받고 있었다.' },
+    { who: 'narr', text: '사람들은 자유를 잃은 채 힘들게 살아가고 있었다.' },
+    { who: 'narr', text: '학교를 마치고 집으로 가던 어느 날 저녁이었다.' },
+    { who: 'mate', name: '독립운동가', text: '여보게, 학생. 잠깐 이리 와 보게.' },
+    { who: 'mate', name: '독립운동가', text: '이 편지를 비밀 아지트까지 전해 주겠나? 일본 경찰에게 들켜서는 절대 안 되네.' },
+    { who: 'hero', name: '나', text: '…알겠습니다. 꼭 전하겠습니다.' },
+  ],
+
+  /* ---------- 2장 · 김구 선생님과의 만남 ---------- */
+  2: [
+    { who: 'narr', text: '편지를 무사히 전한 주인공은 비밀 아지트 안으로 들어갔다.' },
+    { who: 'kimgu', name: '김구', text: '자네가 편지를 가져온 학생인가. 정말 고맙네.' },
+    { who: 'kimgu', name: '김구', text: '나라를 되찾기 위해서는 많은 사람들의 용기와 도움이 필요하다네.' },
+    { who: 'kimgu', name: '김구', text: '다음 임무를 맡기기 전에, 우리 역사를 얼마나 아는지 물어보겠네.' },
+  ],
+
+  /* ---------- 3장 · 태극기 지키기 ---------- */
+  3: [
+    { who: 'mate', name: '독립운동가', text: '큰일이네! 일본 경찰이 우리가 숨겨 둔 태극기를 찾고 있어.' },
+    { who: 'mate', name: '독립운동가', text: '태극기 다섯 장을 골목 곳곳에 나누어 숨겨 두었네.' },
+    { who: 'mate', name: '독립운동가', text: '경찰보다 먼저 모두 찾아서 안전한 곳으로 옮겨 주게.' },
+    { who: 'hero', name: '나', text: '붉은 곳에는 보초가 서 있으니 다른 길로 돌아가야겠어.' },
+  ],
+
+  /* ---------- 4장 · 만세운동 준비 ---------- */
+  4: [
+    { who: 'narr', text: '태극기를 지켜 낸 주인공은 유관순을 만났다.' },
+    { who: 'yu', name: '유관순', text: '이 태극기로 만세운동을 준비할 거예요.' },
+    { who: 'yu', name: '유관순', text: '광장에 모인 사람들에게 하나씩 나누어 주고, 독립의 뜻을 알려 주세요.' },
+    { who: 'yu', name: '유관순', text: '순찰하는 일본 경찰이 있으니 가까이 가지 않게 조심하세요.' },
+  ],
+
+  /* ---------- 5장 · 독립을 향하여 ---------- */
+  5: [
+    { who: 'narr', text: '모든 준비를 마쳤다. 이제 마지막 싸움만이 남았다.' },
+    { who: 'kimgu', name: '김구', text: '여기까지 온 것은 모두 자네와 같은 이들의 용기 덕분이네.' },
+    { who: 'captain', name: '일본 헌병대장', text: '감히 독립을 꿈꾸다니! 여기서 끝을 내 주마!' },
+    { who: 'hero', name: '나', text: '우리는 물러서지 않는다!' },
+  ],
+
+  /* ---------- 6장 · 광복의 날 ---------- */
+  6: [
+    { who: 'narr', text: '마지막 임무까지 마친 그날 밤이 지나고…' },
+    { who: 'kimgu', name: '김구', text: '이보게, 들리는가? 거리에서 사람들이 만세를 부르고 있네.' },
+  ],
+};
+
+
+/* ==================================================================
+   이야기 보여주기
+   ================================================================== */
+const Story = (function () {
+
+  const TYPE_SPEED = 38;     // 글자 하나가 나오는 시간 (밀리초)
+
+  let lines = [];            // 이번 장의 대사들
+  let index = 0;             // 지금 몇 번째 줄인지
+  let typing = false;        // 글자가 나오는 중인지
+  let typeTimer = null;
+  let onDone = null;         // 이야기가 끝나면 부를 함수
+  let running = false;
+  let node = {};
+
+  /* ---------- 한 줄을 화면에 그려요 ---------- */
+  function showLine() {
+    const line = lines[index];
+    const isNarr = line.who === 'narr';
+
+    // 해설일 때는 사람 없이 가운데에 이야기만 나와요
+    node.scene.classList.toggle('is-narr', isNarr);
+    // 빨간 눈은 일본 경찰과 헌병대장에게만 그려요 (우리 편은 무섭지 않게!)
+    const enemy = line.who === 'police' || line.who === 'captain';
+    node.cast.innerHTML = isNarr ? '' : MissionUtil.figure(line.who, enemy ? 'is-looking' : '');
+    node.scene.classList.toggle('is-enemy', enemy);
+    node.name.textContent = isNarr ? '' : line.name;
+    node.count.textContent = (index + 1) + ' / ' + lines.length;
+
+    // 글자를 하나씩 보여줘요 (타자 치듯이)
+    const text = line.text;
+    let shown = 0;
+    typing = true;
+    node.text.textContent = '';
+    node.more.classList.remove('is-on');
+
+    clearInterval(typeTimer);
+    typeTimer = setInterval(function () {
+      if (game.paused) return;              // 잠시 멈춤 중이면 기다려요
+      shown += 1;
+      node.text.textContent = text.slice(0, shown);
+      if (shown >= text.length) finishTyping();
+    }, TYPE_SPEED);
+  }
+
+  /* 글자가 다 나왔어요 */
+  function finishTyping() {
+    clearInterval(typeTimer);
+    typing = false;
+    node.text.textContent = lines[index].text;
+    node.more.classList.add('is-on');       // ▼ 표시가 깜빡여요
+  }
+
+  /* ---------- 4번 버튼 : 다음 ---------- */
+  function next() {
+    if (!running) return;
+
+    // 글자가 나오는 중이면, 먼저 그 줄을 한꺼번에 다 보여줘요
+    if (typing) { finishTyping(); return; }
+
+    index += 1;
+    if (index >= lines.length) { end(); return; }
+    showLine();
+  }
+
+  /* ---------- 1번 버튼 : 모두 넘기기 ---------- */
+  function skipAll() {
+    if (!running) return;
+    end();
+  }
+
+  /* 이야기가 끝났어요 → 미션을 시작해요 */
+  function end() {
+    stop();
+    if (onDone) onDone();
+  }
+
+  /* ---------- 이야기 시작 ---------- */
+  function play(chapter, done) {
+    lines = STORIES[chapter.id] || [];
+    index = 0;
+    onDone = done;
+    running = true;
+
+    if (lines.length === 0) { end(); return; }
+
+    const stage = MissionUtil.setStage(
+      '<div class="story">' +
+        '<p class="story-chapter">' +
+          '<span>제 ' + chapter.id + ' 장</span>' +
+          '<b>' + chapter.name.replace(/^\d+장 · /, '') + '</b>' +
+        '</p>' +
+        '<div class="story-cast"></div>' +
+        '<div class="story-box">' +
+          '<p class="story-name"></p>' +
+          '<p class="story-text"></p>' +
+          '<div class="story-foot">' +
+            '<span class="story-count"></span>' +
+            '<span class="story-keys">4번 다음 &nbsp;·&nbsp; 1번 모두 넘기기</span>' +
+            '<span class="story-more">▼</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+
+    node = {
+      scene: stage.querySelector('.story'),
+      cast:  stage.querySelector('.story-cast'),
+      name:  stage.querySelector('.story-name'),
+      text:  stage.querySelector('.story-text'),
+      count: stage.querySelector('.story-count'),
+      more:  stage.querySelector('.story-more'),
+    };
+
+    // 4번 = 다음, 1번 = 모두 넘기기, 마우스로 눌러도 다음
+    Input.on('next', next);
+    Input.on('jump', skipAll);
+    node.scene.addEventListener('click', next);
+
+    showLine();
+  }
+
+  /* ---------- 멈추기 (처음으로 등을 눌렀을 때) ---------- */
+  function stop() {
+    running = false;
+    typing = false;
+    clearInterval(typeTimer);
+    typeTimer = null;
+  }
+
+  return { play: play, stop: stop };
+})();
 
 
 /* ===== js/ch1.js ===== */
@@ -5607,6 +5939,7 @@ const game = {
   chapterIndex: 0,    // 지금 몇 번째 장인지 (0부터 세요)
   life: MAX_LIFE,     // 남은 목숨(하트) 개수
   paused: false,      // 잠깐 멈춤 중인지
+  seenStory: {},      // 이번 판에서 이미 본 장 이야기 (들켜서 다시 할 땐 건너뛰어요)
 };
 
 
@@ -5901,6 +6234,27 @@ function startChapter() {
   stopMission();
   Input.clear();
 
+  /* ★ 이번 판에서 처음 오는 장이면, 이야기부터 보여줘요.
+     들켜서 다시 하는 거라면 이야기는 건너뛰고 바로 미션을 시작해요. */
+  if (!game.seenStory[ch.id] && STORIES[ch.id]) {
+    game.seenStory[ch.id] = true;
+    el.screens.game.classList.add('is-story');   // 이야기 동안은 말풍선을 숨겨요
+    currentMission = Story;                      // '처음으로'를 누르면 멈출 수 있게
+    Story.play(ch, function () {
+      currentMission = null;
+      Input.clear();                             // 이야기의 버튼 약속을 지워요
+      beginMission(ch);
+    });
+    return;
+  }
+
+  beginMission(ch);
+}
+
+/* 이번 장의 미션 게임을 시작해요 */
+function beginMission(ch) {
+  el.screens.game.classList.remove('is-story');  // 말풍선을 다시 보여줘요
+
   // 이번 장의 미션 게임을 찾아봐요
   const mission = MISSIONS[ch.id];
 
@@ -5965,6 +6319,8 @@ function clearChapter() {
 // 게임을 처음부터 시작해요
 function startGame() {
   cancelCaughtTimer();
+  game.seenStory = {};         // 새 판이니까 이야기를 처음부터 다시 봐요
+  el.screens.game.classList.remove('is-story');
   game.score = 0;
   game.chapterIndex = 0;
   game.life = MAX_LIFE;

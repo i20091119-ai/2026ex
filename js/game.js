@@ -18,6 +18,7 @@ const game = {
   chapterIndex: 0,    // 지금 몇 번째 장인지 (0부터 세요)
   life: MAX_LIFE,     // 남은 목숨(하트) 개수
   paused: false,      // 잠깐 멈춤 중인지
+  seenStory: {},      // 이번 판에서 이미 본 장 이야기 (들켜서 다시 할 땐 건너뛰어요)
 };
 
 
@@ -312,6 +313,27 @@ function startChapter() {
   stopMission();
   Input.clear();
 
+  /* ★ 이번 판에서 처음 오는 장이면, 이야기부터 보여줘요.
+     들켜서 다시 하는 거라면 이야기는 건너뛰고 바로 미션을 시작해요. */
+  if (!game.seenStory[ch.id] && STORIES[ch.id]) {
+    game.seenStory[ch.id] = true;
+    el.screens.game.classList.add('is-story');   // 이야기 동안은 말풍선을 숨겨요
+    currentMission = Story;                      // '처음으로'를 누르면 멈출 수 있게
+    Story.play(ch, function () {
+      currentMission = null;
+      Input.clear();                             // 이야기의 버튼 약속을 지워요
+      beginMission(ch);
+    });
+    return;
+  }
+
+  beginMission(ch);
+}
+
+/* 이번 장의 미션 게임을 시작해요 */
+function beginMission(ch) {
+  el.screens.game.classList.remove('is-story');  // 말풍선을 다시 보여줘요
+
   // 이번 장의 미션 게임을 찾아봐요
   const mission = MISSIONS[ch.id];
 
@@ -376,6 +398,8 @@ function clearChapter() {
 // 게임을 처음부터 시작해요
 function startGame() {
   cancelCaughtTimer();
+  game.seenStory = {};         // 새 판이니까 이야기를 처음부터 다시 봐요
+  el.screens.game.classList.remove('is-story');
   game.score = 0;
   game.chapterIndex = 0;
   game.life = MAX_LIFE;

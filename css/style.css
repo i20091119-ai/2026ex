@@ -2439,3 +2439,130 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   width: 100%;                                   /* 오래된 브라우저용 */
   width: min(100%, 860px, calc((100cqh - 108px) * 21 / 13));
 }
+
+/* ==================================================================
+   장 사이 이야기 (대사를 한 줄씩 넘기기)
+   ================================================================== */
+
+/* 이야기 동안은 아래 말풍선을 숨겨요 (이야기 상자가 그 일을 해요).
+   그 자리만큼 이야기 화면이 넓어져요. */
+#screen-game.is-story #bubble { display: none; }
+
+.story {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 2vh, 18px);
+  padding: clamp(12px, 2.4vw, 26px);
+  cursor: pointer;
+  /* 위에서 아래로 은은하게 어두워지는 배경 */
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+/* ---------- 맨 위 : 장 제목 ----------
+   제목이 맨 위 자리를 차지하고, 그 아래 남은 곳에 사람이 서요.
+   그래서 사람이 커져도 제목을 가리지 않아요. */
+.story-chapter {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.story-chapter span {
+  font-size: clamp(10px, 1.5vw, 13px);
+  letter-spacing: 6px;
+  color: var(--ochre);
+}
+
+.story-chapter b {
+  font-size: clamp(18px, 3.4vw, 30px);
+  letter-spacing: 6px;
+  font-weight: 800;
+}
+
+/* ---------- 가운데 : 말하는 사람 ---------- */
+.story-cast {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.story-cast .fig {
+  /* 남은 높이에 맞춰 크기가 정해져요 (cqh = 이 칸 높이의 1%) */
+  font-size: min(clamp(56px, 11vw, 118px), 62cqh);
+  animation: storyIn 0.35s ease;
+}
+
+.story-cast { container-type: size; width: 100%; }
+
+/* 일본 헌병대장·경찰이 말할 때는 대사 상자 줄이 더 붉어져요 */
+.story.is-enemy .story-name { color: var(--ink); }
+.story.is-enemy .story-box { border-left-color: var(--ink); }
+
+/* 해설일 때는 사람 자리를 비워요 */
+.story.is-narr .story-cast { flex: 1; }
+
+/* ---------- 아래 : 대사 상자 ---------- */
+.story-box {
+  width: 100%;
+  max-width: 760px;
+  padding: clamp(12px, 2vh, 18px) clamp(14px, 2.4vw, 24px);
+  background: var(--paper);
+  color: var(--ink);
+  border-left: 5px solid var(--flag-red);
+  border-radius: var(--round);
+}
+
+.story-name {
+  font-size: clamp(11px, 1.7vw, 14px);
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--flag-red);
+  min-height: 1.2em;
+  margin-bottom: 4px;
+}
+
+.story-text {
+  font-size: clamp(14px, 2.4vw, 20px);
+  font-weight: 700;
+  line-height: 1.6;
+  min-height: 3.2em;                 /* 두 줄 자리를 미리 잡아서 상자가 출렁이지 않게 */
+}
+
+/* 해설은 이름 없이, 조금 차분하게 */
+.story.is-narr .story-box { border-left-color: var(--ochre); }
+.story.is-narr .story-text { font-weight: 500; font-style: italic; }
+
+.story-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: clamp(9px, 1.3vw, 11px);
+  color: rgba(13, 17, 40, 0.55);
+}
+
+.story-keys { margin-left: auto; }
+
+/* ▼ 다음으로 넘어갈 수 있다는 표시 (깜빡여요) */
+.story-more {
+  color: var(--flag-red);
+  opacity: 0;
+}
+
+.story-more.is-on { animation: blink 1s ease-in-out infinite; }
+
+/* 움직임을 줄이고 싶은 사람을 위해 깜빡임을 꺼요 */
+@media (prefers-reduced-motion: reduce) {
+  .story-more.is-on { animation: none; opacity: 1; }
+  .story-cast .fig { animation: none; }
+}
