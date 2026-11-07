@@ -68,6 +68,10 @@ const Input = (function () {
   /* true 이면 게임 조작이 잠깐 멈춰요 (덮개 화면이 열렸을 때) */
   let blocked = false;
 
+  /* true 이면 5~8번까지 포함해서 모든 동작을 잠깐 꺼요.
+     (조종기 맞추는 중에 누른 버튼이 '처음으로' 같은 일을 하면 안 되니까요) */
+  let suspended = false;
+
   /* ================================================================
      ★ 조종기 맞추기 (직접 배우기)
 
@@ -156,12 +160,20 @@ const Input = (function () {
 
   /* "이 동작이 일어났어요!" 하고 부탁받은 사람들에게 알려줘요 */
   function fire(act) {
-    // 먼저 항상 되어야 하는 것들(5~8번 버튼)에게 알려요
+    if (suspended) return;     // 조종기 맞추는 중이면 아무 일도 안 해요
+
+    /* ★ 버튼을 누른 '그 순간'에 덮개 창이 열려 있었는지 먼저 기억해둬요.
+       4번으로 '이어서 하기'를 눌러 창이 닫히자마자
+       같은 4번이 게임 안에서도 눌려버리면 안 되니까요.
+       (예: 2장 퀴즈 답이 나도 모르게 제출되는 일) */
+    const wasBlocked = blocked;
+
+    // 먼저 항상 되어야 하는 것들(5~8번 버튼, 메뉴 고르기)에게 알려요
     if (systemListeners[act]) {
       systemListeners[act].forEach(function (fn) { fn(); });
     }
-    // 덮개 화면(멈추기·도움말)이 열려 있으면 게임 조작은 잠깐 쉬어요
-    if (blocked) return;
+    // 덮개 화면(멈추기·도움말)이 열려 있었으면 게임 조작은 쉬어요
+    if (wasBlocked || blocked) return;
 
     // 그다음 지금 장에서 부탁한 것들에게 알려요
     const list = listeners[act];
@@ -497,6 +509,9 @@ const Input = (function () {
     /* 게임 조작을 잠깐 멈추거나 다시 켜요.
        (5~8번 버튼은 멈춰도 계속 눌러서 쓸 수 있어요) */
     setBlocked: function (v) { blocked = v; },
+
+    /* 모든 동작을 잠깐 끄거나 다시 켜요 (조종기 맞출 때 써요) */
+    setSuspended: function (v) { suspended = v; },
 
     /* 부탁을 취소해요 (장이 바뀔 때 정리하려고 만들었어요)
        단, onSystem 으로 건 부탁은 지워지지 않아요! */

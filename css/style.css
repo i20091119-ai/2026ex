@@ -2378,3 +2378,64 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 }
 
 .m4-talk.is-bad { color: var(--flag-red); font-weight: 700; }
+
+/* ==================================================================
+   조종기로 고르는 메뉴 : 지금 고른 버튼 표시
+   ★ 스틱으로 고르면 이 놋쇠색 테두리가 옮겨 다녀요.
+   ================================================================== */
+.is-focus {
+  outline: 3px solid var(--ochre);
+  outline-offset: 4px;
+}
+
+/* 큰 버튼을 고르면 살짝 밝아져요 */
+.big-btn.is-focus { background: #d9b573; }
+
+/* 작은 버튼을 고르면 놋쇠색 글씨가 돼요 */
+.small-btn.is-focus,
+.round-btn.is-focus,
+.corner-test.is-focus {
+  color: var(--ochre);
+  border-color: var(--ochre);
+}
+
+/* ▶ 시작 버튼을 고르면 놋쇠색으로 채워져요 */
+.play-btn.is-focus { background: var(--ochre); }
+
+/* 키보드 Tab 으로 옮길 때도 보이게 해요 (접근성) */
+button:focus-visible {
+  outline: 3px solid var(--ochre);
+  outline-offset: 4px;
+}
+
+/* 창 아래 '스틱으로 고르고 · 4번으로 결정' 안내 */
+.menu-tip {
+  flex-basis: 100%;
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--paper-dim);
+  text-align: center;
+}
+
+/* ==================================================================
+   말풍선 왼쪽 캐릭터가 안 보이던 문제
+   한지색 바탕 위에 한지색 실루엣이라 안 보였어요.
+   말풍선 안에서는 먹색으로 그려요.
+   ================================================================== */
+#bubble-face .fig { color: #2a3150; }
+body.liberation #bubble-face .fig { color: #e6dcc6; }
+
+/* ==================================================================
+   작은 모니터에서 3장 미로가 찌그러지던 문제
+   ★ 미로는 가로:세로가 21:13 이에요.
+     높이가 모자라면 그 높이에 맞춰 가로도 함께 줄어들게 해요.
+     (cqh 는 '이 상자 높이의 1%' 라는 뜻이에요)
+   ================================================================== */
+.m3-scene { container-type: size; }
+
+.m3-maze {
+  flex: none;
+  width: 100%;                                   /* 오래된 브라우저용 */
+  width: min(100%, 860px, calc((100cqh - 108px) * 21 / 13));
+}

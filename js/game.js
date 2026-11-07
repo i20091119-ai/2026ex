@@ -118,7 +118,78 @@ function showScreen(name) {
   }
   // 그리고 원하는 화면 하나만 보여줘요
   el.screens[name].classList.add('is-on');
+  refreshMenu();
 }
+
+
+/* ==================================================================
+   4-2. 조종기로 고르는 메뉴
+   ★ 마우스가 없는 아케이드에서도 모든 버튼을 누를 수 있게 해요.
+     스틱으로 고르면 놋쇠색 테두리가 옮겨 다니고,
+     4번(다음) 버튼을 누르면 그 버튼이 눌려요.
+   ================================================================== */
+const Menu = {
+  items: [],       // 지금 고를 수 있는 버튼들
+  index: 0,        // 지금 고르고 있는 버튼 번호
+  locked: false,   // true 면 잠깐 고를 수 없어요 (조종기 맞추는 중)
+  key: null,       // 지금 메뉴의 이름 ('title', 'end' ...)
+  memory: {},      // 화면마다 마지막으로 고른 자리를 기억해둬요
+
+  /* 고를 버튼들을 새로 정해요.
+     key 를 주면, 그 화면에서 마지막으로 고르던 자리로 돌아가요.
+     (창을 열었다 닫아도 고르던 자리가 그대로예요) */
+  set: function (buttons, key) {
+    if (this.key) this.memory[this.key] = this.index;   // 떠나기 전에 기억해요
+    this.items.forEach(function (b) { b.classList.remove('is-focus'); });
+    this.items = buttons.filter(Boolean);
+    this.key = key || null;
+    const saved = key ? this.memory[key] : 0;
+    this.index = (saved && saved < this.items.length) ? saved : 0;
+    this.draw();
+  },
+
+  /* 고른 버튼에 놋쇠색 테두리를 그려요 */
+  draw: function () {
+    const now = this.index;
+    this.items.forEach(function (b, i) { b.classList.toggle('is-focus', i === now); });
+  },
+
+  /* 스틱으로 옆 버튼으로 옮겨가요 */
+  move: function (step) {
+    if (this.locked || this.items.length < 2) return;
+    this.index = (this.index + step + this.items.length) % this.items.length;
+    this.draw();
+    Sound.pok();
+  },
+
+  /* 4번 버튼 : 고른 버튼을 눌러요 */
+  press: function () {
+    if (this.locked || this.items.length === 0) return;
+    this.items[this.index].click();
+  },
+};
+
+/* 지금 보이는 화면에 맞춰서 고를 버튼들을 정해요 */
+function refreshMenu() {
+  if (typeof overlayOpen !== 'undefined' && overlayOpen) {
+    Menu.set(Array.prototype.slice.call(overlay.actions.querySelectorAll('button')));
+  } else if (el.screens.title.classList.contains('is-on')) {
+    Menu.set([el.btnStart,
+              document.getElementById('btn-info'),
+              document.getElementById('btn-pad-test')], 'title');
+  } else if (el.screens.end.classList.contains('is-on')) {
+    Menu.set([el.btnRetry], 'end');
+  } else {
+    Menu.set([]);   // 게임 중에는 스틱이 주인공을 움직여요
+  }
+}
+
+/* 스틱과 4번 버튼을 메뉴에 연결해요 (장이 바뀌어도 지워지지 않아요) */
+Input.onSystem('dir:left',  function () { Menu.move(-1); });
+Input.onSystem('dir:up',    function () { Menu.move(-1); });
+Input.onSystem('dir:right', function () { Menu.move(1); });
+Input.onSystem('dir:down',  function () { Menu.move(1); });
+Input.onSystem('next',      function () { Menu.press(); });
 
 
 /* ------------------------------------------------------------------
@@ -193,7 +264,23 @@ function showCaughtMessage(reason) {
     '</div>';
 
   // 2초 뒤에 같은 장을 다시 시작해요
-  setTimeout(startChapter, 2000);
+  // ★ 타이머 번호를 기억해둬요. 그 사이에 '처음으로'를 누르면
+  //   이 타이머를 꼭 꺼야 해요! (안 끄면 시작 화면 뒤에서
+  //   미션이 몰래 다시 켜져서 조종기가 안 먹어요)
+  cancelCaughtTimer();
+  caughtTimer = setTimeout(function () {
+    caughtTimer = null;
+    startChapter();
+  }, 2000);
+}
+
+/* '들켰다!' 뒤에 장을 다시 켜는 타이머예요 */
+let caughtTimer = null;
+
+/* 그 타이머를 꺼요 */
+function cancelCaughtTimer() {
+  if (caughtTimer) clearTimeout(caughtTimer);
+  caughtTimer = null;
 }
 
 
@@ -288,6 +375,7 @@ function clearChapter() {
 
 // 게임을 처음부터 시작해요
 function startGame() {
+  cancelCaughtTimer();
   game.score = 0;
   game.chapterIndex = 0;
   game.life = MAX_LIFE;
@@ -301,6 +389,7 @@ function startGame() {
 
 // 모든 임무를 마쳤을 때 (이겼어요!)
 function finishGame() {
+  cancelCaughtTimer();
   stopMission();
   Input.clear();
   Sound.fanfare();            // 짜잔! 축하 소리
@@ -309,10 +398,12 @@ function finishGame() {
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
   el.endScore.textContent = game.score;
   showScreen('end');
+  Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
 }
 
 // 하트를 모두 잃었을 때 (졌어요)
 function gameOver(reason) {
+  cancelCaughtTimer();
   stopMission();
   Input.clear();
   Sound.stopBgm();            // 배경음악을 멈춰요
@@ -323,6 +414,7 @@ function gameOver(reason) {
                               ' 하지만 포기하지 말아요. 다시 도전!';
   el.endScore.textContent = game.score;
   showScreen('end');
+  Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
 }
 
 
@@ -400,10 +492,19 @@ function openOverlay(emoji, title, bodyHtml, buttons) {
     overlay.actions.appendChild(btn);
   });
 
+  // 버튼이 두 개 이상이면 고르는 방법을 알려줘요
+  if ((buttons || []).length > 1) {
+    const tip = document.createElement('p');
+    tip.className = 'menu-tip';
+    tip.textContent = '스틱으로 고르고 · 4번으로 결정';
+    overlay.actions.appendChild(tip);
+  }
+
   overlay.box.classList.add('is-on');
   overlayOpen = true;
   game.paused = true;          // 게임을 잠깐 멈춰요
   Input.setBlocked(true);      // 게임 조작도 잠깐 쉬어요
+  refreshMenu();               // 조종기로 고를 버튼들을 새로 정해요
 }
 
 /* 덮개 창을 닫아요 */
@@ -412,6 +513,7 @@ function closeOverlay() {
   overlayOpen = false;
   game.paused = false;         // 다시 게임이 움직여요
   Input.setBlocked(false);     // 게임 조작도 다시 켜요
+  refreshMenu();               // 원래 화면의 버튼들로 돌아가요
 }
 
 
@@ -472,12 +574,14 @@ Input.onSystem('zoom',   toggleZoom);     // 8번
 
 // 시작 화면으로 돌아가요
 function goTitle() {
+  cancelCaughtTimer();         // 숨어 있던 '다시 시작' 타이머를 꺼요
   stopMission();
   Input.clear();
   document.body.classList.remove('liberation');
+  Menu.memory.title = 0;       // 시작 화면에 오면 ▶ 시작을 골라둬요
   showScreen('title');
-  // 시작 화면에서는 어느 버튼을 눌러도 게임이 시작돼요
-  Input.on('next', startGame);
+  // 1번 버튼은 어디를 고르고 있든 바로 게임을 시작해요.
+  // 4번 버튼은 지금 고른 것(처음엔 ▶ 시작)을 눌러요. (아래 '메뉴' 참고)
   Input.on('jump', startGame);
 }
 
@@ -559,6 +663,8 @@ closeOverlay = function () {
   padTestTimer = null;
   clearInterval(setupTimer);
   setupTimer = null;
+  Input.setSuspended(false);   // 맞추다 말고 닫아도 조작이 다시 켜져요
+  Menu.locked = false;
   _closeOverlay();
 };
 
@@ -666,12 +772,16 @@ let setupTimer = null;
 function startSetup() {
   setupIndex = 0;
   setupMap = { dirs: {}, acts: {} };
+  // 맞추는 동안 아무 버튼이나 누르게 되니까,
+  // 그 버튼이 '처음으로' 같은 일을 해버리지 않게 잠깐 꺼둬요
+  Input.setSuspended(true);
   openOverlay('설정', '조종기 맞추기',
     '<div id="setup-body" class="setup"></div>',
     [
       { label: '이 단계 건너뛰기', run: skipSetupStep },
       { label: '그만두기', run: stopSetup },
     ]);
+  Menu.locked = true;          // 메뉴도 잠깐 잠가요
   nextSetupStep();
 }
 
@@ -789,6 +899,8 @@ const SETUP_NAMES = {
 /* 다 맞췄어요! */
 function finishSetup() {
   clearInterval(setupTimer);
+  Input.setSuspended(false);
+  Menu.locked = false;
   Input.saveMap(setupMap);
   Sound.fanfare();
 
@@ -812,6 +924,8 @@ function finishSetup() {
 /* 도중에 그만둬요 */
 function stopSetup() {
   clearInterval(setupTimer);
+  Input.setSuspended(false);
+  Menu.locked = false;
   setupTimer = null;
   closeOverlay();
 }
