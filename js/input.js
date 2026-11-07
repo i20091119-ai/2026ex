@@ -424,8 +424,14 @@ const Input = (function () {
            DP 로 두면  → 십자 버튼(12~15) 또는 해트 축
          어느 쪽으로 두어도 되게 전부 확인해요! */
 
-      const x = biggest(pad.axes[0], pad.axes[2]);
-      const y = biggest(pad.axes[1], pad.axes[3]);
+      /* ★ 스틱 값은 '가만히 있을 때의 값'에서 얼마나 벗어났는지로 봐요.
+           DINPUT 모드에서는 손을 안 대도 -1 에 머물러 있는 축이 있어서
+           (예: 트리거), 그냥 값을 보면 계속 '위'를 누른 것처럼 돼요.
+
+         ★ DINPUT + RS 로 두면 오른쪽 스틱의 세로가 5번 축으로 와요.
+           (XINPUT 에서는 3번 축) 그래서 5번 축도 함께 봐요. */
+      const x = biggest(axisMove(pad, 0), axisMove(pad, 2));
+      const y = biggest(axisMove(pad, 1), axisMove(pad, 3), axisMove(pad, 5));
 
       /* 십자 버튼 (XINPUT 모드에서 DP 로 두었을 때) */
       const dpad = {
@@ -445,6 +451,12 @@ const Input = (function () {
            그때를 '가운데'로 다시 기억해두면,
            게임을 켤 때 스틱이 밀려 있었어도 저절로 고쳐져요! */
         if (v !== undefined && Math.abs(v) > 1.05) padRest[a] = v;
+
+        /* 해트(십자키)는 손을 뗐을 때 -1~1 바깥의 값(예: 3.29)을 가져요.
+           가운데 값이 0 근처인 축은 스틱이니까 해트로 읽지 않아요.
+           (안 그러면 DINPUT+RS 의 5번 축을 해트로 잘못 읽어서
+            '아래'를 밀었는데 '왼쪽 위'로 가버려요) */
+        if (!(Math.abs(padRest[a]) > 1.05)) continue;
 
         readHat(v, padRest[a]).forEach(function (name) {
           hat[name] = true;
@@ -475,10 +487,22 @@ const Input = (function () {
 
   /* 두 숫자 중에 0에서 더 많이 벗어난 쪽을 골라줘요.
      (스틱을 LS 로 두든 RS 로 두든 움직인 쪽 값을 쓰려고요) */
-  function biggest(a, b) {
-    a = a || 0;
-    b = b || 0;
-    return Math.abs(a) >= Math.abs(b) ? a : b;
+  function biggest() {
+    let best = 0;
+    for (let i = 0; i < arguments.length; i++) {
+      const v = arguments[i] || 0;
+      if (Math.abs(v) > Math.abs(best)) best = v;
+    }
+    return best;
+  }
+
+  /* 축 하나가 '가만히 있을 때'보다 얼마나 움직였는지 알려줘요.
+     -1~1 을 벗어난 값(해트의 '안 누름')은 움직임이 아니에요. */
+  function axisMove(pad, i) {
+    const v = pad.axes[i];
+    if (v === undefined || Math.abs(v) > 1.05) return 0;
+    const rest = (padRest && Math.abs(padRest[i]) <= 1.05) ? padRest[i] : 0;
+    return v - rest;
   }
 
   function setPadDir(name, now) {
