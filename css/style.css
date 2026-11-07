@@ -2215,6 +2215,36 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
   margin-bottom: 8px;
 }
 
+.setup-ask b { color: var(--ochre); }
+
+/* '게임에서 1번 점프 버튼이 돼요' 처럼 덧붙이는 글 */
+.setup-sub {
+  font-size: 13px;
+  color: var(--paper-dim);
+  margin-bottom: 8px;
+}
+
+/* 새 조종기라서 저절로 열렸을 때 맨 위에 나와요 */
+.setup-intro {
+  font-size: 13px;
+  color: var(--paper);
+  background: rgba(200, 162, 90, 0.14);
+  border: 1px solid var(--ochre);
+  border-radius: var(--round);
+  padding: 7px 10px;
+  margin-bottom: 12px;
+}
+
+/* '이미 쓴 버튼이에요' 경고 */
+.setup-note {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red-lit);
+  margin-bottom: 8px;
+}
+
+.setup-done.is-skip span:first-child { color: var(--paper-dim); }
+
 /* '기다리는 중' 이 깜빡여요 */
 .setup-wait {
   font-size: 12px;
@@ -2250,7 +2280,7 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 
 .setup-done span:first-child {
   flex: none;
-  width: 34px;
+  min-width: 46px;
   color: var(--ochre);
   font-weight: 800;
 }

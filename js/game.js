@@ -775,30 +775,36 @@ document.getElementById('pad-device').addEventListener('click', openPadTest);
      이렇게 하면 어떤 조종기든 무조건 작동해요!
    ================================================================== */
 
-/* 물어볼 순서예요. 방향 4개 + 버튼 8개 */
+/* 물어볼 순서예요. 방향 4개 + 버튼 8개
+   ★ 버튼은 '조종기에 적힌 이름'으로 물어봐요. (A/×, B/○ …)
+     그러면 화면 안내판에 적힌 이름과 진짜 버튼이 꼭 맞아요! */
 const SETUP_STEPS = [
-  { kind: 'dir', key: 'up',    ask: '스틱을 위로 미세요',    icon: '▲' },
-  { kind: 'dir', key: 'down',  ask: '스틱을 아래로 미세요',  icon: '▼' },
-  { kind: 'dir', key: 'left',  ask: '스틱을 왼쪽으로 미세요', icon: '◀' },
-  { kind: 'dir', key: 'right', ask: '스틱을 오른쪽으로 미세요', icon: '▶' },
-  { kind: 'act', key: 'jump',   ask: '「점프」로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'talk',   ask: '「말걸기」로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'attack', ask: '「공격」으로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'next',   ask: '「다음」으로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'volume', ask: '「소리 크기」로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'pause',  ask: '「잠시 멈춤」으로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'home',   ask: '「처음으로」로 쓸 버튼을 누르세요' },
-  { kind: 'act', key: 'zoom',   ask: '「글씨 크기」로 쓸 버튼을 누르세요' },
-];
+  { kind: 'dir', key: 'up',    ask: '스틱을 <b>위로</b> 미세요',    icon: '▲' },
+  { kind: 'dir', key: 'down',  ask: '스틱을 <b>아래로</b> 미세요',  icon: '▼' },
+  { kind: 'dir', key: 'left',  ask: '스틱을 <b>왼쪽으로</b> 미세요', icon: '◀' },
+  { kind: 'dir', key: 'right', ask: '스틱을 <b>오른쪽으로</b> 미세요', icon: '▶' },
+].concat(Input.buttons.map(function (b) {
+  return {
+    kind: 'act',
+    key: b.act,
+    icon: b.arcade,
+    ask: '조종기의 <b>' + b.arcade + '</b> 버튼을 누르세요',
+    sub: '게임에서 ' + b.no + '번 「' + b.label + '」 버튼이 돼요',
+  };
+}));
 
 let setupIndex = 0;
 let setupMap = null;
 let setupBase = null;      // 누르기 직전의 조종기 상태 (사진)
 let setupTimer = null;
+let setupAuto = false;     // 새 조종기라서 저절로 시작했는지
+let setupNote = '';        // '이미 쓴 버튼이에요' 같은 알림
 
 /* 설정을 시작해요 */
-function startSetup() {
+function startSetup(auto) {
   setupIndex = 0;
+  setupAuto = !!auto;
+  setupNote = '';
   setupMap = { dirs: {}, acts: {} };
   // 맞추는 동안 아무 버튼이나 누르게 되니까,
   // 그 버튼이 '처음으로' 같은 일을 해버리지 않게 잠깐 꺼둬요
@@ -810,6 +816,9 @@ function startSetup() {
       { label: '그만두기', run: stopSetup },
     ]);
   Menu.locked = true;          // 메뉴도 잠깐 잠가요
+  // 맞추는 동안은 조종기 버튼이 '배우기'에만 쓰여요 → 아래 두 버튼은 마우스로 눌러요
+  const tip = document.querySelector('#overlay .menu-tip');
+  if (tip) tip.textContent = '아래 두 버튼은 마우스로 눌러요';
   nextSetupStep();
 }
 
@@ -833,20 +842,57 @@ function nextSetupStep() {
 function watchSetup() {
   if (!setupBase) { setupBase = Input.snapshot(); return; }
 
-  const found = Input.findChange(setupBase);
+  const step = SETUP_STEPS[setupIndex];
+  const found = Input.findChange(setupBase, step.kind);
   if (!found) return;
 
-  const step = SETUP_STEPS[setupIndex];
+  /* 이미 다른 기능에 쓴 버튼이면 받지 않아요.
+     (같은 버튼에 기능 두 개가 붙으면 엉뚱한 일이 생기니까요) */
+  const used = whoUses(found);
+  if (used) {
+    setupNote = '그 버튼은 이미 「' + used + '」에 썼어요. 다른 버튼을 눌러 주세요.';
+    Sound.alert();
+    drawSetup();
+    setupBase = null;                       // 손을 뗀 뒤 다시 사진 찍어요
+    clearInterval(setupTimer);
+    setTimeout(function () {
+      setupBase = Input.snapshot();
+      setupTimer = setInterval(watchSetup, 60);
+    }, 450);
+    return;
+  }
+
   if (step.kind === 'dir') setupMap.dirs[step.key] = found;
   else                     setupMap.acts[step.key] = found;
 
+  setupNote = '';
   Sound.pok();
   setupIndex += 1;
   nextSetupStep();
 }
 
+/* 이 신호를 이미 다른 단계에서 썼는지 찾아요. 썼으면 그 이름을 알려줘요 */
+function sameSignal(a, b) {
+  if (!a || !b || a.type !== b.type || a.index !== b.index) return false;
+  if (a.type === 'button') return true;
+  // 같은 축이라도 반대쪽(위↔아래)이면 다른 신호예요
+  return Math.abs(a.value - b.value) < 0.2;
+}
+
+function whoUses(found) {
+  for (let i = 0; i < setupIndex; i++) {
+    const st = SETUP_STEPS[i];
+    const rule = (st.kind === 'dir') ? setupMap.dirs[st.key] : setupMap.acts[st.key];
+    if (sameSignal(rule, found)) {
+      return st.kind === 'dir' ? '스틱 ' + st.icon : st.icon + ' 버튼';
+    }
+  }
+  return null;
+}
+
 /* 이 단계를 건너뛰어요 (기본값을 그대로 써요) */
 function skipSetupStep() {
+  setupNote = '';
   setupIndex += 1;
   nextSetupStep();
 }
@@ -861,8 +907,13 @@ function drawSetup() {
   /* 무슨 일이 있어도 '지금 무엇을 해야 하는지'는 꼭 보이게 해요.
      아래에서 문제가 생겨도 이 글은 이미 화면에 있어요. */
   let html =
+    (setupAuto && setupIndex === 0
+      ? '<p class="setup-intro">처음 꽂은 조종기예요! 한 번만 맞추면 정확하게 움직여요.</p>'
+      : '') +
     '<p class="setup-count">' + (setupIndex + 1) + ' / ' + SETUP_STEPS.length + '</p>' +
-    '<p class="setup-ask">' + step.ask + '</p>';
+    '<p class="setup-ask">' + step.ask + '</p>' +
+    (step.sub ? '<p class="setup-sub">' + step.sub + '</p>' : '') +
+    (setupNote ? '<p class="setup-note">' + setupNote + '</p>' : '');
 
   try {
     const pads = Input.readPads();
@@ -877,9 +928,9 @@ function drawSetup() {
       for (let i = 0; i < setupIndex; i++) {
         const st = SETUP_STEPS[i];
         const rule = (st.kind === 'dir') ? setupMap.dirs[st.key] : setupMap.acts[st.key];
-        done += '<div class="setup-done">' +
-                  '<span>' + (st.icon || SETUP_NAMES[st.key]) + '</span>' +
-                  '<span>' + (rule ? rule.label : '건너뜀') + '</span>' +
+        done += '<div class="setup-done' + (rule ? '' : ' is-skip') + '">' +
+                  '<span>' + st.icon + '</span>' +
+                  '<span>' + (rule ? '✔' : '건너뜀') + '</span>' +
                 '</div>';
       }
       if (done) html += '<div class="setup-list">' + done + '</div>';
@@ -918,12 +969,6 @@ function padMissingHtml() {
   return html;
 }
 
-/* 동작 이름을 한글로 보여주려고 만든 표예요 */
-const SETUP_NAMES = {
-  jump: '점프', talk: '말걸기', attack: '공격', next: '다음',
-  volume: '소리', pause: '멈춤', home: '처음', zoom: '글씨',
-};
-
 /* 다 맞췄어요! */
 function finishSetup() {
   clearInterval(setupTimer);
@@ -935,9 +980,10 @@ function finishSetup() {
   let list = '';
   SETUP_STEPS.forEach(function (s) {
     const rule = (s.kind === 'dir') ? setupMap.dirs[s.key] : setupMap.acts[s.key];
-    list += '<div class="setup-done">' +
-              '<span>' + (s.icon || SETUP_NAMES[s.key]) + '</span>' +
-              '<span>' + (rule ? rule.label : '건너뜀') + '</span>' +
+    const b = Input.buttons.find(function (x) { return x.act === s.key; });
+    list += '<div class="setup-done' + (rule ? '' : ' is-skip') + '">' +
+              '<span>' + s.icon + '</span>' +
+              '<span>' + (b ? b.no + '번 ' + b.label : '스틱') + (rule ? ' ✔' : ' (건너뜀)') + '</span>' +
             '</div>';
   });
 
@@ -949,8 +995,18 @@ function finishSetup() {
     [{ label: '좋아요', run: closeOverlay, big: true }]);
 }
 
-/* 도중에 그만둬요 */
+/* 처음 보는 조종기가 꽂히면 맞추기를 저절로 시작해요.
+   ★ 조종기는 회사·스위치마다 버튼 신호 순서가 달라서
+     짐작으로는 버튼이 엉뚱한 기능을 할 수 있어요.
+     한 번 맞추면 그 조종기 이름으로 저장돼서 다음부터는 안 물어요. */
+Input.setNewPadHook(function () {
+  if (overlayOpen && document.getElementById('setup-body')) return;   // 이미 맞추는 중
+  startSetup(true);
+});
+
+/* 도중에 그만둬요 (이번에 켜는 동안은 다시 묻지 않아요) */
 function stopSetup() {
+  Input.dismissSetup();
   clearInterval(setupTimer);
   Input.setSuspended(false);
   Menu.locked = false;

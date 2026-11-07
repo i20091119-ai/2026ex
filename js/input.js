@@ -27,7 +27,7 @@ const Input = (function () {
      뒤쪽 J/K/L 같은 키는 노트북으로 연습할 때 쓰라고 넣었어요.
      ---------------------------------------------------------------- */
   const BUTTONS = [
-    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A/X',   keys: ['ControlLeft', 'KeyJ'] },
+    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A/×',   keys: ['ControlLeft', 'KeyJ'] },
     { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B/○',   keys: ['AltLeft', 'KeyK'] },
     { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X/□',   keys: ['Space', 'KeyL'] },
     { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y/△',   keys: ['ShiftLeft', 'Enter'] },
@@ -86,8 +86,11 @@ const Input = (function () {
 
      기억한 내용은 브라우저에 저장돼서 다음에 켜도 그대로예요.
      ================================================================ */
-  const MAP_KEY = 'dokrip.padmap';   // 저장할 때 쓰는 이름표
-  let padMap = null;                 // { dirs:{up:규칙,...}, acts:{jump:규칙,...} }
+  const MAP_KEY = 'dokrip.padmaps';  // 저장할 때 쓰는 이름표
+  let maps = {};                     // 조종기 이름마다 맞춘 설정 { '조종기이름': {dirs, acts} }
+  let padMap = null;                 // 지금 꽂힌 조종기의 설정
+  let currentPadId = null;           // 지금 꽂힌 조종기의 이름
+  const dismissed = {};              // '나중에' 를 누른 조종기 (이번에 켜는 동안만)
 
   /* ★ 조종기 목록을 안전하게 가져와요.
 
@@ -112,14 +115,22 @@ const Input = (function () {
     try { return window.self !== window.top; } catch (e) { return true; }
   }
 
-  /* 저장해둔 설정을 불러와요 */
+  /* 저장해둔 설정을 불러와요.
+     ★ 예전 버전은 조종기 구분 없이 하나만 저장했는데,
+       그때 저장된 설정이 지금 조종기와 안 맞아서 버튼이 엉뚱하게
+       동작할 수 있어요. 그래서 예전 설정은 지워버려요. */
   function loadMap() {
     try {
+      localStorage.removeItem('dokrip.padmap');          // 예전 설정 지우기
       const raw = localStorage.getItem(MAP_KEY);
-      if (raw) padMap = JSON.parse(raw);
-    } catch (e) { padMap = null; }
+      maps = raw ? JSON.parse(raw) : {};
+    } catch (e) { maps = {}; }
   }
   loadMap();
+
+  function storeMaps() {
+    try { localStorage.setItem(MAP_KEY, JSON.stringify(maps)); } catch (e) {}
+  }
 
   /* 축(스틱·십자키) 신호가 배운 것과 같은지 확인해요 */
   function axisMatches(rule, axes) {
@@ -130,8 +141,10 @@ const Input = (function () {
     // 가만히 있을 때와 거의 같으면 안 누른 거예요.
     // (손을 안 대도 -1 에 머무는 축을 '누름'으로 잘못 배워 저장했더라도
     //  방향이 계속 눌린 채로 굳지 않게 해줘요)
-    const rest = (padRest && Math.abs(padRest[rule.index]) <= 1.05) ? padRest[rule.index] : 0;
-    if (Math.abs(v - rest) < 0.4) return false;
+    //  ※ 해트(십자키)는 가만히 있을 때 3.29 처럼 바깥 값이라 이 검사를 안 해요.
+    //    (안 그러면 해트의 '아래' 값 0.14 를 못 알아봐요)
+    const rest = padRest ? padRest[rule.index] : 0;
+    if (!(Math.abs(rest) > 1.05) && Math.abs(v - (rest || 0)) < 0.4) return false;
 
     if (Math.abs(rule.value) >= 0.85) {
       // 끝까지 기울인 신호 → 방향만 같으면 인정해요
@@ -242,12 +255,13 @@ const Input = (function () {
 
     box.innerHTML = BUTTONS.map(function (b) {
       // 직접 맞춘 설정이 있으면 그걸 보여주고, 없으면 기본 이름을 보여줘요
-      const learned = padMap && padMap.acts[b.act] ? padMap.acts[b.act].label : null;
+      // 맞춘 버튼은 놋쇠색 밑줄이 생겨요. 이름은 조종기에 적힌 그대로 보여줘요.
+      const learned = !!(padMap && padMap.acts[b.act]);
       return (
         '<div class="pad-btn' + (learned ? ' is-learned' : '') + '" data-act="' + b.act + '">' +
           '<span class="pad-no">' + b.no + '</span>' +
           '<span class="pad-name">' + b.label + '</span>' +
-          '<span class="pad-arcade">' + (learned || b.arcade) + '</span>' +
+          '<span class="pad-arcade">' + b.arcade + '</span>' +
         '</div>'
       );
     }).join('');
@@ -347,6 +361,14 @@ const Input = (function () {
      '움직였다'고 알 수 있어요. (조종기마다 기본값이 달라서 필요해요) */
   let padRest = null;
 
+  /* 버튼 기능(트리거 등)이 쓰기로 맞춘 축이에요.
+     이 축은 방향(스틱)으로 읽지 않아요.
+     (안 그러면 LT 를 눌렀는데 주인공이 아래로 걸어가요) */
+  let claimedAxes = {};
+
+  /* 처음 보는 조종기가 꽂혔을 때 부를 함수 (game.js 가 정해줘요) */
+  let newPadHook = null;
+
   /* 십자키(해트) 값을 방향으로 바꾸는 표예요.
      DINPUT 모드에서는 십자키가 버튼이 아니라
      이런 숫자 하나로 들어와요.
@@ -426,11 +448,43 @@ const Input = (function () {
            (XINPUT 이면 순서 그대로) */
       const order = (pad.mapping === 'standard') ? XINPUT_ORDER : DINPUT_ORDER;
 
+      /* 이 조종기에 맞춘 설정이 있으면 꺼내와요 */
+      if (pad.id !== currentPadId) {
+        currentPadId = pad.id;
+        padMap = maps[pad.id] || null;
+        drawGuide();
+        // 처음 보는 조종기라면 게임에게 알려줘요 → 맞추기 화면이 저절로 떠요
+        if (newPadHook && Input.needsSetup()) newPadHook();
+      }
+
+      /* ★ 맞춘 설정이 있으면 '그것만' 써요.
+         (전에는 맞춘 설정과 기본 순서를 둘 다 써서, 버튼 하나를 누르면
+          기능 두 개가 한꺼번에 나가는 일이 있었어요!)
+         맞추다가 건너뛴 기능만, 아무도 안 쓰는 버튼일 때 기본 순서로 읽어요. */
+      const claimed = {};       // 다른 기능이 쓰기로 한 버튼
+      claimedAxes = {};         // 버튼 기능(예: 트리거)이 쓰기로 한 축
+      if (padMap) {
+        [padMap.acts, padMap.dirs].forEach(function (group) {
+          for (const k in group) {
+            if (group[k] && group[k].type === 'button') claimed[group[k].index] = true;
+          }
+        });
+        for (const k in padMap.acts) {
+          const r = padMap.acts[k];
+          if (r && r.type === 'axis') claimedAxes[r.index] = true;
+        }
+      }
+
       BUTTONS.forEach(function (b, index) {
-        const real = pad.buttons[order[index]];
-        const byOrder = real ? real.pressed : false;
-        const byMap = padMap ? ruleOn(padMap.acts[b.act], pad) : false;
-        const now = byMap || byOrder;
+        let now;
+        const rule = padMap ? padMap.acts[b.act] : null;
+        if (rule) {
+          now = ruleOn(rule, pad);                         // 맞춘 대로만
+        } else {
+          const i = order[index];
+          const real = claimed[i] ? null : pad.buttons[i];  // 다른 기능이 쓰는 버튼은 빼요
+          now = real ? real.pressed : false;
+        }
         const key = 'b' + index;
 
         if (now && !padWas[key]) pressButton(b.act);     // 방금 눌렸어요
@@ -473,10 +527,10 @@ const Input = (function () {
 
       /* 십자 버튼 (XINPUT 모드에서 DP 로 두었을 때) */
       const dpad = {
-        up:    isDown(pad.buttons[12]),
-        down:  isDown(pad.buttons[13]),
-        left:  isDown(pad.buttons[14]),
-        right: isDown(pad.buttons[15]),
+        up:    !claimed[12] && isDown(pad.buttons[12]),
+        down:  !claimed[13] && isDown(pad.buttons[13]),
+        left:  !claimed[14] && isDown(pad.buttons[14]),
+        right: !claimed[15] && isDown(pad.buttons[15]),
       };
 
       /* 해트 축 (DINPUT 모드에서 DP 로 두었을 때)
@@ -495,6 +549,7 @@ const Input = (function () {
            (안 그러면 DINPUT+RS 의 5번 축을 해트로 잘못 읽어서
             '아래'를 밀었는데 '왼쪽 위'로 가버려요) */
         if (!(Math.abs(padRest[a]) > 1.05)) continue;
+        if (claimedAxes[a]) continue;      // 버튼 기능이 쓰는 축이면 건너뛰어요
 
         readHat(v, padRest[a]).forEach(function (name) {
           hat[name] = true;
@@ -539,6 +594,7 @@ const Input = (function () {
   function axisMove(pad, i) {
     const v = pad.axes[i];
     if (v === undefined || Math.abs(v) > 1.05) return 0;
+    if (claimedAxes[i]) return 0;        // 버튼 기능이 쓰는 축이에요
     const rest = (padRest && Math.abs(padRest[i]) <= 1.05) ? padRest[i] : 0;
     return v - rest;
   }
@@ -629,22 +685,32 @@ const Input = (function () {
 
     /* 사진 찍어둔 때와 비교해서, 무엇이 새로 눌렸는지 찾아줘요.
        찾으면 그 신호를 설명하는 '규칙'을 돌려줘요. */
-    findChange: function (before) {
+    findChange: function (before, kind) {
       const now = this.snapshot();
       if (!now || !before) return null;
 
+      /* kind 가 'dir' 이면 스틱을 기다리는 중이에요.
+         이때 앞쪽 버튼(0~11번)은 받지 않아요. 그건 A/× 같은 버튼이니까요.
+         (십자키가 버튼으로 오는 조종기는 12번부터 써요) */
+      const minButton = (kind === 'dir') ? 12 : 0;
+
       // (1) 새로 눌린 버튼이 있나요?
-      for (let i = 0; i < now.buttons.length; i++) {
+      for (let i = minButton; i < now.buttons.length; i++) {
         if (now.buttons[i] && !before.buttons[i]) {
-          return { type: 'button', index: i, label: '버튼 ' + (i + 1) };
+          return { type: 'button', index: i, label: '버튼 ' + i };
         }
       }
 
       // (2) 크게 움직인 축(스틱·십자키)이 있나요?
+      //     버튼 단계에서는 -1 → +1 처럼 아주 크게 바뀌는 축(트리거)만 받아요.
+      //     (스틱을 살짝 건드린 걸 버튼으로 배우면 안 되니까요)
       let best = null;
-      let bestMove = 0.45;                 // 이만큼은 움직여야 인정해요
+      let bestMove = (kind === 'dir') ? 0.45 : 1.3;
       for (let i = 0; i < now.axes.length; i++) {
-        const moved = Math.abs(now.axes[i] - (before.axes[i] || 0));
+        const was = before.axes[i] || 0;
+        const moved = Math.abs(now.axes[i] - was);
+        // 버튼 단계에서는 해트(십자키)를 버튼으로 배우지 않아요
+        if (kind !== 'dir' && Math.abs(was) > 1.05) continue;
         if (moved > bestMove && Math.abs(now.axes[i]) <= 1.05) {
           bestMove = moved;
           best = {
@@ -660,17 +726,40 @@ const Input = (function () {
 
     /* 다 맞춘 설정을 저장해요 */
     saveMap: function (map) {
+      if (!currentPadId) return;
+      maps[currentPadId] = map;           // 이 조종기 이름으로 저장해요
       padMap = map;
-      try { localStorage.setItem(MAP_KEY, JSON.stringify(map)); } catch (e) {}
+      storeMaps();
       drawGuide();
     },
 
     /* 맞춘 설정을 지우고 기본값으로 되돌려요 */
     clearMap: function () {
+      if (currentPadId) delete maps[currentPadId];
       padMap = null;
-      try { localStorage.removeItem(MAP_KEY); } catch (e) {}
+      storeMaps();
       drawGuide();
     },
+
+    /* 지금 꽂힌 조종기의 이름 */
+    padId: function () { return currentPadId; },
+
+    /* 새 조종기라서 맞추기가 필요한가요?
+       (조종기가 보이고, 아직 맞춘 적 없고, '나중에'를 누르지 않았으면) */
+    needsSetup: function () {
+      return !!currentPadId && !padBlocked && !maps[currentPadId] && !dismissed[currentPadId];
+    },
+
+    /* 처음 보는 조종기가 꽂히면 부를 함수를 정해요 */
+    setNewPadHook: function (fn) {
+      newPadHook = fn;
+      // 게임 파일이 읽히기 전에 조종기가 먼저 잡혔을 수도 있어요.
+      // 그럼 알림을 놓쳤으니 지금 바로 알려줘요.
+      if (this.needsSetup()) setTimeout(fn, 0);
+    },
+
+    /* '나중에' : 이번에 켜는 동안은 다시 묻지 않아요 */
+    dismissSetup: function () { if (currentPadId) dismissed[currentPadId] = true; },
 
     /* 지금 맞춘 설정이 있나요? */
     hasMap: function () { return !!padMap; },
