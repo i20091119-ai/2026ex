@@ -2575,6 +2575,17 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   .story-cast .fig { animation: none; }
 }
 
+/* ---------- 자리 비움 : 남은 초 ---------- */
+.idle-count {
+  text-align: center;
+  font-size: clamp(44px, 9vw, 76px);
+  font-weight: 900;
+  color: var(--ochre);
+  font-variant-numeric: tabular-nums;   /* 숫자 폭이 같아서 흔들리지 않아요 */
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
 </style>
 </head>
 <body>
@@ -3020,6 +3031,11 @@ const Input = (function () {
   /* true 이면 게임 조작이 잠깐 멈춰요 (덮개 화면이 열렸을 때) */
   let blocked = false;
 
+  /* 누가 조종기를 만졌다는 걸 알려줄 곳이에요 (자리 비움 확인에 써요).
+     이 함수가 true 를 돌려주면, 그 누름은 '계속하기'로만 쓰이고
+     게임 안에서는 아무 일도 하지 않아요. */
+  let activityHook = null;
+
   /* true 이면 5~8번까지 포함해서 모든 동작을 잠깐 꺼요.
      (조종기 맞추는 중에 누른 버튼이 '처음으로' 같은 일을 하면 안 되니까요) */
   let suspended = false;
@@ -3139,6 +3155,9 @@ const Input = (function () {
     held[act] = true;
     highlight(act, true);       // 안내판에 불을 켜요
 
+    // '계속할까요?' 를 닫는 데 쓰인 누름이면 여기서 끝내요
+    if (activityHook && activityHook()) return;
+
     // 뽁! 하고 버튼 소리가 나요
     // (5번은 소리 크기를 바꾸면서 스스로 소리를 내니까 빼요)
     if (act !== 'volume' && window.Sound) Sound.pok();
@@ -3157,6 +3176,10 @@ const Input = (function () {
     if (dir[name]) return;
     dir[name] = true;
     highlightDir(name, true);
+
+    // '계속할까요?' 를 닫는 데 쓰인 누름이면 여기서 끝내요
+    if (activityHook && activityHook()) return;
+
     fire('dir:' + name);        // 방향도 알려줘요 (퀴즈 고를 때 써요)
   }
 
@@ -3461,6 +3484,16 @@ const Input = (function () {
     /* 게임 조작을 잠깐 멈추거나 다시 켜요.
        (5~8번 버튼은 멈춰도 계속 눌러서 쓸 수 있어요) */
     setBlocked: function (v) { blocked = v; },
+
+    /* 누가 조종기를 만지면 알려달라고 부탁해요 (자리 비움 확인용) */
+    setActivityHook: function (fn) { activityHook = fn; },
+
+    /* 지금 버튼이나 방향을 누르고 있나요? (꾹 누르고 있어도 노는 중이에요) */
+    anyHeld: function () {
+      for (const k in held) if (held[k]) return true;
+      for (const k in dir) if (dir[k]) return true;
+      return false;
+    },
 
     /* 모든 동작을 잠깐 끄거나 다시 켜요 (조종기 맞출 때 써요) */
     setSuspended: function (v) { suspended = v; },
@@ -5334,18 +5367,18 @@ MISSIONS[5] = (function () {
   /* ----------------------------------------------------------------
      1. 싸움 규칙 숫자들
      ---------------------------------------------------------------- */
-  const BOSS_HP = 5;        // 헌병대장의 기력
-  const HERO_HP = 3;        // 주인공의 기력
+  const BOSS_HP = 4;        // 헌병대장의 기력 (네 번만 맞히면 이겨요)
+  const HERO_HP = 4;        // 주인공의 기력 (네 번 맞아도 버틸 수 있어요)
 
-  const JUMP_TIME  = 620;   // 점프해서 공중에 떠 있는 시간 (밀리초)
-  const MISS_TIME  = 420;   // 헛손질하고 굳어 있는 시간
+  const JUMP_TIME  = 780;   // 점프해서 공중에 떠 있는 시간 (밀리초)
+  const MISS_TIME  = 280;   // 헛손질하고 굳어 있는 시간
   const HIT_FLASH  = 260;   // 맞았을 때 번쩍이는 시간
 
   /* 헌병대장의 동작 시간 (기력이 줄수록 점점 빨라져요) */
-  const IDLE_TIME   = [900, 500];   // 처음 900 → 마지막 500
-  const READY_TIME  = [780, 430];   // 「준비」 신호를 보여주는 시간
-  const STRIKE_TIME = [300, 240];   // 내려치는 시간
-  const OPEN_TIME   = [900, 620];   // 빈틈이 생기는 시간
+  const IDLE_TIME   = [1100, 750];  // 처음 1100 → 마지막 750
+  const READY_TIME  = [1150, 800];  // 「준비」 신호를 보여주는 시간 (넉넉하게)
+  const STRIKE_TIME = [380, 320];   // 내려치는 시간 (이 동안 뛰어도 피할 수 있어요)
+  const OPEN_TIME   = [1400, 1050]; // 빈틈이 생기는 시간 (공격할 틈이 길어요)
 
 
   /* ----------------------------------------------------------------
@@ -5447,6 +5480,8 @@ MISSIONS[5] = (function () {
       struck = false;                        // 이번 공격은 아직 판정 안 했어요
 
     } else if (bossState === 'strike') {
+      // 내려치는 동안 한 번도 안 뛰었으면 그제서야 맞아요
+      if (!struck) { struck = true; heroHit(); if (!running) return; }
       bossState = 'open';
       stateTimer = speedOf(OPEN_TIME);
 
@@ -5560,11 +5595,13 @@ MISSIONS[5] = (function () {
     stateTimer -= delta;
     if (stateTimer <= 0) nextBossState();
 
-    /* 내려치는 순간에 딱 한 번만 맞았는지 확인해요 */
-    if (bossState === 'strike' && !struck) {
+    /* ★ 내려치는 동안 공중에 있으면 피한 거예요.
+       전에는 내려치는 '첫 순간'에만 확인해서 조금만 늦어도 맞았어요.
+       이제는 칼이 내려오는 동안 언제 뛰어도 피할 수 있어요.
+       (끝까지 안 뛰면 공격이 끝날 때 맞아요) */
+    if (bossState === 'strike' && !struck && isJumping(now)) {
       struck = true;
-      if (!isJumping(now)) heroHit();       // 공중에 없으면 맞아요!
-      else setTalk('잘 피했다!', 'good');
+      setTalk('잘 피했다!', 'good');
     }
 
     drawHero(now);
@@ -6874,6 +6911,86 @@ function stopSetup() {
   setupTimer = null;
   closeOverlay();
 }
+
+
+/* ==================================================================
+   자리 비움 : 아무도 안 하면 시작 화면으로 돌아가기
+   ★ 발표회나 전시 때 기계를 그냥 두고 가도 괜찮게 해요.
+     1분 동안 아무것도 안 누르면 '계속할까요? 10…' 이 뜨고,
+     그래도 안 누르면 시작 화면으로 돌아가요.
+   ================================================================== */
+const IDLE_LIMIT = 60;       // 이만큼(초) 아무것도 안 하면 물어봐요
+const IDLE_COUNT = 10;       // 물어본 뒤 이만큼(초) 기다려줘요
+
+let lastActive = performance.now();   // 마지막으로 누가 만진 때
+let idleAsking = false;               // 지금 '계속할까요?' 를 묻는 중인지
+
+/* 누가 만졌어요! 시계를 처음부터 다시 세요.
+   묻는 중이었다면 창을 닫고 이어서 해요.
+   (돌려주는 값이 true 면, 이번 누름은 '계속하기'로만 쓰여요) */
+function markActive() {
+  lastActive = performance.now();
+  if (!idleAsking) return false;
+  idleAsking = false;
+  closeOverlay();
+  return true;
+}
+
+/* '계속할까요?' 창을 열어요 */
+function askStillThere() {
+  idleAsking = true;
+  openOverlay('대기', '계속할까요?',
+    '<p class="idle-count" id="idle-left">' + IDLE_COUNT + '</p>' +
+    '<p style="text-align:center">아무 버튼이나 누르면 이어서 해요.<br>' +
+    '그대로 두면 처음 화면으로 돌아가요.</p>',
+    [{ label: '계속하기', run: markActive, big: true }]);
+}
+
+/* 0.25초마다 시계를 확인해요 */
+setInterval(function () {
+  const now = performance.now();
+
+  // 시작 화면에서는 기다리지 않아요 (이미 처음 화면이니까요)
+  // 조종기 맞추는 중이거나, 버튼을 꾹 누르고 있으면 노는 중이에요
+  if (el.screens.title.classList.contains('is-on') ||
+      Menu.locked || Input.anyHeld()) {
+    lastActive = now;
+    return;
+  }
+
+  const idle = (now - lastActive) / 1000;
+
+  if (!idleAsking && idle >= IDLE_LIMIT) {
+    askStillThere();
+    return;
+  }
+
+  if (idleAsking) {
+    const left = Math.ceil(IDLE_LIMIT + IDLE_COUNT - idle);
+    const node = document.getElementById('idle-left');
+    if (node) node.textContent = Math.max(0, left);
+
+    if (left <= 0) {              // 끝까지 아무도 없었어요
+      idleAsking = false;
+      closeOverlay();
+      goTitle();
+    }
+  }
+}, 250);
+
+/* 조종기·키보드 버튼을 누르면 알려줘요 */
+Input.setActivityHook(markActive);
+
+/* 마우스를 움직이거나 누르거나, 다른 키를 눌러도 '있다'고 쳐요 */
+['pointerdown', 'pointermove', 'keydown', 'wheel'].forEach(function (type) {
+  window.addEventListener(type, function () {
+    if (!idleAsking) lastActive = performance.now();
+  }, { passive: true });
+});
+/* 묻는 중에 마우스로 화면 아무 데나 눌러도 이어서 해요 */
+window.addEventListener('pointerdown', function () {
+  if (idleAsking) markActive();
+});
 
 
 /* 화면의 모든 버튼을 마우스로 누를 때도 '뽁' 소리가 나요 */

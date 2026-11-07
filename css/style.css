@@ -2566,3 +2566,14 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   .story-more.is-on { animation: none; opacity: 1; }
   .story-cast .fig { animation: none; }
 }
+
+/* ---------- 자리 비움 : 남은 초 ---------- */
+.idle-count {
+  text-align: center;
+  font-size: clamp(44px, 9vw, 76px);
+  font-weight: 900;
+  color: var(--ochre);
+  font-variant-numeric: tabular-nums;   /* 숫자 폭이 같아서 흔들리지 않아요 */
+  line-height: 1.1;
+  margin-bottom: 8px;
+}

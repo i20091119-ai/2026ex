@@ -20,18 +20,18 @@ MISSIONS[5] = (function () {
   /* ----------------------------------------------------------------
      1. 싸움 규칙 숫자들
      ---------------------------------------------------------------- */
-  const BOSS_HP = 5;        // 헌병대장의 기력
-  const HERO_HP = 3;        // 주인공의 기력
+  const BOSS_HP = 4;        // 헌병대장의 기력 (네 번만 맞히면 이겨요)
+  const HERO_HP = 4;        // 주인공의 기력 (네 번 맞아도 버틸 수 있어요)
 
-  const JUMP_TIME  = 620;   // 점프해서 공중에 떠 있는 시간 (밀리초)
-  const MISS_TIME  = 420;   // 헛손질하고 굳어 있는 시간
+  const JUMP_TIME  = 780;   // 점프해서 공중에 떠 있는 시간 (밀리초)
+  const MISS_TIME  = 280;   // 헛손질하고 굳어 있는 시간
   const HIT_FLASH  = 260;   // 맞았을 때 번쩍이는 시간
 
   /* 헌병대장의 동작 시간 (기력이 줄수록 점점 빨라져요) */
-  const IDLE_TIME   = [900, 500];   // 처음 900 → 마지막 500
-  const READY_TIME  = [780, 430];   // 「준비」 신호를 보여주는 시간
-  const STRIKE_TIME = [300, 240];   // 내려치는 시간
-  const OPEN_TIME   = [900, 620];   // 빈틈이 생기는 시간
+  const IDLE_TIME   = [1100, 750];  // 처음 1100 → 마지막 750
+  const READY_TIME  = [1150, 800];  // 「준비」 신호를 보여주는 시간 (넉넉하게)
+  const STRIKE_TIME = [380, 320];   // 내려치는 시간 (이 동안 뛰어도 피할 수 있어요)
+  const OPEN_TIME   = [1400, 1050]; // 빈틈이 생기는 시간 (공격할 틈이 길어요)
 
 
   /* ----------------------------------------------------------------
@@ -133,6 +133,8 @@ MISSIONS[5] = (function () {
       struck = false;                        // 이번 공격은 아직 판정 안 했어요
 
     } else if (bossState === 'strike') {
+      // 내려치는 동안 한 번도 안 뛰었으면 그제서야 맞아요
+      if (!struck) { struck = true; heroHit(); if (!running) return; }
       bossState = 'open';
       stateTimer = speedOf(OPEN_TIME);
 
@@ -246,11 +248,13 @@ MISSIONS[5] = (function () {
     stateTimer -= delta;
     if (stateTimer <= 0) nextBossState();
 
-    /* 내려치는 순간에 딱 한 번만 맞았는지 확인해요 */
-    if (bossState === 'strike' && !struck) {
+    /* ★ 내려치는 동안 공중에 있으면 피한 거예요.
+       전에는 내려치는 '첫 순간'에만 확인해서 조금만 늦어도 맞았어요.
+       이제는 칼이 내려오는 동안 언제 뛰어도 피할 수 있어요.
+       (끝까지 안 뛰면 공격이 끝날 때 맞아요) */
+    if (bossState === 'strike' && !struck && isJumping(now)) {
       struck = true;
-      if (!isJumping(now)) heroHit();       // 공중에 없으면 맞아요!
-      else setTalk('잘 피했다!', 'good');
+      setTalk('잘 피했다!', 'good');
     }
 
     drawHero(now);

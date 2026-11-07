@@ -955,6 +955,86 @@ function stopSetup() {
 }
 
 
+/* ==================================================================
+   자리 비움 : 아무도 안 하면 시작 화면으로 돌아가기
+   ★ 발표회나 전시 때 기계를 그냥 두고 가도 괜찮게 해요.
+     1분 동안 아무것도 안 누르면 '계속할까요? 10…' 이 뜨고,
+     그래도 안 누르면 시작 화면으로 돌아가요.
+   ================================================================== */
+const IDLE_LIMIT = 60;       // 이만큼(초) 아무것도 안 하면 물어봐요
+const IDLE_COUNT = 10;       // 물어본 뒤 이만큼(초) 기다려줘요
+
+let lastActive = performance.now();   // 마지막으로 누가 만진 때
+let idleAsking = false;               // 지금 '계속할까요?' 를 묻는 중인지
+
+/* 누가 만졌어요! 시계를 처음부터 다시 세요.
+   묻는 중이었다면 창을 닫고 이어서 해요.
+   (돌려주는 값이 true 면, 이번 누름은 '계속하기'로만 쓰여요) */
+function markActive() {
+  lastActive = performance.now();
+  if (!idleAsking) return false;
+  idleAsking = false;
+  closeOverlay();
+  return true;
+}
+
+/* '계속할까요?' 창을 열어요 */
+function askStillThere() {
+  idleAsking = true;
+  openOverlay('대기', '계속할까요?',
+    '<p class="idle-count" id="idle-left">' + IDLE_COUNT + '</p>' +
+    '<p style="text-align:center">아무 버튼이나 누르면 이어서 해요.<br>' +
+    '그대로 두면 처음 화면으로 돌아가요.</p>',
+    [{ label: '계속하기', run: markActive, big: true }]);
+}
+
+/* 0.25초마다 시계를 확인해요 */
+setInterval(function () {
+  const now = performance.now();
+
+  // 시작 화면에서는 기다리지 않아요 (이미 처음 화면이니까요)
+  // 조종기 맞추는 중이거나, 버튼을 꾹 누르고 있으면 노는 중이에요
+  if (el.screens.title.classList.contains('is-on') ||
+      Menu.locked || Input.anyHeld()) {
+    lastActive = now;
+    return;
+  }
+
+  const idle = (now - lastActive) / 1000;
+
+  if (!idleAsking && idle >= IDLE_LIMIT) {
+    askStillThere();
+    return;
+  }
+
+  if (idleAsking) {
+    const left = Math.ceil(IDLE_LIMIT + IDLE_COUNT - idle);
+    const node = document.getElementById('idle-left');
+    if (node) node.textContent = Math.max(0, left);
+
+    if (left <= 0) {              // 끝까지 아무도 없었어요
+      idleAsking = false;
+      closeOverlay();
+      goTitle();
+    }
+  }
+}, 250);
+
+/* 조종기·키보드 버튼을 누르면 알려줘요 */
+Input.setActivityHook(markActive);
+
+/* 마우스를 움직이거나 누르거나, 다른 키를 눌러도 '있다'고 쳐요 */
+['pointerdown', 'pointermove', 'keydown', 'wheel'].forEach(function (type) {
+  window.addEventListener(type, function () {
+    if (!idleAsking) lastActive = performance.now();
+  }, { passive: true });
+});
+/* 묻는 중에 마우스로 화면 아무 데나 눌러도 이어서 해요 */
+window.addEventListener('pointerdown', function () {
+  if (idleAsking) markActive();
+});
+
+
 /* 화면의 모든 버튼을 마우스로 누를 때도 '뽁' 소리가 나요 */
 document.addEventListener('click', function (e) {
   if (e.target.closest('button') && !e.target.closest('.pad-btn')) Sound.pok();

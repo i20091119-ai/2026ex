@@ -68,6 +68,11 @@ const Input = (function () {
   /* true 이면 게임 조작이 잠깐 멈춰요 (덮개 화면이 열렸을 때) */
   let blocked = false;
 
+  /* 누가 조종기를 만졌다는 걸 알려줄 곳이에요 (자리 비움 확인에 써요).
+     이 함수가 true 를 돌려주면, 그 누름은 '계속하기'로만 쓰이고
+     게임 안에서는 아무 일도 하지 않아요. */
+  let activityHook = null;
+
   /* true 이면 5~8번까지 포함해서 모든 동작을 잠깐 꺼요.
      (조종기 맞추는 중에 누른 버튼이 '처음으로' 같은 일을 하면 안 되니까요) */
   let suspended = false;
@@ -187,6 +192,9 @@ const Input = (function () {
     held[act] = true;
     highlight(act, true);       // 안내판에 불을 켜요
 
+    // '계속할까요?' 를 닫는 데 쓰인 누름이면 여기서 끝내요
+    if (activityHook && activityHook()) return;
+
     // 뽁! 하고 버튼 소리가 나요
     // (5번은 소리 크기를 바꾸면서 스스로 소리를 내니까 빼요)
     if (act !== 'volume' && window.Sound) Sound.pok();
@@ -205,6 +213,10 @@ const Input = (function () {
     if (dir[name]) return;
     dir[name] = true;
     highlightDir(name, true);
+
+    // '계속할까요?' 를 닫는 데 쓰인 누름이면 여기서 끝내요
+    if (activityHook && activityHook()) return;
+
     fire('dir:' + name);        // 방향도 알려줘요 (퀴즈 고를 때 써요)
   }
 
@@ -509,6 +521,16 @@ const Input = (function () {
     /* 게임 조작을 잠깐 멈추거나 다시 켜요.
        (5~8번 버튼은 멈춰도 계속 눌러서 쓸 수 있어요) */
     setBlocked: function (v) { blocked = v; },
+
+    /* 누가 조종기를 만지면 알려달라고 부탁해요 (자리 비움 확인용) */
+    setActivityHook: function (fn) { activityHook = fn; },
+
+    /* 지금 버튼이나 방향을 누르고 있나요? (꾹 누르고 있어도 노는 중이에요) */
+    anyHeld: function () {
+      for (const k in held) if (held[k]) return true;
+      for (const k in dir) if (dir[k]) return true;
+      return false;
+    },
 
     /* 모든 동작을 잠깐 끄거나 다시 켜요 (조종기 맞출 때 써요) */
     setSuspended: function (v) { suspended = v; },
