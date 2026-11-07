@@ -836,6 +836,40 @@ body {
   vertical-align: bottom;
 }
 
+/* ---------- 우리가 그린 그림 (skin.js) ----------
+   images 폴더에 그림이 있으면 실루엣 대신 이 그림이 나와요.
+   그림 크기는 실루엣과 같은 키(1.55em)에 맞춰요. */
+.fig.has-art { width: auto; min-width: 1.1em; }
+
+.fig .f-art {
+  display: block;
+  height: 1.55em;
+  width: auto;
+  max-width: 2.2em;
+  margin: 0 auto;
+  object-fit: contain;
+  /* 어두운 배경에서도 그림 테두리가 잘 보이게 연한 빛을 둘러요 */
+  filter: drop-shadow(0 0 0.025em rgba(222, 213, 194, 0.9));
+}
+
+/* '쳐다보는' 그림은 평소엔 숨어 있어요 */
+.fig .f-art--look { display: none; }
+.fig.has-look.is-looking .f-art { display: none; }
+.fig.has-look.is-looking .f-art--look { display: block; }
+
+/* 쳐다보는 그림이 없으면 붉은 빛으로 알려줘요 (들키면 안 되니까 중요해요!) */
+.fig.has-art.is-looking:not(.has-look) .f-art {
+  filter: drop-shadow(0 0 0.04em #ff4a4a) drop-shadow(0 0 0.1em rgba(255, 60, 60, 0.85));
+}
+
+/* 배경 그림 */
+#screen-title.has-art,
+.has-art-bg {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
 /* 머리 (동그라미) */
 .fig .f-head {
   position: absolute;

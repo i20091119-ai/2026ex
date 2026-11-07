@@ -24,6 +24,8 @@ const MissionUtil = {
   setStage: function (html) {
     const stage = document.getElementById('stage-inner');
     stage.innerHTML = html;
+    // 우리가 그린 배경 그림이 있으면 깔아줘요 (skin.js)
+    if (typeof Skin !== 'undefined') Skin.stage(stage.firstElementChild);
     return stage;
   },
 
@@ -42,6 +44,9 @@ const MissionUtil = {
            'yu'(유관순) 'mate'(동료) 'captain'(헌병대장)
      extra : 덧붙일 이름표 (예: 'm1-hero') */
   figure: function (who, extra) {
+    // 우리가 그린 그림이 있으면 그걸 써요 (skin.js)
+    const art = (typeof Skin !== 'undefined') ? Skin.figure(who, extra) : null;
+    if (art) return art;
     return '<span class="fig fig--' + who + ' ' + (extra || '') + '">' +
              '<i class="f-hat"></i>' +
              '<i class="f-head"><i class="f-eyes"></i></i>' +

@@ -8,12 +8,16 @@ USB 에 담아 아케이드 기계로 옮길 때 이 파일 하나만 있으면 
 쓰는 방법 :  python3 build.py
 """
 
+import base64
+import json
+import os
 import re
 
 # 합칠 자바스크립트 파일들 (순서가 중요해요!)
 JS_FILES = [
     'js/sound.js',     # 소리
     'js/input.js',     # 조작
+    'js/skin.js',      # 우리가 그린 그림 넣기
     'js/missions.js',  # 미션 보관함
     'js/story.js',     # 장 사이 이야기
     'js/ch1.js',       # 1장
@@ -52,6 +56,17 @@ def main():
     )
     if '</script>' in js:
         raise SystemExit('자바스크립트 안에 </script> 가 있으면 안 돼요!')
+
+    # images 폴더의 그림들도 파일 안에 넣어요 (USB 로 옮겨도 그림이 따라가요)
+    skin = {}
+    if os.path.isdir('images'):
+        for name in sorted(os.listdir('images')):
+            if name.lower().endswith('.png'):
+                with open(os.path.join('images', name), 'rb') as f:
+                    skin[name[:-4]] = 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+    if skin:
+        js = 'window.SKIN_DATA = ' + json.dumps(skin) + ';\n\n' + js
+        print('그림 %d 장을 함께 넣었어요 : %s' % (len(skin), ', '.join(skin)))
 
     html = html.replace('</body>', '<script>\n' + js + '\n</script>\n</body>')
 
