@@ -73,7 +73,7 @@ const Skin = (function () {
     node.classList.add('has-art');
     // 글씨가 잘 보이게 살짝 어둡게 덮어요
     node.style.backgroundImage =
-      'linear-gradient(rgba(16,21,42,0.3), rgba(16,21,42,0.3)), url("' + url('title') + '")';
+      'radial-gradient(ellipse at 50% 45%, rgba(10,14,30,0.55), rgba(10,14,30,0.25) 70%), url("' + url('title') + '")';
   }
 
   /* 사람 그림을 만들어요. 그림이 없으면 null (→ 원래 실루엣) */

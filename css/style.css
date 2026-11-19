@@ -2835,3 +2835,15 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 .m6-scene.has-art-bg .m6-sky::after,
 .m6-scene.has-art-bg .m6-sun,
 .m6-scene.has-art-bg .m6-ground { display: none; }
+
+/* 시작 화면에 그림이 깔리면 글씨 뒤에 그림자를 넣어 잘 읽히게 해요 */
+#screen-title.has-art .game-title,
+#screen-title.has-art .start-word,
+#screen-title.has-art .team-name,
+#screen-title.has-art .team-members,
+#screen-title.has-art .corner-label,
+#screen-title.has-art .pad-status {
+  text-shadow: 0 0 3px #000, 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 18px rgba(0, 0, 0, 0.7);
+}
+#screen-title.has-art .team-name,
+#screen-title.has-art .team-members { color: var(--paper); opacity: 1; }
