@@ -642,15 +642,30 @@ function showHelp() {
 
 /* ---------- 7번 버튼 : 처음으로 🏠 ----------
    잘못 눌러서 게임이 날아가면 속상하니까, 한 번 더 물어봐요. */
+/* ★ 7번(LT) = 홈 키
+     게임 중 : 한 번 누르면 "처음으로 갈까요?" → 한 번 더 누르면 바로 처음 화면
+     끝 화면 : 바로 처음 화면
+     시작 화면 : 이미 처음이라 아무 일도 안 해요 */
+let homeAsking = false;
+
 function askGoHome() {
-  if (overlayOpen) { closeOverlay(); return; }
+  if (el.screens.title.classList.contains('is-on')) return;          // 이미 처음 화면
+  if (el.screens.end.classList.contains('is-on')) { goTitle(); return; }
+
+  // "처음으로 갈까요?" 가 떠 있을 때 7번을 또 누르면 = 네!
+  if (homeAsking) { homeAsking = false; closeOverlay(); goTitle(); return; }
+
+  // 멈춤 창 같은 다른 창이 열려 있으면 그 창을 닫고 물어봐요
+  if (overlayOpen) closeOverlay();
 
   openOverlay('처음', '처음으로 갈까요?',
-    '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>',
+    '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>' +
+    '<p class="home-tip">7번(LT) 버튼을 <b>한 번 더</b> 누르면 바로 처음 화면으로 가요</p>',
     [
-      { label: '아니요, 계속할래요', run: closeOverlay, big: true },
-      { label: '네, 처음으로', run: function () { closeOverlay(); goTitle(); } },
+      { label: '아니요, 계속할래요', run: function () { homeAsking = false; closeOverlay(); }, big: true },
+      { label: '네, 처음으로', run: function () { homeAsking = false; closeOverlay(); goTitle(); } },
     ]);
+  homeAsking = true;
 }
 
 
@@ -760,6 +775,7 @@ closeOverlay = function () {
   clearInterval(setupTimer);
   setupTimer = null;
   Input.setSuspended(false);   // 맞추다 말고 닫아도 조작이 다시 켜져요
+  homeAsking = false;
   Menu.locked = false;
   _closeOverlay();
 };
@@ -852,7 +868,7 @@ document.getElementById('pad-device').addEventListener('click', openPadTest);
    ================================================================== */
 
 /* 물어볼 순서예요. 방향 4개 + 버튼 8개
-   ★ 버튼은 '조종기에 적힌 이름'으로 물어봐요. (A/×, B/○ …)
+   ★ 버튼은 '조종기에 적힌 이름'으로 물어봐요. (A, B, X, Y …)
      그러면 화면 안내판에 적힌 이름과 진짜 버튼이 꼭 맞아요! */
 const SETUP_STEPS = [
   { kind: 'dir', key: 'up',    ask: '스틱을 <b>위로</b> 미세요',    icon: '▲' },

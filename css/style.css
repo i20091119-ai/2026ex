@@ -2853,3 +2853,85 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 @media (max-width: 600px) {
   .pad-status { max-width: 46vw; text-align: right; }
 }
+
+/* ==================================================================
+   조작 안내판 : 진짜 조종기 판과 같은 자리 (2줄 × 4개)
+     윗줄   X  Y  RB  LB
+     아랫줄 A  B  RT  LT
+   ================================================================== */
+#pad-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 4px 6px;
+}
+.pad-btn {
+  width: auto;
+  min-width: clamp(84px, 11vw, 112px);
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 3px 9px 3px 4px;
+  border-radius: 999px;
+}
+/* 조종기에 적힌 글자를 동그란 버튼처럼 크게 */
+.pad-btn .pad-arcade {
+  flex: none;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 1;
+  letter-spacing: 0;
+}
+.pad-btn .pad-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: clamp(10px, 1.3vw, 12px);
+}
+.pad-btn .pad-no { width: 14px; height: 14px; font-size: 8px; }
+.pad-btn.is-down .pad-arcade { background: var(--ink); color: var(--ochre); }
+body.liberation .pad-btn .pad-arcade { background: #1a2340; color: #fff; }
+
+/* 시작 화면 : 무슨 버튼을 누르면 시작하는지 */
+.start-hint {
+  margin-top: clamp(8px, 1.6vh, 14px);
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 700;
+  color: var(--paper);
+  text-shadow: 0 0 3px #000, 0 2px 8px rgba(0, 0, 0, 0.95);
+  animation: blink 1.6s ease-in-out infinite;
+}
+.start-hint b {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin: 0 3px;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 900;
+  text-shadow: none;
+}
+.start-hint-sub {
+  margin-top: 4px;
+  font-size: clamp(10px, 1.4vw, 12px);
+  color: var(--paper-dim);
+  text-shadow: 0 0 3px #000, 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* "처음으로 갈까요?" 아래 작은 도움말 */
+.home-tip {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ochre);
+}

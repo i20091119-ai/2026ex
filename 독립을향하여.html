@@ -2862,6 +2862,88 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
   .pad-status { max-width: 46vw; text-align: right; }
 }
 
+/* ==================================================================
+   조작 안내판 : 진짜 조종기 판과 같은 자리 (2줄 × 4개)
+     윗줄   X  Y  RB  LB
+     아랫줄 A  B  RT  LT
+   ================================================================== */
+#pad-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 4px 6px;
+}
+.pad-btn {
+  width: auto;
+  min-width: clamp(84px, 11vw, 112px);
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 3px 9px 3px 4px;
+  border-radius: 999px;
+}
+/* 조종기에 적힌 글자를 동그란 버튼처럼 크게 */
+.pad-btn .pad-arcade {
+  flex: none;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 1;
+  letter-spacing: 0;
+}
+.pad-btn .pad-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: clamp(10px, 1.3vw, 12px);
+}
+.pad-btn .pad-no { width: 14px; height: 14px; font-size: 8px; }
+.pad-btn.is-down .pad-arcade { background: var(--ink); color: var(--ochre); }
+body.liberation .pad-btn .pad-arcade { background: #1a2340; color: #fff; }
+
+/* 시작 화면 : 무슨 버튼을 누르면 시작하는지 */
+.start-hint {
+  margin-top: clamp(8px, 1.6vh, 14px);
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 700;
+  color: var(--paper);
+  text-shadow: 0 0 3px #000, 0 2px 8px rgba(0, 0, 0, 0.95);
+  animation: blink 1.6s ease-in-out infinite;
+}
+.start-hint b {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin: 0 3px;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 900;
+  text-shadow: none;
+}
+.start-hint-sub {
+  margin-top: 4px;
+  font-size: clamp(10px, 1.4vw, 12px);
+  color: var(--paper-dim);
+  text-shadow: 0 0 3px #000, 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* "처음으로 갈까요?" 아래 작은 도움말 */
+.home-tip {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ochre);
+}
+
 </style>
 </head>
 <body>
@@ -2889,6 +2971,9 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
     <div class="start-block">
       <div class="start-word">Start</div>
       <button id="btn-start" class="play-btn" aria-label="게임 시작">▶</button>
+      <!-- 무슨 버튼을 누르면 시작하는지 알려줘요 -->
+      <p class="start-hint">조종기 <b>A</b> 버튼을 누르면 시작해요</p>
+      <p class="start-hint-sub">키보드는 Enter · 마우스는 ▶ 클릭</p>
     </div>
 
     <!-- 팀 이름 -->
@@ -3668,6 +3753,12 @@ const Lang = (function () {
     '스틱 ✔': 'stick ✔',
     '스틱 (건너뜀)': 'stick (skipped)',
     '팀 - 서진': 'Team - Seojin',
+    '조종기': 'Press',
+    '버튼을 누르면 시작해요': 'on the controller to start',
+    '키보드는 Enter · 마우스는 ▶ 클릭': 'Keyboard: Enter · Mouse: click ▶',
+    '7번(LT) 버튼을': 'Press button #7 (LT)',
+    '한 번 더': 'once more',
+    '누르면 바로 처음 화면으로 가요': 'to go straight to the title screen',
     '2026. 창녕교육지원청영재교육원 초등발명반': '2026. Changnyeong Gifted Education Center · Elementary Invention Class',
     '누르면 달려요 · 「멈춰!」 가 뜨면': 'to run · when “Freeze!” appears,',
     'English': 'English',
@@ -3815,14 +3906,14 @@ const Input = (function () {
      뒤쪽 J/K/L 같은 키는 노트북으로 연습할 때 쓰라고 넣었어요.
      ---------------------------------------------------------------- */
   const BUTTONS = [
-    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A/×',   keys: ['ControlLeft', 'KeyJ'] },
-    { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B/○',   keys: ['AltLeft', 'KeyK'] },
-    { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X/□',   keys: ['Space', 'KeyL'] },
-    { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y/△',   keys: ['ShiftLeft', 'Enter'] },
-    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', arcade: 'LB/L1', keys: ['KeyZ'] },
-    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', arcade: 'RB/R1', keys: ['KeyX'] },
-    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', arcade: 'LT/L2', keys: ['KeyC'] },
-    { no: 8, act: 'zoom',   label: '글씨크기', emoji: '🔍', arcade: 'RT/R2', keys: ['KeyV'] },
+    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A',     keys: ['ControlLeft', 'KeyJ'] },
+    { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B',     keys: ['AltLeft', 'KeyK'] },
+    { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X',     keys: ['Space', 'KeyL'] },
+    { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y',     keys: ['ShiftLeft', 'Enter'] },
+    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', arcade: 'LB',    keys: ['KeyZ'] },
+    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', arcade: 'RB',    keys: ['KeyX'] },
+    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', arcade: 'LT',    keys: ['KeyC', 'Escape'] },
+    { no: 8, act: 'zoom',   label: '글씨크기', emoji: '🔍', arcade: 'RT',    keys: ['KeyV'] },
   ];
 
   /* 방향키 정보표예요. 방향 스틱도 이 방향들을 보내요. */
@@ -4041,15 +4132,22 @@ const Input = (function () {
     const box = document.getElementById('pad-buttons');
     if (!box) return;
 
-    box.innerHTML = BUTTONS.map(function (b) {
+    /* ★ 안내판 버튼을 진짜 조종기 판과 같은 자리에 놓아요
+         윗줄   : X  Y  RB  LB
+         아랫줄 : A  B  RT  LT  */
+    const PANEL = ['attack', 'next', 'pause', 'volume', 'jump', 'talk', 'zoom', 'home'];
+    const ordered = PANEL.map(function (act) {
+      return BUTTONS.find(function (b) { return b.act === act; });
+    });
+
+    box.innerHTML = ordered.map(function (b) {
       // 직접 맞춘 설정이 있으면 그걸 보여주고, 없으면 기본 이름을 보여줘요
       // 맞춘 버튼은 놋쇠색 밑줄이 생겨요. 이름은 조종기에 적힌 그대로 보여줘요.
       const learned = !!(padMap && padMap.acts[b.act]);
       return (
         '<div class="pad-btn' + (learned ? ' is-learned' : '') + '" data-act="' + b.act + '">' +
-          '<span class="pad-no">' + b.no + '</span>' +
-          '<span class="pad-name">' + b.label + '</span>' +
           '<span class="pad-arcade">' + b.arcade + '</span>' +
+          '<span class="pad-name"><span class="pad-no">' + b.no + '</span>' + b.label + '</span>' +
         '</div>'
       );
     }).join('');
@@ -4136,7 +4234,7 @@ const Input = (function () {
   const padWas = {};             // 방금 전에 눌려 있었는지 기억해요
 
   /* 게임 버튼 1~8번이 조종기의 몇 번째 신호인지 적어둔 표예요.
-     게임 순서 : 1 A/×  2 B/○  3 X/□  4 Y/△  5 LB/L1  6 RB/R1  7 LT/L2  8 RT/R2
+     게임 순서 : 1 A  2 B  3 X  4 Y  5 LB  6 RB  7 LT  8 RT
 
      XINPUT : 조종기가 A, B, X, Y, LB, RB, LT, RT 순서로 보내요
      그 밖  : ★ 우리 학교 조종기를 진단 페이지로 직접 눌러 본 결과예요 (11월 19일)
@@ -4489,7 +4587,7 @@ const Input = (function () {
       if (!now || !before) return null;
 
       /* kind 가 'dir' 이면 스틱을 기다리는 중이에요.
-         이때 앞쪽 버튼(0~11번)은 받지 않아요. 그건 A/× 같은 버튼이니까요.
+         이때 앞쪽 버튼(0~11번)은 받지 않아요. 그건 A 같은 버튼이니까요.
          (십자키가 버튼으로 오는 조종기는 12번부터 써요) */
       const minButton = (kind === 'dir') ? 12 : 0;
 
@@ -7767,15 +7865,30 @@ function showHelp() {
 
 /* ---------- 7번 버튼 : 처음으로 🏠 ----------
    잘못 눌러서 게임이 날아가면 속상하니까, 한 번 더 물어봐요. */
+/* ★ 7번(LT) = 홈 키
+     게임 중 : 한 번 누르면 "처음으로 갈까요?" → 한 번 더 누르면 바로 처음 화면
+     끝 화면 : 바로 처음 화면
+     시작 화면 : 이미 처음이라 아무 일도 안 해요 */
+let homeAsking = false;
+
 function askGoHome() {
-  if (overlayOpen) { closeOverlay(); return; }
+  if (el.screens.title.classList.contains('is-on')) return;          // 이미 처음 화면
+  if (el.screens.end.classList.contains('is-on')) { goTitle(); return; }
+
+  // "처음으로 갈까요?" 가 떠 있을 때 7번을 또 누르면 = 네!
+  if (homeAsking) { homeAsking = false; closeOverlay(); goTitle(); return; }
+
+  // 멈춤 창 같은 다른 창이 열려 있으면 그 창을 닫고 물어봐요
+  if (overlayOpen) closeOverlay();
 
   openOverlay('처음', '처음으로 갈까요?',
-    '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>',
+    '<p style="text-align:center">지금까지 모은 독립 포인트가 사라져요.<br>정말 처음 화면으로 갈까요?</p>' +
+    '<p class="home-tip">7번(LT) 버튼을 <b>한 번 더</b> 누르면 바로 처음 화면으로 가요</p>',
     [
-      { label: '아니요, 계속할래요', run: closeOverlay, big: true },
-      { label: '네, 처음으로', run: function () { closeOverlay(); goTitle(); } },
+      { label: '아니요, 계속할래요', run: function () { homeAsking = false; closeOverlay(); }, big: true },
+      { label: '네, 처음으로', run: function () { homeAsking = false; closeOverlay(); goTitle(); } },
     ]);
+  homeAsking = true;
 }
 
 
@@ -7885,6 +7998,7 @@ closeOverlay = function () {
   clearInterval(setupTimer);
   setupTimer = null;
   Input.setSuspended(false);   // 맞추다 말고 닫아도 조작이 다시 켜져요
+  homeAsking = false;
   Menu.locked = false;
   _closeOverlay();
 };
@@ -7977,7 +8091,7 @@ document.getElementById('pad-device').addEventListener('click', openPadTest);
    ================================================================== */
 
 /* 물어볼 순서예요. 방향 4개 + 버튼 8개
-   ★ 버튼은 '조종기에 적힌 이름'으로 물어봐요. (A/×, B/○ …)
+   ★ 버튼은 '조종기에 적힌 이름'으로 물어봐요. (A, B, X, Y …)
      그러면 화면 안내판에 적힌 이름과 진짜 버튼이 꼭 맞아요! */
 const SETUP_STEPS = [
   { kind: 'dir', key: 'up',    ask: '스틱을 <b>위로</b> 미세요',    icon: '▲' },

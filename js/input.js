@@ -27,14 +27,14 @@ const Input = (function () {
      뒤쪽 J/K/L 같은 키는 노트북으로 연습할 때 쓰라고 넣었어요.
      ---------------------------------------------------------------- */
   const BUTTONS = [
-    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A/×',   keys: ['ControlLeft', 'KeyJ'] },
-    { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B/○',   keys: ['AltLeft', 'KeyK'] },
-    { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X/□',   keys: ['Space', 'KeyL'] },
-    { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y/△',   keys: ['ShiftLeft', 'Enter'] },
-    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', arcade: 'LB/L1', keys: ['KeyZ'] },
-    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', arcade: 'RB/R1', keys: ['KeyX'] },
-    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', arcade: 'LT/L2', keys: ['KeyC'] },
-    { no: 8, act: 'zoom',   label: '글씨크기', emoji: '🔍', arcade: 'RT/R2', keys: ['KeyV'] },
+    { no: 1, act: 'jump',   label: '점프',    emoji: '🦘', arcade: 'A',     keys: ['ControlLeft', 'KeyJ'] },
+    { no: 2, act: 'talk',   label: '말걸기',  emoji: '💬', arcade: 'B',     keys: ['AltLeft', 'KeyK'] },
+    { no: 3, act: 'attack', label: '공격',    emoji: '✊', arcade: 'X',     keys: ['Space', 'KeyL'] },
+    { no: 4, act: 'next',   label: '다음',    emoji: '➡️', arcade: 'Y',     keys: ['ShiftLeft', 'Enter'] },
+    { no: 5, act: 'volume', label: '소리크기', emoji: '🔊', arcade: 'LB',    keys: ['KeyZ'] },
+    { no: 6, act: 'pause',  label: '잠시멈춤', emoji: '⏸️', arcade: 'RB',    keys: ['KeyX'] },
+    { no: 7, act: 'home',   label: '처음으로', emoji: '🏠', arcade: 'LT',    keys: ['KeyC', 'Escape'] },
+    { no: 8, act: 'zoom',   label: '글씨크기', emoji: '🔍', arcade: 'RT',    keys: ['KeyV'] },
   ];
 
   /* 방향키 정보표예요. 방향 스틱도 이 방향들을 보내요. */
@@ -253,15 +253,22 @@ const Input = (function () {
     const box = document.getElementById('pad-buttons');
     if (!box) return;
 
-    box.innerHTML = BUTTONS.map(function (b) {
+    /* ★ 안내판 버튼을 진짜 조종기 판과 같은 자리에 놓아요
+         윗줄   : X  Y  RB  LB
+         아랫줄 : A  B  RT  LT  */
+    const PANEL = ['attack', 'next', 'pause', 'volume', 'jump', 'talk', 'zoom', 'home'];
+    const ordered = PANEL.map(function (act) {
+      return BUTTONS.find(function (b) { return b.act === act; });
+    });
+
+    box.innerHTML = ordered.map(function (b) {
       // 직접 맞춘 설정이 있으면 그걸 보여주고, 없으면 기본 이름을 보여줘요
       // 맞춘 버튼은 놋쇠색 밑줄이 생겨요. 이름은 조종기에 적힌 그대로 보여줘요.
       const learned = !!(padMap && padMap.acts[b.act]);
       return (
         '<div class="pad-btn' + (learned ? ' is-learned' : '') + '" data-act="' + b.act + '">' +
-          '<span class="pad-no">' + b.no + '</span>' +
-          '<span class="pad-name">' + b.label + '</span>' +
           '<span class="pad-arcade">' + b.arcade + '</span>' +
+          '<span class="pad-name"><span class="pad-no">' + b.no + '</span>' + b.label + '</span>' +
         '</div>'
       );
     }).join('');
@@ -348,7 +355,7 @@ const Input = (function () {
   const padWas = {};             // 방금 전에 눌려 있었는지 기억해요
 
   /* 게임 버튼 1~8번이 조종기의 몇 번째 신호인지 적어둔 표예요.
-     게임 순서 : 1 A/×  2 B/○  3 X/□  4 Y/△  5 LB/L1  6 RB/R1  7 LT/L2  8 RT/R2
+     게임 순서 : 1 A  2 B  3 X  4 Y  5 LB  6 RB  7 LT  8 RT
 
      XINPUT : 조종기가 A, B, X, Y, LB, RB, LT, RT 순서로 보내요
      그 밖  : ★ 우리 학교 조종기를 진단 페이지로 직접 눌러 본 결과예요 (11월 19일)
@@ -701,7 +708,7 @@ const Input = (function () {
       if (!now || !before) return null;
 
       /* kind 가 'dir' 이면 스틱을 기다리는 중이에요.
-         이때 앞쪽 버튼(0~11번)은 받지 않아요. 그건 A/× 같은 버튼이니까요.
+         이때 앞쪽 버튼(0~11번)은 받지 않아요. 그건 A 같은 버튼이니까요.
          (십자키가 버튼으로 오는 조종기는 12번부터 써요) */
       const minButton = (kind === 'dir') ? 12 : 0;
 
