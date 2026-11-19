@@ -47,7 +47,11 @@
     <!-- 오른쪽 위 : 조종기 확인
          아케이드 조종기가 제대로 연결됐는지 확인하는 곳이에요 -->
     <div class="corner-pad">
-      <button id="btn-pad-test" class="corner-test">조종기 확인</button>
+      <div class="corner-row">
+        <!-- 한국어 ↔ English (기획서 대상 : 외국인도) -->
+        <button id="btn-lang" class="corner-test" lang="en">English</button>
+        <button id="btn-pad-test" class="corner-test">조종기 확인</button>
+      </div>
       <!-- 지금 조종기가 잡혔는지 항상 보여줘요 -->
       <p id="title-pad-status" class="pad-status">조종기 확인 중…</p>
     </div>
@@ -180,6 +184,7 @@
 </div>
 
 <script src="js/sound.js"></script>
+<script src="js/lang.js"></script>
 <script src="js/input.js"></script>
 <script src="js/skin.js"></script>
 <script src="js/missions.js"></script>

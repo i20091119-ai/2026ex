@@ -122,7 +122,7 @@ const Story = (function () {
     node.count.textContent = (index + 1) + ' / ' + lines.length;
 
     // 글자를 하나씩 보여줘요 (타자 치듯이)
-    const text = line.text;
+    const text = (typeof Lang !== 'undefined') ? Lang.t(line.text) : line.text;   // 영어 모드면 영어로
     let shown = 0;
     typing = true;
     node.text.textContent = '';
@@ -141,7 +141,7 @@ const Story = (function () {
   function finishTyping() {
     clearInterval(typeTimer);
     typing = false;
-    node.text.textContent = lines[index].text;
+    node.text.textContent = (typeof Lang !== 'undefined') ? Lang.t(lines[index].text) : lines[index].text;
     node.more.classList.add('is-on');       // ▼ 표시가 깜빡여요
   }
 

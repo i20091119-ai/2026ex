@@ -2793,6 +2793,7 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 
 /* 원래 따로 떠 있던 조종기 확인 버튼은 이제 상자 안에 들어가요 */
 .corner-pad .corner-test { position: static; }
+.corner-row { display: flex; gap: 6px; }
 
 .pad-status {
   font-size: clamp(10px, 1.4vw, 12px);

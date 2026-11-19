@@ -177,7 +177,8 @@ function refreshMenu() {
   } else if (el.screens.title.classList.contains('is-on')) {
     Menu.set([el.btnStart,
               document.getElementById('btn-info'),
-              document.getElementById('btn-pad-test')], 'title');
+              document.getElementById('btn-pad-test'),
+              document.getElementById('btn-lang')], 'title');
   } else if (el.screens.end.classList.contains('is-on')) {
     Menu.set([el.btnRetry], 'end');
   } else {
@@ -827,6 +828,11 @@ function drawPadTest() {
 }
 
 document.getElementById('btn-pad-test').addEventListener('click', openPadTest);
+
+/* 한국어 ↔ English */
+const btnLang = document.getElementById('btn-lang');
+btnLang.textContent = Lang.isEnglish() ? '한국어' : 'English';
+btnLang.addEventListener('click', Lang.toggle);
 
 /* 창 안의 창으로 열렸으면 시작 화면에 경고를 보여줘요 */
 if (Input.inFrame()) document.getElementById('frame-warning').hidden = false;

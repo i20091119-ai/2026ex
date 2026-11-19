@@ -16,6 +16,7 @@ import re
 # 합칠 자바스크립트 파일들 (순서가 중요해요!)
 JS_FILES = [
     'js/sound.js',     # 소리
+    'js/lang.js',      # 영어로 보기
     'js/input.js',     # 조작
     'js/skin.js',      # 우리가 그린 그림 넣기
     'js/missions.js',  # 미션 보관함
