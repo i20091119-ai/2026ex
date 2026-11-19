@@ -35,23 +35,35 @@ const Skin = (function () {
   };
 
   const ready = {};     // 그림이 잘 불러와졌는지
+  const found = {};     // 찾은 그림의 주소
 
   /* 그림 주소예요.
      한 파일 버전(독립을향하여.html)은 그림이 파일 안에 들어 있어요. */
   function url(name) {
     if (window.SKIN_DATA && window.SKIN_DATA[name]) return window.SKIN_DATA[name];
-    return 'images/' + name + '.png';
+    return found[name] || ('images/' + name + '.png');
   }
 
-  /* 게임을 켤 때 그림이 있는지 하나씩 확인해요 */
+  /* 게임을 켤 때 그림이 있는지 하나씩 확인해요.
+     사람은 .png (투명 배경), 배경은 .jpg (파일이 작아요) 를 먼저 찾아요. */
   Object.keys(SLOTS).forEach(function (name) {
-    const img = new Image();
-    img.onload = function () {
-      ready[name] = true;
-      if (name === 'title') drawTitle();
-    };
-    img.src = url(name);      // 없으면 그냥 조용히 넘어가요
+    if (window.SKIN_DATA && window.SKIN_DATA[name]) { done(name); return; }
+    const isBg = name === 'title' || /^ch\d$/.test(name);
+    const tries = isBg ? ['.jpg', '.png'] : ['.png', '.jpg'];
+    (function next(i) {
+      if (i >= tries.length) return;          // 없으면 그냥 조용히 넘어가요
+      const src = 'images/' + name + tries[i];
+      const img = new Image();
+      img.onload = function () { found[name] = src; done(name); };
+      img.onerror = function () { next(i + 1); };
+      img.src = src;
+    })(0);
   });
+
+  function done(name) {
+    ready[name] = true;
+    if (name === 'title') drawTitle();
+  }
 
   /* 시작 화면 배경 */
   function drawTitle() {

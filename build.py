@@ -61,9 +61,10 @@ def main():
     skin = {}
     if os.path.isdir('images'):
         for name in sorted(os.listdir('images')):
-            if name.lower().endswith('.png'):
+            kind = {'.png': 'png', '.jpg': 'jpeg'}.get(os.path.splitext(name)[1].lower())
+            if kind:
                 with open(os.path.join('images', name), 'rb') as f:
-                    skin[name[:-4]] = 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+                    skin[os.path.splitext(name)[0]] = 'data:image/%s;base64,' % kind + base64.b64encode(f.read()).decode()
     if skin:
         js = 'window.SKIN_DATA = ' + json.dumps(skin) + ';\n\n' + js
         print('그림 %d 장을 함께 넣었어요 : %s' % (len(skin), ', '.join(skin)))
