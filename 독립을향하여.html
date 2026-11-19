@@ -183,6 +183,31 @@ body {
   opacity: 0.6;
 }
 
+/* ---------- 왼쪽 위 : 만든 곳과 만든 사람 ---------- */
+.corner-credit {
+  position: absolute;
+  left: clamp(14px, 3vw, 34px);
+  top: clamp(14px, 3vh, 26px);
+  text-align: left;
+  max-width: 46%;
+  line-height: 1.5;
+}
+.credit-org {
+  font-size: clamp(11px, 1.6vw, 15px);
+  font-weight: 700;
+  color: var(--paper);
+  letter-spacing: 0.5px;
+}
+.credit-names {
+  margin-top: 2px;
+  font-size: clamp(11px, 1.5vw, 14px);
+  color: var(--ochre);
+  letter-spacing: 1px;
+}
+#screen-title.has-art .corner-credit {
+  text-shadow: 0 0 3px #000, 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 18px rgba(0, 0, 0, 0.7);
+}
+
 /* ---------- 왼쪽 아래 : 설명란 ---------- */
 .corner-help {
   position: absolute;
@@ -2856,6 +2881,11 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 #screen-title.has-art .team-name,
 #screen-title.has-art .team-members { color: var(--paper); opacity: 1; }
 
+/* 좁은 화면 : 오른쪽 위 조종기 글씨가 왼쪽 위 이름과 겹치지 않게 */
+@media (max-width: 600px) {
+  .pad-status { max-width: 46vw; text-align: right; }
+}
+
 </style>
 </head>
 <body>
@@ -2887,7 +2917,12 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 
     <!-- 팀 이름 -->
     <p class="team-name">팀 - 서진</p>
-    <p class="team-members">서진 · 조찬우 · 박윤진</p>
+
+    <!-- 왼쪽 위 : 만든 곳과 만든 사람 -->
+    <div class="corner-credit">
+      <p class="credit-org">2026. 창녕교육지원청영재교육원 초등발명반</p>
+      <p class="credit-names">서진 · 조찬우 · 박윤진</p>
+    </div>
 
     <!-- 왼쪽 아래 : 설명란 -->
     <div class="corner-help">
@@ -3663,6 +3698,7 @@ const Lang = (function () {
     '스틱 ✔': 'stick ✔',
     '스틱 (건너뜀)': 'stick (skipped)',
     '팀 - 서진': 'Team - Seojin',
+    '2026. 창녕교육지원청영재교육원 초등발명반': '2026. Changnyeong Gifted Education Center · Elementary Invention Class',
     '누르면 달려요 · 「멈춰!」 가 뜨면': 'to run · when “Freeze!” appears,',
     'English': 'English',
 

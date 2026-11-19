@@ -395,6 +395,7 @@ const Lang = (function () {
     '스틱 ✔': 'stick ✔',
     '스틱 (건너뜀)': 'stick (skipped)',
     '팀 - 서진': 'Team - Seojin',
+    '2026. 창녕교육지원청영재교육원 초등발명반': '2026. Changnyeong Gifted Education Center · Elementary Invention Class',
     '누르면 달려요 · 「멈춰!」 가 뜨면': 'to run · when “Freeze!” appears,',
     'English': 'English',
 
