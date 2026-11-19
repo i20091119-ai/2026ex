@@ -2824,3 +2824,14 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 
 /* 5장 헌병대장 그림은 조금 더 크게 (마지막 상대니까요) */
 .m5-boss .fig.has-art .f-art { height: 1.85em; max-width: 2.8em; }
+
+/* 6장에 우리가 그린 배경이 있으면 :
+   처음엔 밤처럼 어둡게 덮여 있다가, 태극기를 흔들수록 그림이 밝아져요 */
+.m6-scene.has-art-bg .m6-sky {
+  background: #05070f;
+  opacity: calc(0.9 - var(--dawn) * 0.9);
+  transition: opacity 0.25s ease;
+}
+.m6-scene.has-art-bg .m6-sky::after,
+.m6-scene.has-art-bg .m6-sun,
+.m6-scene.has-art-bg .m6-ground { display: none; }
