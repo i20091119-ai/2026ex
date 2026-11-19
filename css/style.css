@@ -963,7 +963,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
           drop-shadow(0 0 0.06em #ff4a4a);
 }
 
-.fig.has-art.is-looking:not(.has-look) .f-art {
+.fig--police.has-art.is-looking:not(.has-look) .f-art,
+.fig--captain.has-art.is-looking:not(.has-look) .f-art {
   filter: drop-shadow(0 0 0.04em #ff4a4a) drop-shadow(0 0 0.1em rgba(255, 60, 60, 0.85));
 }
 
