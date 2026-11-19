@@ -5,6 +5,11 @@
   <!-- 아케이드 기계 모니터, 노트북, 태블릿 어디서든 잘 보이게 하는 설정이에요 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>독립을 향하여 - 서진모둠</title>
+  <!-- 글꼴 : 제목은 명조(Noto Serif KR), 나머지는 고딕(Noto Sans KR).
+       인터넷이 없으면 컴퓨터에 있는 글꼴로 대신 보여요. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@600;700;900&display=swap">
   <style>
 /* ==================================================================
    독립을 향하여 - 꾸미기 파일 (CSS)
@@ -3270,6 +3275,348 @@ body.liberation .pad-btn .pad-arcade { background: #1a2340; color: #fff; }
 }
 .m6-crowd { bottom: 31%; }
 .m6-ground { height: 32%; }
+
+/* ==================================================================
+   ★ 디자인 다듬기 (전체)
+     - 제목·이야기는 명조, 나머지는 고딕
+     - 상자들은 반투명 유리 느낌 + 가는 놋쇠색 선
+     - 말풍선·대사 상자는 한지 종이
+     밝아지는 6장(광복)에서는 아래 'liberation' 값으로 바뀌어요.
+   ================================================================== */
+:root {
+  --serif: "Noto Serif KR", "Nanum Myeongjo", "AppleMyungjo", "Batang", serif;
+  --sans:  "Noto Sans KR", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --round: 10px;
+  --glass: rgba(14, 19, 40, 0.62);
+  --glass-2: rgba(255, 255, 255, 0.06);
+  --hair: rgba(215, 180, 106, 0.28);        /* 가는 놋쇠색 선 */
+  --gold: #d7b46a;
+  --gold-hi: #f0d896;
+  --hanji: linear-gradient(180deg, #f1e9d6 0%, #e4d8bf 100%);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+}
+body.liberation {
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-2: rgba(26, 35, 64, 0.05);
+  --hair: rgba(138, 100, 32, 0.3);
+  --shadow: 0 10px 26px rgba(26, 35, 64, 0.16);
+}
+
+body { font-family: var(--sans); letter-spacing: -0.01em; }
+button { font-family: var(--sans); }
+
+/* 화면 배경 : 가운데가 은은하게 밝은 밤하늘 */
+.screen {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(91, 147, 214, 0.08), transparent 60%),
+    radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(170deg, var(--bg-1), var(--bg-2));
+}
+
+/* ---------- 시작 화면 ---------- */
+.game-title {
+  font-family: var(--serif);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  position: relative;
+  padding-bottom: 14px;
+}
+.game-title::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: min(60%, 260px);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.t-red  { text-shadow: 0 0 22px rgba(217, 68, 82, 0.45), 0 2px 6px rgba(0, 0, 0, 0.6); }
+.t-blue { text-shadow: 0 0 22px rgba(91, 147, 214, 0.45), 0 2px 6px rgba(0, 0, 0, 0.6); }
+
+.start-word {
+  font-family: var(--serif);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  -webkit-text-stroke: 0;
+  color: #fbf6ea;
+  text-shadow: 0 0 30px rgba(240, 216, 150, 0.35), 0 4px 14px rgba(0, 0, 0, 0.7);
+}
+
+.play-btn {
+  color: #1a1408;
+  background: radial-gradient(circle at 35% 30%, var(--gold-hi), var(--gold) 60%, #a77d36);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 6px rgba(215, 180, 106, 0.18), 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: play-glow 2.4s ease-in-out infinite;
+}
+.play-btn:hover, .play-btn.is-focus { background: radial-gradient(circle at 35% 30%, #fff1c7, var(--gold-hi) 60%, var(--gold)); }
+@keyframes play-glow {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(215, 180, 106, 0.18), 0 8px 24px rgba(0, 0, 0, 0.5); }
+  50%      { box-shadow: 0 0 0 12px rgba(215, 180, 106, 0.08), 0 8px 24px rgba(0, 0, 0, 0.5); }
+}
+
+.start-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px 6px 10px;
+  border-radius: 999px;
+  background: rgba(8, 11, 22, 0.55);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(6px);
+  font-weight: 500;
+  animation: none;
+}
+.start-hint b { animation: blink 1.6s ease-in-out infinite; background: var(--gold-hi); }
+
+.team-name {
+  font-family: var(--serif);
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  color: var(--paper);
+}
+
+.credit-org { font-weight: 500; letter-spacing: 0.02em; }
+.credit-names { font-family: var(--serif); font-weight: 700; color: var(--gold-hi); letter-spacing: 0.12em; }
+
+/* 유리 알약 버튼 (조종기 확인 · English · 설명 ?) */
+.corner-test,
+.round-btn,
+.small-btn {
+  background: var(--glass);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  color: var(--paper);
+  font-weight: 500;
+}
+.round-btn { border-radius: 50%; }
+.corner-test:hover, .round-btn:hover, .small-btn:hover,
+.corner-test.is-focus, .round-btn.is-focus, .small-btn.is-focus {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+  background: rgba(215, 180, 106, 0.14);
+}
+
+.taegeukgi { border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 14px 34px rgba(0, 0, 0, 0.6); }
+
+/* 큰 버튼 : 놋쇠 금빛 */
+.big-btn {
+  border-radius: 999px;
+  padding: 13px 38px;
+  color: #1a1408;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, #b48a43);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.big-btn:hover, .big-btn.is-focus { background: linear-gradient(180deg, #fff1c7, var(--gold-hi) 55%, var(--gold)); }
+
+/* 메뉴로 고른 것 : 금빛 고리 */
+.is-focus, button:focus-visible {
+  outline: 2px solid var(--gold-hi);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 7px rgba(240, 216, 150, 0.16);
+}
+
+/* ---------- 게임 화면 : 위쪽 점수판 (한 줄 유리 막대) ---------- */
+#hud {
+  width: calc(100% - 28px);
+  max-width: 900px;
+  margin: 12px auto 0;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  gap: 0;
+}
+.hud-chapter, .hud-score, .hud-life {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 2px 16px;
+}
+.hud-life { border-left: 1px solid var(--hair); border-right: 1px solid var(--hair); }
+.hud-chapter { flex: 1; min-width: 0; }
+.hud-score { justify-content: flex-end; }
+.hud-label {
+  font-size: clamp(9px, 1.2vw, 11px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  opacity: 0.9;
+}
+#hud-chapter-name {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#hud-score { font-family: var(--serif); font-weight: 900; color: var(--gold-hi); }
+.life-mark { width: 11px; height: 11px; box-shadow: 0 0 8px rgba(217, 68, 82, 0.7); }
+.life-mark.is-lost { box-shadow: none; }
+body.liberation #hud-score { color: #8a6420; }
+
+/* ---------- 게임 무대 : 가는 금빛 테와 네 귀퉁이 장식 ---------- */
+#stage { padding: 12px 14px; }
+#stage-inner {
+  border-radius: var(--round);
+  border: 1px solid var(--hair);
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45), var(--shadow);
+}
+#stage-inner::before,
+#stage-inner::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  z-index: 8;
+  pointer-events: none;
+  border-color: var(--gold);
+  border-style: solid;
+  opacity: 0.8;
+}
+#stage-inner::before { left: 6px; top: 6px; border-width: 2px 0 0 2px; }
+#stage-inner::after  { right: 6px; bottom: 6px; border-width: 0 2px 2px 0; }
+
+/* ---------- 미션 말풍선 : 한지 카드 + 동그란 얼굴 ---------- */
+#bubble {
+  border-radius: var(--round);
+  background: var(--hanji);
+  color: #1d1a14;
+  border: 1px solid rgba(80, 60, 30, 0.25);
+  border-left: none;
+  box-shadow: var(--shadow);
+  padding: 10px 18px 10px 12px;
+  position: relative;
+}
+#bubble::before {          /* 왼쪽 붉은 인장(낙관) 띠 */
+  content: '';
+  position: absolute;
+  left: 0; top: 10px; bottom: 10px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  background: var(--flag-red);
+}
+#bubble-face {
+  width: clamp(40px, 6vh, 52px);
+  height: clamp(40px, 6vh, 52px);
+  margin-left: 6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #fbf6ea, #ddd0b4);
+  border: 2px solid rgba(160, 50, 50, 0.55);
+  font-size: clamp(30px, 4.6vh, 40px);
+}
+#bubble-text { font-weight: 500; letter-spacing: -0.01em; }
+
+/* ---------- 아래 조작 안내판 : 유리 ---------- */
+#pad-guide {
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+.pad-btn { background: var(--glass-2); border: 1px solid var(--hair); }
+.pad-stick { background: var(--glass-2); border: 1px solid var(--hair); }
+.pad-device { border-radius: 999px; }
+
+/* ---------- 덮개 창 (멈춤 · 설명 · 조종기) ---------- */
+#overlay { background: rgba(6, 9, 22, 0.7); backdrop-filter: blur(8px); }
+.overlay-card {
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(30, 38, 70, 0.92), rgba(16, 21, 42, 0.95));
+  border: 1px solid var(--hair);
+  border-top: 1px solid var(--hair);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+.overlay-card::before {
+  content: '';
+  position: absolute;
+  left: 18%; right: 18%; top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-hi), transparent);
+}
+#overlay-emoji { font-weight: 700; letter-spacing: 0.5em; }
+#overlay-title { font-family: var(--serif); font-weight: 700; letter-spacing: 0.04em; }
+.help-row { border-radius: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.06); }
+body.liberation .overlay-card { background: linear-gradient(180deg, #fbf7ee, #eee6d4); color: #1a2340; }
+
+/* ---------- 장 사이 이야기 ---------- */
+.story-chapter span { letter-spacing: 0.5em; }
+.story-chapter b { font-family: var(--serif); font-weight: 900; letter-spacing: 0.3em; }
+.story-box {
+  border-radius: 14px;
+  background: var(--hanji);
+  color: #1d1a14;
+  border: 1px solid rgba(80, 60, 30, 0.25);
+  border-left: none;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  position: relative;
+}
+.story-box::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 14px; bottom: 14px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  background: var(--flag-red);
+}
+.story.is-narr .story-box::before { background: var(--gold); }
+.story-name {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #9e2b33;
+  color: #fbf3e2;
+  letter-spacing: 0.2em;
+  min-height: 0;
+}
+.story-name:empty { display: none; }
+.story-text { font-family: var(--serif); font-weight: 600; }
+.story.is-narr .story-text { font-weight: 600; font-style: normal; color: #3a3226; }
+
+/* ---------- 끝 화면 ---------- */
+#end-title { font-family: var(--serif); font-weight: 900; letter-spacing: 0.06em; }
+#end-emoji { font-family: var(--serif); font-weight: 700; }
+.score-card {
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.score-card strong { font-family: var(--serif); font-weight: 900; color: var(--gold-hi); }
+body.liberation .score-card strong { color: #8a6420; }
+.end-panel {
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.end-panel h3 { font-family: var(--serif); font-weight: 700; color: var(--gold); }
+.end-history b { font-family: var(--serif); font-weight: 700; }
+
+/* ---------- 각 장의 작은 글씨 상자들 ---------- */
+.m3-key {
+  border-radius: 6px;
+  border: 1px solid var(--hair);
+  background: var(--glass-2);
+}
+
+/* 끝 화면 위쪽 인물 그림 (졌을 때 경찰) 크게 */
+#end-emoji .fig { font-size: clamp(54px, 10vh, 86px); }
 
 </style>
 </head>
