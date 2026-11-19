@@ -2935,3 +2935,7 @@ body.liberation .pad-btn .pad-arcade { background: #1a2340; color: #fff; }
   font-size: 12px;
   color: var(--ochre);
 }
+
+/* 4장 : 새로 온 경찰은 깜빡이며 나타나요 (이때는 아직 못 잡아요) */
+.m4-cop.is-new { animation: cop-arrive 0.3s ease-in-out infinite alternate; }
+@keyframes cop-arrive { from { opacity: 0.25; } to { opacity: 0.9; } }

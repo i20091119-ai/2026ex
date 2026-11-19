@@ -426,6 +426,7 @@ const Lang = (function () {
     [/^찾은 태극기 (\d+) \/ (\d+)$/, function (m) { return 'Flags found ' + m[1] + ' / ' + m[2]; }],
     [/^남은 태극기 (\d+)개$/, function (m) { return 'Flags left: ' + m[1]; }],
     [/^태극기를 찾았다!\s+아직 (\d+)장 더 남았다\.$/, function (m) { return 'Found a flag! ' + m[1] + ' more to go.'; }],
+    [/^「 (.+) 」  —  경찰이 한 명 더 왔다!$/, function (m) { return '“' + t(m[1]) + '”  —  Another policeman arrived!'; }],
     [/^「 (.+) 」$/, function (m) { return '“' + t(m[1]) + '”'; }],
     [/^아니란다\. 정답은 「(.+)」 이야\. (.+)$/, function (m) { return 'Not quite. The answer is “' + t(m[1]) + '”. ' + t(m[2]); }],
     [/^조종기 : 연결됨 \((\w+)\)$/, function (m) { return 'Controller: connected (' + m[1] + ')'; }],
