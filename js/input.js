@@ -351,9 +351,12 @@ const Input = (function () {
      게임 순서 : 1 A/×  2 B/○  3 X/□  4 Y/△  5 LB/L1  6 RB/R1  7 LT/L2  8 RT/R2
 
      XINPUT : 조종기가 A, B, X, Y, LB, RB, LT, RT 순서로 보내요
-     DINPUT : 플레이스테이션3 방식이라 □, ×, ○, △, L1, R1, L2, R2 순서로 보내요 */
+     그 밖  : ★ 우리 학교 조종기를 진단 페이지로 직접 눌러 본 결과예요 (11월 19일)
+              A → 0, B → 1, X → 3, Y → 4, LB → 6, RB → 7
+              (2번과 5번은 비어 있어요. LT · RT 는 8 · 9 로 보고 있어요)
+     그래도 다르면 「조종기 맞추기」가 진짜 신호를 배워요. */
   const XINPUT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7];
-  const DINPUT_ORDER = [1, 2, 0, 3, 4, 5, 6, 7];
+  const DINPUT_ORDER = [0, 1, 3, 4, 6, 7, 8, 9];
   const STICK_LIMIT = 0.5;       // 스틱을 이만큼 기울여야 '눌렀다'고 쳐요
 
   /* 조종기를 처음 연결했을 때 각 축이 어떤 값이었는지 적어둬요.
@@ -522,8 +525,14 @@ const Input = (function () {
 
          ★ DINPUT + RS 로 두면 오른쪽 스틱의 세로가 5번 축으로 와요.
            (XINPUT 에서는 3번 축) 그래서 5번 축도 함께 봐요. */
+      /* ★ 우리 학교 조종기(표준이 아닌 방식)는 LT · RT 를 누르면
+           버튼 8 · 9 와 함께 축 3 · 4 도 -1 → 1 로 움직여요.
+           그래서 표준이 아닐 때는 축 3 을 스틱으로 읽지 않아요.
+           (안 그러면 LT 를 눌렀는데 주인공이 아래로 걸어가요) */
       const x = biggest(axisMove(pad, 0), axisMove(pad, 2));
-      const y = biggest(axisMove(pad, 1), axisMove(pad, 3), axisMove(pad, 5));
+      const y = (pad.mapping === 'standard')
+        ? biggest(axisMove(pad, 1), axisMove(pad, 3), axisMove(pad, 5))
+        : biggest(axisMove(pad, 1), axisMove(pad, 5));
 
       /* 십자 버튼 (XINPUT 모드에서 DP 로 두었을 때) */
       const dpad = {
@@ -595,6 +604,8 @@ const Input = (function () {
     const v = pad.axes[i];
     if (v === undefined || Math.abs(v) > 1.05) return 0;
     if (claimedAxes[i]) return 0;        // 버튼 기능이 쓰는 축이에요
+    // 가만히 있을 때 -1 이나 1 에 붙어 있는 축은 스틱이 아니라 트리거예요
+    if (padRest && Math.abs(padRest[i]) > 0.9) return 0;
     const rest = (padRest && Math.abs(padRest[i]) <= 1.05) ? padRest[i] : 0;
     return v - rest;
   }
