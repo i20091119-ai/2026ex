@@ -137,6 +137,17 @@ const Lang = (function () {
     '두 번째 경찰': 'Police 2',
     '경찰이 한 명 더 왔다! 둘 다 뒤돌아야 달릴 수 있다.': 'Another policeman came! Run only when both have turned away.',
     '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 얼른 손을 떼면 된다.': 'Run only while the police look away. When “Freeze!” appears, let go quickly.',
+    '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 멈추고, 손전등이 오면 짚단·장독·수레 옆에서 ↓ 로 숨어라.': 'Run only while the police look away. Stop at “Freeze!”, and when the flashlight comes, hide next to a haystack, jar or cart with ↓.',
+    '손전등을 비춘다!  짚단 · 장독 · 수레 옆에서 ↓ 로 숨어라!': 'Flashlight coming! Hide next to a haystack, jar or cart with ↓!',
+    '손전등 불빛에 들켰다!': 'The flashlight found you!',
+    '손전등 불빛에 들켰어요!': 'The flashlight found you!',
+    '…아무도 없군': '…nobody there',
+    '아슬아슬!': 'Close call!',
+    '숨어라!': 'Hide!',
+    '휴…': 'Phew…',
+    '↓ 숨기': '↓ hide',
+    '살 수 있어요 ·': 'to stay safe ·',
+    '손전등이 오면 숨을 곳 옆에서': 'when the flashlight comes, hide with',
 
     /* 2장 : 퀴즈 */
     '역사 문제': 'History quiz',

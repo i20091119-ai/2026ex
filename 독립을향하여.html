@@ -3618,6 +3618,155 @@ body.liberation .score-card strong { color: #8a6420; }
 /* 끝 화면 위쪽 인물 그림 (졌을 때 경찰) 크게 */
 #end-emoji .fig { font-size: clamp(54px, 10vh, 86px); }
 
+/* ==================================================================
+   1장 : 숨을 곳 · 손전등 · 아슬아슬
+   ================================================================== */
+.m1-road { overflow: visible; }
+
+/* 숨을 곳 (짚단 · 장독 · 수레) */
+.m1-spot {
+  position: absolute;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.m1-spot.is-hay {
+  width: clamp(40px, 6vw, 58px); height: clamp(30px, 4.6vw, 44px);
+  border-radius: 50% 50% 12% 12% / 70% 70% 12% 12%;
+  background:
+    repeating-linear-gradient(100deg, rgba(120, 80, 20, 0.35) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #e2bd63, #b48a35);
+  border: 2px solid #5a4318;
+}
+.m1-spot.is-jar {
+  width: clamp(30px, 4.4vw, 42px); height: clamp(34px, 5vw, 48px);
+  border-radius: 38% 38% 30% 30% / 30% 30% 22% 22%;
+  background: radial-gradient(circle at 35% 35%, #8a5a36, #4a2c18 70%);
+  border: 2px solid #24150b;
+}
+.m1-spot.is-jar::before {           /* 장독 뚜껑 */
+  content: '';
+  position: absolute;
+  left: 18%; right: 18%; top: -6px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a2414;
+  border: 2px solid #24150b;
+}
+.m1-spot.is-cart {
+  width: clamp(48px, 7vw, 68px); height: clamp(24px, 3.6vw, 34px);
+  bottom: 14px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0 2px, transparent 2px 12px),
+    linear-gradient(180deg, #9a6a3c, #6b4422);
+  border: 2px solid #2e1b0c;
+}
+.m1-spot.is-cart::before,
+.m1-spot.is-cart::after {           /* 수레 바퀴 */
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2e1b0c 25%, #8b5e34 30% 55%, #2e1b0c 60%);
+}
+.m1-spot.is-cart::before { left: 4px; }
+.m1-spot.is-cart::after  { right: 4px; }
+
+/* 가까이 가면 금빛 테와 「↓ 숨기」 */
+.m1-spot-tip {
+  position: absolute;
+  left: 50%; bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #1a1408;
+  background: var(--gold-hi, #f0d896);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.m1-spot.is-near { filter: drop-shadow(0 0 6px rgba(240, 216, 150, 0.9)); }
+.m1-spot.is-near .m1-spot-tip { opacity: 1; }
+.m1-spot.is-used .m1-spot-tip { opacity: 0; }
+
+/* 숨으면 몸을 낮추고 숨을 곳 뒤로 */
+.m1-hero { z-index: 3; }
+.m1-hero.is-hiding { z-index: 1; }
+.m1-hero.is-hiding .fig { transform: translateY(16%) scale(0.85); opacity: 0.55; transition: transform 0.12s ease, opacity 0.12s ease; }
+.m1-hero.is-lit .fig { filter: drop-shadow(0 0 8px rgba(255, 230, 150, 0.9)); }
+
+/* 손전등 불빛 */
+.m1-beam {
+  position: absolute;
+  top: -55%;
+  bottom: -8%;
+  width: 13%;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 75%, rgba(255, 244, 196, 0.62), rgba(255, 230, 150, 0.18) 55%, transparent 72%);
+  transition: opacity 0.2s ease;
+}
+.m1-beam.is-warn { opacity: 0.6; width: 5%; animation: blink 0.25s ease-in-out infinite; }
+.m1-beam.is-on   { opacity: 1; }
+
+/* 발밑 먼지 */
+.m1-dust {
+  position: absolute;
+  bottom: 4px;
+  width: 16px; height: 8px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: rgba(222, 213, 194, 0.45);
+  pointer-events: none;
+  animation: m1-dust 0.5s ease-out forwards;
+}
+@keyframes m1-dust { to { transform: translate(-14px, -6px) scale(1.8); opacity: 0; } }
+
+/* 떠오르는 글자 */
+.m1-pop {
+  position: absolute;
+  bottom: 100%;
+  z-index: 6;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: clamp(14px, 2.2vw, 20px);
+  text-shadow: 0 0 4px #000, 0 2px 8px #000;
+  pointer-events: none;
+  animation: m1-pop 1s ease-out forwards;
+}
+.m1-pop.is-close { color: #ffe08a; }
+.m1-pop.is-calm  { color: #cfe8c3; font-size: clamp(12px, 1.8vw, 16px); }
+@keyframes m1-pop {
+  0%   { transform: translate(-50%, 6px) scale(0.6); opacity: 0; }
+  25%  { transform: translate(-50%, -6px) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -34px) scale(1); opacity: 0; }
+}
+
+/* 달리면 배경이 천천히 따라 움직여요 */
+.m1-scene.has-art-bg {
+  background-size: 135% auto !important;
+  background-position: calc(var(--pan, 0) * 1%) 60% !important;
+}
+
+/* 1장 : 손전등이 올 때 신호와 알림을 크게 */
+.m1-light.is-search { background: #2f4f86; color: #ffffff; box-shadow: 0 0 18px rgba(120, 170, 255, 0.6); animation: blink 0.5s ease-in-out infinite; }
+.m1-warn.is-search {
+  display: inline-block;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: rgba(160, 30, 40, 0.9);
+  color: #fff4f0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.m1-hero.is-hiding .fig { opacity: 0.75; }
+
 </style>
 </head>
 <body>
@@ -4210,6 +4359,17 @@ const Lang = (function () {
     '두 번째 경찰': 'Police 2',
     '경찰이 한 명 더 왔다! 둘 다 뒤돌아야 달릴 수 있다.': 'Another policeman came! Run only when both have turned away.',
     '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 얼른 손을 떼면 된다.': 'Run only while the police look away. When “Freeze!” appears, let go quickly.',
+    '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 멈추고, 손전등이 오면 짚단·장독·수레 옆에서 ↓ 로 숨어라.': 'Run only while the police look away. Stop at “Freeze!”, and when the flashlight comes, hide next to a haystack, jar or cart with ↓.',
+    '손전등을 비춘다!  짚단 · 장독 · 수레 옆에서 ↓ 로 숨어라!': 'Flashlight coming! Hide next to a haystack, jar or cart with ↓!',
+    '손전등 불빛에 들켰다!': 'The flashlight found you!',
+    '손전등 불빛에 들켰어요!': 'The flashlight found you!',
+    '…아무도 없군': '…nobody there',
+    '아슬아슬!': 'Close call!',
+    '숨어라!': 'Hide!',
+    '휴…': 'Phew…',
+    '↓ 숨기': '↓ hide',
+    '살 수 있어요 ·': 'to stay safe ·',
+    '손전등이 오면 숨을 곳 옆에서': 'when the flashlight comes, hide with',
 
     /* 2장 : 퀴즈 */
     '역사 문제': 'History quiz',
@@ -5837,7 +5997,15 @@ const Story = (function () {
    - 경찰이 이쪽을 볼 때(👀) 움직이면 들켜요!
    - 오른쪽 끝 비밀 아지트까지 편지를 전달하면 성공이에요
 
+   ★ 더 재밌게!
+   - 경찰이 「음?」 하고 돌아보려다 그냥 다시 돌아서기도 해요 (속임수)
+   - 길 중간부터는 「손전등」 이 길을 쓸고 지나가요.
+     이때는 가만히 있어도 들켜요! 짚단·장독·수레 옆에서 스틱 ↓ 로 숨어요.
+   - 아슬아슬하게 멈추면 「아슬아슬!」 이 떠요
+
    조작 : 오른쪽 방향키(또는 스틱 오른쪽)를 꾹 누르면 앞으로 가요
+          왼쪽 방향키(스틱 ←)로 뒤로 물러날 수도 있어요
+          숨을 곳 옆에서 아래 방향키(스틱 ↓)를 꾹 누르면 숨어요
           마우스로 화면을 꾹 눌러도 앞으로 가요
    ================================================================== */
 
@@ -5852,6 +6020,12 @@ MISSIONS[1] = (function () {
   let running = false;     // 미션이 진행 중인지
   let mouseHold = false;   // 마우스를 누르고 있는지
   let lastTime = 0;        // 시간을 재려고 기억해두는 값
+  let clock = 0;           // 이 장의 시계 (초)
+  let lastMoveAt = -9;     // 마지막으로 움직인 때
+  let hidden = false;      // 지금 숨어 있는지
+  let search = null;       // 손전등 { phase:'warn'|'sweep', t, from, to, x }
+  let searchWait = 0;      // 다음 손전등까지 남은 시간
+  let dustTimer = 0;
 
   let onSuccess = null;    // 성공하면 부를 함수
   let onFail = null;       // 들키면 부를 함수
@@ -5871,6 +6045,22 @@ MISSIONS[1] = (function () {
      "앗!" 하고 손을 떼면 살 수 있어요. 어린 동생들에게 꼭 필요해요! */
   const GRACE = 0.28;
 
+  /* ★ 숨을 곳 (길 위의 자리 %, 모양) */
+  const SPOTS = [
+    { x: 22, kind: 'hay',  name: '짚단' },
+    { x: 47, kind: 'jar',  name: '장독' },
+    { x: 73, kind: 'cart', name: '수레' },
+  ];
+  const HIDE_NEAR = 4.5;      // 숨을 곳에서 이만큼 가까우면 숨을 수 있어요
+
+  /* ★ 손전등 수색 */
+  const SEARCH_FROM  = 16;    // 이만큼 온 뒤부터 손전등이 와요
+  const SEARCH_WARN  = 1.7;   // 「손전등을 비춘다!」 알림 시간 (초)
+  const SEARCH_SWEEP = 2.6;   // 불빛이 길 끝에서 끝까지 쓸고 가는 시간 (초)
+  const BEAM_HALF    = 6;     // 불빛의 반쯤 너비 (%)
+
+  const FAKE_CHANCE = 0.28;   // 경찰이 돌아보는 척만 할 확률
+
 
   /* ----------------------------------------------------------------
      2. 경찰의 세 가지 상태
@@ -5888,10 +6078,14 @@ MISSIONS[1] = (function () {
       // '돌아본다!' 신호 시간이에요. 짧을수록 어려워져요.
       // 도착에 가까워질수록 더 짧아져서 점점 긴장돼요.
       cop.timer = MissionUtil.clamp(1.2 - hard * 0.35, 0.7, 1.25);
+      // ★ 가끔은 돌아보는 척만 하고 다시 돌아서요 (막대가 줄다가 멈춰요)
+      cop.fakeAt = (hero > 8 && Math.random() < FAKE_CHANCE)
+        ? cop.timer * MissionUtil.random(0.3, 0.6) : -1;
 
     } else if (cop.state === 'warning') {
       cop.state = 'watching';
       cop.watched = 0;                       // 이제 막 돌아봤어요 (봐주는 시간 시작)
+      cop.closeCall = (clock - lastMoveAt) < 0.45;   // 방금까지 달리고 있었나요?
       cop.timer = MissionUtil.random(0.9, 1.5) + hard * 0.25;
       if (window.Sound) Sound.alert();       // 삐빅! 조심하라는 소리
 
@@ -5968,11 +6162,109 @@ MISSIONS[1] = (function () {
     node.count.classList.toggle('is-on', left > 0);
   }
 
+  /* 무대 위에 글자를 잠깐 띄워요 (아슬아슬! 등) */
+  function pop(text, cls) {
+    const el = document.createElement('div');
+    el.className = 'm1-pop ' + (cls || '');
+    el.textContent = text;
+    el.style.left = hero + '%';
+    node.road.appendChild(el);
+    setTimeout(function () { el.remove(); }, 1000);
+  }
+
+  /* 발밑에 먼지가 폴폴 */
+  function dust() {
+    const el = document.createElement('span');
+    el.className = 'm1-dust';
+    el.style.left = hero + '%';
+    node.road.appendChild(el);
+    setTimeout(function () { el.remove(); }, 500);
+  }
+
+  /* 가장 가까운 숨을 곳 (가까우면 그 번호, 아니면 -1) */
+  function nearSpot() {
+    for (let i = 0; i < SPOTS.length; i++) {
+      if (Math.abs(SPOTS[i].x - hero) <= HIDE_NEAR) return i;
+    }
+    return -1;
+  }
+
+  /* ----------------------------------------------------------------
+     3-2. 손전등 수색
+     ---------------------------------------------------------------- */
+  function startSearch() {
+    const fromLeft = Math.random() < 0.5;
+    search = { phase: 'warn', t: SEARCH_WARN, from: fromLeft ? -8 : 108, to: fromLeft ? 108 : -8 };
+    search.x = search.from;
+    node.warn.textContent = '손전등을 비춘다!  짚단 · 장독 · 수레 옆에서 ↓ 로 숨어라!';
+    node.warn.classList.add('is-on');
+    node.beam.classList.add('is-warn');
+    node.beam.style.left = (fromLeft ? 2 : 98) + '%';
+    node.warn.classList.add('is-search');
+    node.light.className = 'm1-light is-search';     // 신호도 「숨어라!」 로 바뀌어요
+    node.light.textContent = '숨어라!';
+    if (window.Sound) Sound.alert();
+  }
+
+  function updateSearch(delta) {
+    // 손전등이 없을 때 : 경찰이 모두 뒤돌아 있을 때만 시작해요 (위험은 한 번에 하나씩!)
+    if (!search) {
+      if (hero < SEARCH_FROM || hero > 92) return;
+      searchWait -= delta;
+      const allAway = cops.every(function (c) { return c.state === 'away' && c.timer > 1; });
+      if (searchWait <= 0 && allAway) startSearch();
+      return;
+    }
+
+    search.t -= delta;
+    if (search.phase === 'warn') {
+      if (search.t <= 0) {
+        search.phase = 'sweep';
+        search.t = SEARCH_SWEEP;
+        node.beam.classList.remove('is-warn');
+        node.beam.classList.add('is-on');
+      }
+      return;
+    }
+
+    // 불빛이 길을 쓸고 지나가요
+    const k = 1 - search.t / SEARCH_SWEEP;
+    search.x = search.from + (search.to - search.from) * k;
+    node.beam.style.left = search.x + '%';
+
+    if (!hidden && Math.abs(search.x - hero) < BEAM_HALF) {
+      running = false;
+      node.hero.classList.add('is-caught');
+      node.warn.textContent = '손전등 불빛에 들켰다!';
+      setTimeout(function () { onFail('손전등 불빛에 들켰어요!'); }, 700);
+      return;
+    }
+    if (hidden && Math.abs(search.x - hero) < BEAM_HALF) node.hero.classList.add('is-lit');
+    else node.hero.classList.remove('is-lit');
+
+    if (search.t <= 0) {                         // 다 지나갔어요
+      search = null;
+      searchWait = MissionUtil.random(4.5, 6.5);
+      node.beam.className = 'm1-beam';
+      node.warn.classList.remove('is-on', 'is-search');
+      drawPolice();                              // 신호를 원래대로
+      node.hero.classList.remove('is-lit');
+      pop('휴…', 'is-calm');
+    }
+  }
+
   /* 주인공을 지금 위치로 옮겨요 */
   function drawHero(moving) {
     node.hero.style.left = hero + '%';
     node.hero.classList.toggle('is-running', moving);
+    node.hero.classList.toggle('is-hiding', hidden);
     node.barFill.style.width = hero + '%';
+    node.scene.style.setProperty('--pan', hero);      // 배경이 천천히 따라 움직여요
+    const near = nearSpot();
+    node.spots.forEach(function (el, i) {
+      el.classList.toggle('is-near', i === near);
+      el.classList.toggle('is-used', i === near && hidden);
+    });
   }
 
 
@@ -5992,13 +6284,37 @@ MISSIONS[1] = (function () {
       return;
     }
 
+    clock += delta;
+
     // (1) 경찰들의 상태를 시간에 따라 바꿔요
+    //     (손전등이 지나가는 동안 경찰은 뒤돌아서 기다려요)
     cops.forEach(function (cop) {
+      if (search) return;
       cop.timer -= delta;
       // 이쪽을 보고 있는 동안 시간을 세요 (봐주는 시간 계산에 써요)
-      if (cop.state === 'watching') cop.watched += delta;
+      if (cop.state === 'watching') {
+        cop.watched += delta;
+        // 아슬아슬하게 멈췄어요!
+        if (cop.closeCall && cop.watched > GRACE + 0.05) {
+          cop.closeCall = false;
+          pop('아슬아슬!', 'is-close');
+        }
+      }
+      // 돌아보는 척만 하고 다시 돌아서요
+      if (cop.state === 'warning' && cop.fakeAt > 0 && cop.timer <= cop.fakeAt) {
+        cop.state = 'away';
+        cop.timer = MissionUtil.random(1.6, 2.6);
+        cop.timerMax = cop.timer;
+        drawPolice();
+        cop.wordNode.textContent = '…아무도 없군';
+        return;
+      }
       if (cop.timer <= 0) nextState(cop);
     });
+
+    // (1-2) 손전등 수색
+    updateSearch(delta);
+    if (!running) return;
 
     // (2) 절반쯤 오면 두 번째 경찰이 나타나요!
     if (!secondCame && hero >= SECOND_AT) {
@@ -6006,7 +6322,11 @@ MISSIONS[1] = (function () {
     }
 
     // (3) 지금 앞으로 가라는 신호가 들어왔는지 확인해요
-    const wantMove = Input.dir.right || Input.dir.up || mouseHold;
+    const back = Input.dir.left && !Input.dir.right;   // ← 로 뒤로 물러날 수도 있어요 (숨을 곳으로!)
+    const wantMove = Input.dir.right || Input.dir.up || mouseHold || back;
+
+    // 숨을 곳 옆에서 ↓ 를 꾹 누르면 숨어요 (움직이면 다시 나와요)
+    hidden = !wantMove && Input.dir.down && nearSpot() >= 0;
 
     if (wantMove) {
       // 경찰이 보고 있는데 계속 움직이면 들켜요!
@@ -6017,7 +6337,10 @@ MISSIONS[1] = (function () {
         return;
       }
       // 안전하면 앞으로 나아가요
-      hero = MissionUtil.clamp(hero + SPEED * delta, 0, 100);
+      hero = MissionUtil.clamp(hero + (back ? -SPEED : SPEED) * delta, 0, 100);
+      lastMoveAt = clock;
+      dustTimer -= delta;
+      if (dustTimer <= 0) { dust(); dustTimer = 0.2; }
     }
 
     drawHero(wantMove);
@@ -6064,6 +6387,12 @@ MISSIONS[1] = (function () {
     secondCame = false;
     mouseHold = false;
     running = true;
+    clock = 0;
+    lastMoveAt = -9;
+    hidden = false;
+    search = null;
+    searchWait = 2.5;
+    dustTimer = 0;
 
     // 화면을 그려요
     const stage = MissionUtil.setStage(
@@ -6081,6 +6410,11 @@ MISSIONS[1] = (function () {
 
         // 아래쪽 : 길과 주인공
         '<div class="m1-road">' +
+          '<div class="m1-beam"></div>' +          // 손전등 불빛
+          SPOTS.map(function (sp) {                // 숨을 곳 (짚단 · 장독 · 수레)
+            return '<div class="m1-spot is-' + sp.kind + '" style="left:' + sp.x + '%">' +
+                     '<span class="m1-spot-tip">↓ 숨기</span></div>';
+          }).join('') +
           '<div class="m1-goal"></div>' +          // 비밀 아지트 (대문 모양)
           '<div class="m1-hero">' + MissionUtil.figure('hero') + '</div>' +
         '</div>' +
@@ -6091,7 +6425,8 @@ MISSIONS[1] = (function () {
         // 맨 아래 : 얼마나 왔는지 보여주는 막대
         '<div class="m1-bar"><div class="m1-bar-fill"></div></div>' +
         '<p class="m1-tip">오른쪽 방향키를 <b>꾹</b> 누르면 달려요 · ' +
-        '「멈춰!」 가 뜨면 <b>얼른 손을 떼면</b> 살 수 있어요</p>' +
+        '「멈춰!」 가 뜨면 <b>얼른 손을 떼면</b> 살 수 있어요 · ' +
+        '손전등이 오면 숨을 곳 옆에서 <b>↓</b></p>' +
 
       '</div>'
     );
@@ -6105,6 +6440,10 @@ MISSIONS[1] = (function () {
       goal:    stage.querySelector('.m1-goal'),
       barFill: stage.querySelector('.m1-bar-fill'),
       warn:    stage.querySelector('.m1-warn'),
+      scene:   stage.querySelector('.m1-scene'),
+      road:    stage.querySelector('.m1-road'),
+      beam:    stage.querySelector('.m1-beam'),
+      spots:   Array.prototype.slice.call(stage.querySelectorAll('.m1-spot')),
     };
 
     addCop('첫 번째 경찰', 3.4);   // 처음엔 넉넉히 달릴 수 있어요
@@ -6178,7 +6517,7 @@ MISSIONS[1] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 얼른 손을 떼면 된다.',
+    hint: '경찰이 뒤돌았을 때만 달려라. 「멈춰!」가 뜨면 멈추고, 손전등이 오면 짚단·장독·수레 옆에서 ↓ 로 숨어라.',
   };
 })();
 
