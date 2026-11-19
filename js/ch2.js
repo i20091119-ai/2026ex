@@ -7,8 +7,15 @@
    - 문제는 쉬움 → 보통 → 어려움 순서로 점점 어려워져요
    - 틀리면 선생님이 정답을 알려주고 그 문제를 다시 물어봐요
 
+   ★ 더 재밌게!
+   - 등잔불 : 한 문제에 14초. 불이 다 타면 「쉿! 일본 경찰이 지나간다」
+     방이 잠깐 어두워졌다가 같은 문제를 다시 물어요 (벌칙은 없어요)
+   - 김구 선생님의 귀띔 : 3번(X) 버튼. 틀린 보기 하나를 지워 줘요 (한 장에 두 번)
+   - 맞히면 「정답」 도장이 쾅! 세 문제를 모두 한 번에 맞히면 「백범 인정」!
+
    조작 : 스틱(방향키) 위 아래로 답을 고르고
           2번 버튼(말걸기)으로 대답해요. 마우스로 눌러도 돼요.
+          3번 버튼(X) = 김구 선생님의 귀띔
    ================================================================== */
 
 MISSIONS[2] = (function () {
@@ -113,6 +120,10 @@ MISSIONS[2] = (function () {
 
   const POINT_PER_QUIZ = 5;   // 한 문제 맞힐 때마다 주는 점수
 
+  const LAMP_TIME  = 14;      // 등잔불이 타는 시간 (초) — 한 문제에 이만큼
+  const LAMP_ALERT = 5;       // 이만큼 남으면 발소리가 들려요
+  const HINTS      = 2;       // 김구 선생님의 귀띔 (한 장에 두 번)
+
 
   /* ----------------------------------------------------------------
      3. 이 미션이 기억해야 할 것들
@@ -123,6 +134,17 @@ MISSIONS[2] = (function () {
   let locked = false;      // 답을 맞춘 뒤 잠깐 못 누르게 잠그는 값
   let onSuccess = null;
   let node = {};
+  let lamp = LAMP_TIME;       // 등잔불이 얼마나 남았는지 (초)
+  let hintsLeft = HINTS;
+  let crossed = -1;           // 귀띔으로 지운 보기 번호
+  let crossedText = '';       // 지운 보기 글자 (보기를 다시 섞어도 계속 지워 둬요)
+  let streak = 0;             // 한 번에 맞힌 연속 수
+  let firstTry = true;        // 이번 문제를 아직 안 틀렸는지
+  let allFirst = true;        // 세 문제 모두 한 번에 맞혔는지
+  let darkness = false;       // 경찰이 지나가서 방이 어두운 중
+  let running = false;
+  let lastFrame = 0;          // 등잔불 시계를 재려고 기억해두는 값
+  let stepTimer = 0;
 
 
   /* ----------------------------------------------------------------
@@ -161,6 +183,10 @@ MISSIONS[2] = (function () {
     choices = shuffle([quiz.a].concat(quiz.wrong));
     cursor = 0;
     locked = false;
+    crossed = crossedText ? choices.indexOf(crossedText) : -1;
+    if (cursor === crossed) cursor = 1;
+    lamp = LAMP_TIME;
+    drawLamp();
 
     node.count.textContent = (quizIndex + 1) + ' / ' + PICK.length;
     node.question.textContent = quiz.q;
@@ -173,7 +199,8 @@ MISSIONS[2] = (function () {
   /* 보기 3개를 그려요 */
   function drawChoices() {
     node.choices.innerHTML = choices.map(function (text, i) {
-      return '<button class="m2-choice' + (i === cursor ? ' is-on' : '') + '" ' +
+      return '<button class="m2-choice' + (i === cursor ? ' is-on' : '') +
+             (i === crossed ? ' is-crossed' : '') + '" ' +
              'data-index="' + i + '">' +
                '<span class="m2-num">' + (i + 1) + '</span>' +
                '<span>' + text + '</span>' +
@@ -193,7 +220,99 @@ MISSIONS[2] = (function () {
   function moveCursor(step) {
     if (locked) return;
     cursor = (cursor + step + choices.length) % choices.length;
+    if (cursor === crossed) cursor = (cursor + step + choices.length) % choices.length;  // 지운 보기는 건너뛰어요
     drawChoices();
+  }
+
+  /* 등잔불 막대를 그려요 */
+  function drawLamp() {
+    const k = Math.max(0, lamp / LAMP_TIME);
+    node.lampFill.style.width = (k * 100) + '%';
+    node.lamp.classList.toggle('is-low', lamp <= LAMP_ALERT && lamp > 0);
+    node.steps.textContent = (lamp <= LAMP_ALERT && lamp > 0 && !locked) ? '저벅… 저벅…' : '';
+    node.steps.style.opacity = lamp <= LAMP_ALERT ? (1 - lamp / LAMP_ALERT) * 0.7 + 0.3 : 0;
+  }
+
+  /* 귀띔과 연속 정답 표시 */
+  function drawBadges() {
+    let h = '';
+    for (let i = 0; i < HINTS; i++) h += '<span class="m2-hintdot' + (i < hintsLeft ? '' : ' is-used') + '"></span>';
+    node.hints.innerHTML = '<b>X</b> 귀띔 ' + h;
+    node.streak.textContent = streak >= 2 ? '연속 정답 ×' + streak : '';
+  }
+
+  /* ---------- 3번(X) 버튼 : 김구 선생님의 귀띔 ---------- */
+  function useHint() {
+    if (locked || darkness || hintsLeft <= 0 || crossed >= 0) return;
+    const quiz = getQuiz(quizIndex);
+    const wrongs = [];
+    choices.forEach(function (c, i) { if (c !== quiz.a) wrongs.push(i); });
+    crossed = wrongs[Math.floor(Math.random() * wrongs.length)];
+    crossedText = choices[crossed];
+    hintsLeft -= 1;
+    if (cursor === crossed) cursor = (cursor + 1) % choices.length;
+    node.talk.textContent = '김구 : 흠… 「' + choices[crossed] + '」 은(는) 아니라네.';
+    node.talk.className = 'm2-talk';
+    if (window.Sound) Sound.pok();
+    drawChoices();
+    drawBadges();
+  }
+
+  /* 클래스를 붙였다 떼요 (애니메이션을 처음부터 다시) */
+  function flash(el, cls, ms) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function () { el.classList.remove(cls); }, ms);
+  }
+
+  /* 도장을 쾅! 찍어요 */
+  function stamp(text, cls) {
+    const el = document.createElement('div');
+    el.className = 'm2-stamp ' + (cls || '');
+    el.textContent = text;
+    node.panel.appendChild(el);
+    setTimeout(function () { el.remove(); }, cls === 'is-big' ? 2400 : 1150);
+  }
+
+  /* ---------- 등잔불이 다 탔어요 : 경찰이 지나가요 ---------- */
+  function policePass() {
+    darkness = true;
+    locked = true;
+    node.scene.classList.add('is-dark');
+    node.talk.textContent = '쉿! 일본 경찰이 문 앞을 지나간다…';
+    node.talk.className = 'm2-talk is-wrong';
+    if (window.Sound) Sound.alert();
+    streak = 0;
+    drawBadges();
+    setTimeout(function () {
+      if (!running) return;
+      darkness = false;
+      node.scene.classList.remove('is-dark');
+      showQuiz();
+      node.talk.textContent = '휴, 지나갔다. 다시 생각해 보자.';
+    }, 2200);
+  }
+
+  /* 등잔불이 타요 (1초에 60번) */
+  function loop(now) {
+    if (!running) return;
+    const delta = Math.min((now - lastFrame) / 1000, 0.05);
+    lastFrame = now;
+    if (!game.paused && !locked && !darkness) {
+      lamp -= delta;
+      // 발소리가 점점 빨라져요
+      if (lamp <= LAMP_ALERT) {
+        stepTimer -= delta;
+        if (stepTimer <= 0) {
+          stepTimer = 0.35 + (lamp / LAMP_ALERT) * 0.45;
+          if (window.Sound) Sound.step();
+        }
+      }
+      if (lamp <= 0) { lamp = 0; drawLamp(); policePass(); }
+      else drawLamp();
+    }
+    requestAnimationFrame(loop);
   }
 
 
@@ -201,8 +320,10 @@ MISSIONS[2] = (function () {
      6. 답을 말했을 때
      ---------------------------------------------------------------- */
   function answer() {
-    if (locked) return;
+    if (locked || darkness) return;
+    if (cursor === crossed) return;          // 지운 보기는 고를 수 없어요
     locked = true;
+    drawLamp();
 
     const quiz = getQuiz(quizIndex);
     const picked = choices[cursor];
@@ -212,18 +333,34 @@ MISSIONS[2] = (function () {
       node.talk.textContent = '옳거니! 잘 알고 있구나.';
       node.talk.className = 'm2-talk is-right';
       markChoice(true);
+      stamp('정답');                    // 붉은 도장 쾅!
+      flash(node.person, 'is-nod', 600);   // 김구 선생님이 끄덕끄덕
+      if (window.Sound) Sound.hit && Sound.hit();
+      if (firstTry) streak += 1;
+      drawBadges();
 
       addScore(POINT_PER_QUIZ);        // 한 문제당 5점
 
       // 잠시 뒤 다음 문제로 넘어가요
       setTimeout(function () {
         quizIndex += 1;
+        firstTry = true;
+        crossedText = '';              // 새 문제는 지운 보기가 없어요
         if (quizIndex >= PICK.length) {
-          onSuccess();                 // 3문제를 다 맞혔어요!
+          if (allFirst) {
+            // ★ 세 문제를 모두 한 번에 맞혔어요!
+            stamp('백범 인정', 'is-big');
+            node.talk.textContent = '김구 : 훌륭하네! 자네라면 믿고 다음 임무를 맡길 수 있겠어.';
+            node.talk.className = 'm2-talk is-right';
+            if (window.Sound) Sound.fanfare();
+            setTimeout(finish, 2200);
+          } else {
+            finish();                  // 3문제를 다 맞혔어요!
+          }
         } else {
           showQuiz();
         }
-      }, 1200);
+      }, 1300);
 
     } else {
       /* ---- 틀렸어요 ---- */
@@ -232,6 +369,11 @@ MISSIONS[2] = (function () {
       node.talk.textContent = '아니란다. 정답은 「' + quiz.a + '」 이야. ' + quiz.why;
       node.talk.className = 'm2-talk is-wrong';
       markChoice(false);
+      flash(node.panel, 'is-shake', 450);
+      firstTry = false;
+      allFirst = false;
+      streak = 0;
+      drawBadges();
 
       // 잠시 뒤 같은 문제를 다시 물어봐요 (보기 순서는 새로 섞여요)
       setTimeout(showQuiz, 2600);
@@ -253,10 +395,22 @@ MISSIONS[2] = (function () {
   /* ----------------------------------------------------------------
      7. 미션 시작하기
      ---------------------------------------------------------------- */
+  function finish() {
+    running = false;
+    onSuccess();
+  }
+
   function start(success) {
     onSuccess = success;
     pickQuizzes();           // 이번 판 문제를 새로 뽑아요
     quizIndex = 0;
+    hintsLeft = HINTS;
+    crossedText = '';
+    streak = 0;
+    firstTry = true;
+    allFirst = true;
+    darkness = false;
+    running = true;
 
     const stage = MissionUtil.setStage(
       '<div class="m2-scene">' +
@@ -271,12 +425,18 @@ MISSIONS[2] = (function () {
         '<div class="m2-panel">' +
           '<div class="m2-head">' +
             '<span class="m2-label">역사 문제</span>' +
+            '<span class="m2-streak"></span>' +
+            '<span class="m2-hints"></span>' +
             '<span class="m2-count"></span>' +
           '</div>' +
+          // 등잔불 : 다 타면 경찰이 지나가요
+          '<div class="m2-lamp"><span class="m2-flame"></span>' +
+            '<div class="m2-lamp-bar"><div class="m2-lamp-fill"></div></div>' +
+            '<span class="m2-steps"></span></div>' +
           '<p class="m2-question"></p>' +
           '<div class="m2-choices"></div>' +
           '<p class="m2-talk"></p>' +
-          '<p class="m2-tip">스틱 위·아래로 고르고, 2번 버튼으로 대답한다</p>' +
+          '<p class="m2-tip">스틱 위·아래로 고르고, 2번 버튼으로 대답한다 · 3번(X) 김구 선생님의 귀띔</p>' +
         '</div>' +
 
       '</div>'
@@ -287,25 +447,38 @@ MISSIONS[2] = (function () {
       question: stage.querySelector('.m2-question'),
       choices:  stage.querySelector('.m2-choices'),
       talk:     stage.querySelector('.m2-talk'),
+      scene:    stage.querySelector('.m2-scene'),
+      panel:    stage.querySelector('.m2-panel'),
+      person:   stage.querySelector('.m2-person'),
+      lamp:     stage.querySelector('.m2-lamp'),
+      lampFill: stage.querySelector('.m2-lamp-fill'),
+      steps:    stage.querySelector('.m2-steps'),
+      hints:    stage.querySelector('.m2-hints'),
+      streak:   stage.querySelector('.m2-streak'),
     };
 
     showQuiz();
+    drawBadges();
+    lastFrame = performance.now();
+    requestAnimationFrame(loop);
 
     // 조종기와 키보드를 연결해요
     Input.on('dir:up',   function () { moveCursor(-1); });
     Input.on('dir:down', function () { moveCursor(1); });
     Input.on('talk',     answer);      // 2번 버튼 : 말걸기
     Input.on('next',     answer);      // 4번 버튼으로도 대답할 수 있어요
+    Input.on('attack',   useHint);     // 3번 버튼(X) : 김구 선생님의 귀띔
   }
 
   function stop() {
     locked = true;
+    running = false;
   }
 
 
   return {
     start: start,
     stop: stop,
-    hint: '김구 선생님의 물음에 답하여라. 스틱 위·아래로 고르고 2번 버튼으로 대답한다.',
+    hint: '김구 선생님의 물음에 답하여라. 등잔불이 다 타기 전에! 막히면 3번(X)으로 귀띔을 받는다.',
   };
 })();

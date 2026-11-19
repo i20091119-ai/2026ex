@@ -157,6 +157,12 @@ const Sound = (function () {
     tone(1800, 0.04, 'square', 0, null, 0.12);
   }
 
+  /* 저벅 - 경찰 발소리 (낮고 짧게) */
+  function step() {
+    if (!wake()) return;
+    sweep(140, 70, 0.09, 'triangle', 0.25);
+  }
+
   /* 둥! - 북 소리 (만세 박자, 불꽃) */
   function drum() {
     if (!wake()) return;
@@ -253,6 +259,7 @@ const Sound = (function () {
     swish: swish,
     hit: hit,
     drum: drum,
+    step: step,
 
     startBgm: startBgm,
     stopBgm: stopBgm,

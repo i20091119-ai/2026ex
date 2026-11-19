@@ -3753,3 +3753,105 @@ body.liberation .score-card strong { color: #8a6420; }
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .m1-hero.is-hiding .fig { opacity: 0.75; }
+
+/* ==================================================================
+   2장 : 등잔불 · 귀띔 · 도장
+   ================================================================== */
+.m2-panel { position: relative; }
+.m2-head { gap: 10px; }
+.m2-streak { color: #ffe08a; font-weight: 900; font-size: 12px; letter-spacing: 0.05em; }
+.m2-hints {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: auto; margin-right: 8px;
+  font-size: 11px; color: var(--paper-dim);
+}
+.m2-hints b {
+  display: inline-grid; place-items: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--paper); color: var(--ink); font-size: 10px; font-weight: 900;
+}
+.m2-hintdot { width: 9px; height: 9px; border-radius: 50%; background: var(--gold-hi, #f0d896); box-shadow: 0 0 6px rgba(240, 216, 150, 0.8); }
+.m2-hintdot.is-used { background: rgba(222, 213, 194, 0.2); box-shadow: none; }
+
+/* 등잔불 */
+.m2-lamp { display: flex; align-items: center; gap: 8px; }
+.m2-flame {
+  flex: none;
+  width: 12px; height: 18px;
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  background: radial-gradient(ellipse at 50% 70%, #fff6c8, #ffb347 55%, #e0602a);
+  box-shadow: 0 0 12px rgba(255, 180, 80, 0.85);
+  animation: flame 0.9s ease-in-out infinite alternate;
+}
+@keyframes flame { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.12, 0.94) rotate(3deg); } }
+.m2-lamp.is-low .m2-flame { animation-duration: 0.18s; }
+.m2-lamp-bar {
+  flex: 1; height: 6px; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--hair, rgba(215, 180, 106, 0.28));
+  overflow: hidden;
+}
+.m2-lamp-fill { height: 100%; background: linear-gradient(90deg, #e0602a, #ffcf6b); transition: width 0.1s linear; }
+.m2-lamp.is-low .m2-lamp-fill { background: linear-gradient(90deg, #a01e28, #e0602a); }
+.m2-steps { flex: none; min-width: 6em; font-size: 12px; font-weight: 700; color: #ff9a9a; letter-spacing: 0.1em; }
+
+/* 귀띔으로 지운 보기 */
+.m2-choice.is-crossed { opacity: 0.32; text-decoration: line-through; pointer-events: none; }
+
+/* 도장 쾅! */
+.m2-stamp {
+  position: absolute;
+  right: 6%; top: 18%;
+  z-index: 5;
+  padding: 6px 12px;
+  border: 3px solid #c7323d;
+  border-radius: 6px;
+  color: #c7323d;
+  font-family: var(--serif, serif);
+  font-weight: 900;
+  font-size: clamp(18px, 3vw, 28px);
+  letter-spacing: 0.15em;
+  background: rgba(255, 240, 235, 0.08);
+  transform: rotate(-12deg);
+  pointer-events: none;
+  animation: stamp 1.15s ease-out forwards;
+}
+.m2-stamp.is-big {
+  right: 50%; top: 30%;
+  font-size: clamp(26px, 5vw, 46px);
+  border-width: 4px;
+  animation: stamp-big 2.4s ease-out forwards;
+}
+@keyframes stamp {
+  0%   { transform: rotate(-12deg) scale(2.4); opacity: 0; }
+  18%  { transform: rotate(-12deg) scale(0.95); opacity: 1; }
+  26%  { transform: rotate(-12deg) scale(1); }
+  80%  { opacity: 1; }
+  100% { transform: rotate(-12deg) scale(1); opacity: 0; }
+}
+@keyframes stamp-big {
+  0%   { transform: translateX(50%) rotate(-10deg) scale(2.6); opacity: 0; }
+  14%  { transform: translateX(50%) rotate(-10deg) scale(0.95); opacity: 1; }
+  20%  { transform: translateX(50%) rotate(-10deg) scale(1); }
+  85%  { opacity: 1; }
+  100% { transform: translateX(50%) rotate(-10deg) scale(1); opacity: 0; }
+}
+
+/* 틀리면 종이가 흔들, 맞히면 김구 선생님이 끄덕 */
+.m2-panel.is-shake { animation: shake 0.45s ease; }
+.m2-person.is-nod .fig { animation: nod 0.6s ease; }
+@keyframes nod { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(8px); } 60% { transform: translateY(-4px); } }
+
+/* 경찰이 지나갈 때 방이 어두워져요 */
+.m2-scene { position: relative; }
+.m2-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(2, 3, 10, 0.86);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.m2-scene.is-dark::after { opacity: 1; }
+.m2-scene.is-dark .m2-talk { position: relative; z-index: 2; }
