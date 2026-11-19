@@ -1465,9 +1465,21 @@ body.liberation .end-rank .r-no { color: #8a6420; }
 .m3-wall { background: rgba(222, 213, 194, 0.13); }
 
 /* 보초의 경계 구역 (여기 들어가면 들켜요!) */
+/* 경계 구역 칸 : 평소엔 숨어 있다가 켜지면 붉게, 곧 켜질 칸은 점선으로 깜빡여요 */
 .m3-danger {
-  background: rgba(205, 46, 58, 0.28);
-  border: 1px solid rgba(205, 46, 58, 0.5);
+  background: rgba(205, 46, 58, 0.34);
+  border: 1px solid rgba(205, 46, 58, 0.6);
+  opacity: 0;
+  transform: scale(0.55);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.m3-danger.is-on { opacity: 1; transform: scale(1); }
+.m3-danger.is-warn {
+  opacity: 1;
+  transform: scale(0.9);
+  background: rgba(205, 46, 58, 0.12);
+  border: 2px dashed rgba(255, 110, 110, 0.9);
+  animation: blink 0.32s ease-in-out infinite;
 }
 
 /* ---------- 태극기 ---------- */

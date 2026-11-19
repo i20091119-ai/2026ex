@@ -74,6 +74,13 @@ MISSIONS[3] = (function () {
     [ { r: 2, c: 19 }, { r: 7, c: 19 } ],   // 오른쪽 끝 세로 복도
   ];
 
+  /* ★ 보초의 경계 구역이 숨 쉬듯 넓어졌다 좁아졌다 해요.
+     1칸 → 2칸 → 3칸 → 2칸 → 다시 1칸 … (복도를 따라 퍼져요)
+     넓어지기 직전에는 새로 칠해질 칸이 점선으로 깜빡여요! */
+  const ZONE_STEPS = [1, 2, 3, 2];   // 경계 구역 크기 차례
+  const ZONE_TIME  = 1800;           // 한 단계가 이어지는 시간 (밀리초)
+  const WARN_TIME  = 800;            // 넓어지기 전에 미리 깜빡이는 시간
+
   /* 게임 빠르기 (숫자가 작을수록 빨라요, 단위는 밀리초) */
   const HERO_STEP   = 135;   // 주인공이 한 칸 움직이는 데 걸리는 시간
   const PATROL_STEP = 420;   // 순찰 경찰이 한 칸 움직이는 시간
@@ -85,7 +92,8 @@ MISSIONS[3] = (function () {
   let hero = { r: 0, c: 0 };
   let taken = [];             // 주운 태극기 번호들
   let patrols = [];           // 순찰 경찰들의 상태
-  let dangerCells = [];       // 보초 경찰의 경계 구역
+  let zones = [];             // 보초마다 경계 구역 { dist: 칸까지 거리, offset, nodes }
+  let zoneClock = 0;          // 경계 구역 시계 (멈춤 중에는 안 흘러요)
   let running = false;
   let heroTimer = 0;          // 주인공이 다음에 움직일 수 있는 시각
   let lastTime = 0;
@@ -107,24 +115,59 @@ MISSIONS[3] = (function () {
   /* 두 칸이 같은 자리인가요? */
   function same(a, b) { return a.r === b.r && a.c === b.c; }
 
-  /* 보초 경찰의 경계 구역을 만들어요.
-     보초가 선 칸 + 바로 옆 네 칸이 위험해요. */
-  function makeDangerCells() {
-    const list = [];
-    GUARDS.forEach(function (g) {
-      list.push({ r: g.r, c: g.c });
-      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-        const r = g.r + d[0];
-        const c = g.c + d[1];
-        if (isOpen(r, c)) list.push({ r: r, c: c });
+  /* 보초 한 명의 경계 구역을 만들어요.
+     보초 자리에서 복도를 따라 몇 칸 떨어졌는지 재어 둬요. (최대 3칸) */
+  function makeZone(g, i) {
+    const dist = {};
+    dist[g.r + ',' + g.c] = 0;
+    const queue = [{ r: g.r, c: g.c }];
+    while (queue.length) {
+      const cur = queue.shift();
+      const d = dist[cur.r + ',' + cur.c];
+      if (d >= 3) continue;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (m) {
+        const r = cur.r + m[0], c = cur.c + m[1];
+        const key = r + ',' + c;
+        if (isOpen(r, c) && dist[key] === undefined) {
+          dist[key] = d + 1;
+          queue.push({ r: r, c: c });
+        }
       });
-    });
-    return list;
+    }
+    return { dist: dist, offset: i * 1300, nodes: [], shown: '' };
+  }
+
+  /* 지금 이 보초의 경계 구역은 몇 칸인가요? (그리고 곧 몇 칸이 되나요?) */
+  function zoneState(z) {
+    const t = zoneClock + z.offset;
+    const k = Math.floor(t / ZONE_TIME) % ZONE_STEPS.length;
+    const now = ZONE_STEPS[k];
+    const next = ZONE_STEPS[(k + 1) % ZONE_STEPS.length];
+    const left = ZONE_TIME - (t % ZONE_TIME);
+    return { now: now, warn: (next > now && left < WARN_TIME) ? next : now };
   }
 
   /* 그 칸이 보초의 경계 구역인가요? */
   function isDanger(pos) {
-    return dangerCells.some(function (d) { return same(d, pos); });
+    const key = pos.r + ',' + pos.c;
+    return zones.some(function (z) {
+      const d = z.dist[key];
+      return d !== undefined && d <= zoneState(z).now;
+    });
+  }
+
+  /* 경계 구역을 화면에 칠해요 (바뀐 게 있을 때만) */
+  function drawZones() {
+    zones.forEach(function (z) {
+      const st = zoneState(z);
+      const tag = st.now + '/' + st.warn;
+      if (tag === z.shown) return;
+      z.shown = tag;
+      z.nodes.forEach(function (n) {
+        n.el.classList.toggle('is-on', n.d <= st.now);
+        n.el.classList.toggle('is-warn', n.d > st.now && n.d <= st.warn);
+      });
+    });
   }
 
   /* 어떤 칸에서 다른 칸까지 가는 가장 짧은 길을 찾아줘요.
@@ -156,9 +199,13 @@ MISSIONS[3] = (function () {
     }
 
     // 도착지에서 거꾸로 되짚어서 길을 완성해요
+    // ★ 출발한 칸은 길에 넣지 않아요.
+    //   (전에는 출발 칸이 '첫걸음'으로 들어가서, 순찰 경찰이
+    //    제자리에 한 걸음 내딛고는 영영 움직이지 않았어요!)
+    if (came[to.r + ',' + to.c] === undefined) return [];   // 갈 수 없는 곳
     const path = [];
     let cur = to;
-    while (cur && came[cur.r + ',' + cur.c] !== undefined) {
+    while (came[cur.r + ',' + cur.c] !== null) {
       path.unshift(cur);
       cur = came[cur.r + ',' + cur.c];
     }
@@ -325,8 +372,15 @@ MISSIONS[3] = (function () {
       return;
     }
 
+    zoneClock += delta;                  // 경계 구역 시계가 흘러요
+    drawZones();
+
     moveHero(now);
     if (running) movePatrols(now);
+
+    /* 가만히 서 있던 칸이 경계 구역으로 바뀌어도 들켜요 */
+    if (running && isDanger(hero)) lose('넓어진 경계 구역에 들켰어요!');
+
     if (running) requestAnimationFrame(loop);
   }
 
@@ -342,7 +396,8 @@ MISSIONS[3] = (function () {
     taken = [];
     running = true;
     heroTimer = 0;
-    dangerCells = makeDangerCells();
+    zones = GUARDS.map(makeZone);
+    zoneClock = 0;
 
     /* --- 미로 벽을 그려요 --- */
     let html = '';
@@ -354,9 +409,13 @@ MISSIONS[3] = (function () {
       }
     }
 
-    /* --- 보초의 경계 구역을 빨갛게 칠해요 --- */
-    dangerCells.forEach(function (d) {
-      html += '<div class="m3-danger" style="' + cellStyle(d) + '"></div>';
+    /* --- 보초의 경계 구역 칸들 (켜졌다 꺼졌다 해요) --- */
+    zones.forEach(function (z, gi) {
+      for (const key in z.dist) {
+        const rc = key.split(',');
+        html += '<div class="m3-danger" data-g="' + gi + '" data-d="' + z.dist[key] + '" style="' +
+                cellStyle({ r: +rc[0], c: +rc[1] }) + '"></div>';
+      }
     });
 
     /* --- 태극기 5장과 안전한 곳 --- */
@@ -392,7 +451,7 @@ MISSIONS[3] = (function () {
         '<div class="m3-maze" style="--cols:21;--rows:13">' + html + '</div>' +
         '<p class="m3-tip">' +
           '<span class="m3-key">스틱</span> 네 방향 이동 &nbsp;·&nbsp; ' +
-          '<span class="m3-legend m3-legend-guard"></span> 보초(붉은 곳 금지) &nbsp;·&nbsp; ' +
+          '<span class="m3-legend m3-legend-guard"></span> 보초(붉은 곳 금지 · 점선이 깜빡이면 곧 넓어져요) &nbsp;·&nbsp; ' +
           '<span class="m3-legend m3-legend-cop"></span> 순찰(부딪히면 들킴)' +
         '</p>' +
       '</div>'
@@ -406,6 +465,12 @@ MISSIONS[3] = (function () {
       count:     stage.querySelector('.m3-count'),
       countText: stage.querySelector('.m3-count-text'),
     };
+
+    /* 경계 구역 칸들을 보초별로 기억해 두고, 처음 모습을 칠해요 */
+    stage.querySelectorAll('.m3-danger').forEach(function (el) {
+      zones[+el.dataset.g].nodes.push({ el: el, d: +el.dataset.d });
+    });
+    drawZones();
 
     /* 순찰 경찰들의 처음 상태를 정해요 */
     patrols = PATROLS.map(function (route, i) {
