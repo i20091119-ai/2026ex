@@ -250,6 +250,12 @@ const Lang = (function () {
     '보초(붉은 곳 금지) ·': 'guard (no red squares) ·',
     '순찰(부딪히면 들킴)': 'patrol (don\'t bump into them)',
     '미로에 숨겨진 태극기 다섯 장을 모두 찾아 안전한 곳으로 옮겨라. 붉은 곳은 보초가 지킨다.': 'Find all five flags hidden in the maze and take them to safety. Guards watch the red squares.',
+    '어두운 골목에서 반짝이는 태극기 다섯 장을 찾아 안전한 곳으로! 경찰 수색 막대가 다 차기 전에.': 'Find the five flags twinkling in the dark alleys and take them to safety, before the police search bar fills!',
+    '어둠 속에 숨겨진 태극기 다섯 장을 찾아라. 반짝이는 곳을 잘 봐! 경찰보다 먼저!': 'Find the five flags hidden in the dark. Watch for twinkles! Beat the police!',
+    '경찰 수색': 'Police search',
+    '일본 경찰이 먼저 태극기를 찾아냈어요!': 'The Japanese police found the flags first!',
+    '휴!': 'Phew!',
+    '+1': '+1',
 
     /* 4장 */
     '고맙습니다! 이 깃발을 꼭 들겠습니다.': 'Thank you! I will hold this flag high.',

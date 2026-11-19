@@ -81,6 +81,11 @@ MISSIONS[3] = (function () {
   const ZONE_TIME  = 1800;           // 한 단계가 이어지는 시간 (밀리초)
   const WARN_TIME  = 800;            // 넓어지기 전에 미리 깜빡이는 시간
 
+  /* ★ 경찰보다 먼저! 경찰 수색대가 이 시간(초) 안에 골목을 다 뒤져요.
+       그 전에 태극기 다섯 장을 안전한 곳으로 옮겨야 해요. */
+  const SEARCH_LIMIT = 160;
+  const TWINKLE_GAP  = 2.6;  // 어둠 속 태극기가 반짝이는 간격 (초)
+
   /* 게임 빠르기 (숫자가 작을수록 빨라요, 단위는 밀리초) */
   const HERO_STEP   = 135;   // 주인공이 한 칸 움직이는 데 걸리는 시간
   const PATROL_STEP = 420;   // 순찰 경찰이 한 칸 움직이는 시간
@@ -94,6 +99,9 @@ MISSIONS[3] = (function () {
   let patrols = [];           // 순찰 경찰들의 상태
   let zones = [];             // 보초마다 경계 구역 { dist: 칸까지 거리, offset, nodes }
   let zoneClock = 0;          // 경계 구역 시계 (멈춤 중에는 안 흘러요)
+  let searchClock = 0;        // 경찰 수색대 시계 (초)
+  let twinkleTimer = 0;
+  let phewAt = -9;            // 마지막으로 「휴!」 를 띄운 때
   let running = false;
   let heroTimer = 0;          // 주인공이 다음에 움직일 수 있는 시각
   let lastTime = 0;
@@ -228,6 +236,39 @@ MISSIONS[3] = (function () {
     node.hero.style.left = (hero.c * 100 / COLS) + '%';
     node.hero.style.top  = (hero.r * 100 / ROWS) + '%';
     node.hero.classList.toggle('has-flag', taken.length > 0);
+    // 주인공 둘레만 등불처럼 밝아요
+    node.fog.style.setProperty('--hx', ((hero.c + 0.5) * 100 / COLS) + '%');
+    node.fog.style.setProperty('--hy', ((hero.r + 0.5) * 100 / ROWS) + '%');
+    // 태극기는 등불이 닿는 곳(3칸 남짓)에서만 보여요. 멀리 있는 건 반짝일 때만!
+    FLAGS.forEach(function (flag, i) {
+      const d = Math.sqrt((flag.r - hero.r) * (flag.r - hero.r) + (flag.c - hero.c) * (flag.c - hero.c));
+      node.flags[i].classList.toggle('is-dark', d > 3.2);
+    });
+  }
+
+  /* 미로 위 어떤 칸에 글자나 반짝임을 잠깐 띄워요 */
+  function popAt(pos, cls, text, life) {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.style.left = ((pos.c + 0.5) * 100 / COLS) + '%';
+    el.style.top  = ((pos.r + 0.5) * 100 / ROWS) + '%';
+    if (text) el.textContent = text;
+    node.maze.appendChild(el);
+    setTimeout(function () { el.remove(); }, life || 900);
+  }
+
+  /* 어둠 속에서 아직 못 찾은 태극기가 반짝여요 */
+  function twinkle() {
+    FLAGS.forEach(function (flag, i) {
+      if (taken.indexOf(i) === -1) popAt(flag, 'm3-twinkle', '', 900);
+    });
+  }
+
+  /* 경찰 수색대 막대 */
+  function drawRace() {
+    const k = Math.min(1, searchClock / SEARCH_LIMIT);
+    node.raceFill.style.width = (k * 100) + '%';
+    node.race.classList.toggle('is-hot', k >= 0.75);
   }
 
   /* 순찰 경찰들을 지금 칸으로 옮겨요 */
@@ -292,6 +333,8 @@ MISSIONS[3] = (function () {
       node.flags[i].classList.add('is-taken');
       drawCount();
       if (window.Sound) Sound.ding();
+      popAt(flag, 'm3-pop is-flag', '+1', 900);     // 반짝! +1
+      popAt(flag, 'm3-burst', '', 600);
 
       const left = FLAGS.length - taken.length;
       if (left > 0) {
@@ -334,6 +377,15 @@ MISSIONS[3] = (function () {
 
     drawPatrols();
 
+    // 순찰 경찰이 바로 옆을 스쳐 지나갔어요 → 휴!
+    const close = patrols.some(function (cop) {
+      return Math.abs(cop.pos.r - hero.r) + Math.abs(cop.pos.c - hero.c) === 1;
+    });
+    if (close && zoneClock - phewAt > 3000) {
+      phewAt = zoneClock;
+      popAt(hero, 'm3-pop is-phew', '휴!', 900);
+    }
+
     // 순찰 경찰과 부딪혔나요?
     for (const cop of patrols) {
       if (same(cop.pos, hero)) {
@@ -375,6 +427,15 @@ MISSIONS[3] = (function () {
     zoneClock += delta;                  // 경계 구역 시계가 흘러요
     drawZones();
 
+    // 경찰 수색대가 골목을 뒤져요. 막대가 다 차면 경찰이 먼저 찾은 거예요!
+    searchClock += delta / 1000;
+    drawRace();
+    if (searchClock >= SEARCH_LIMIT) { lose('일본 경찰이 먼저 태극기를 찾아냈어요!'); return; }
+
+    // 어둠 속 태극기가 가끔 반짝여요
+    twinkleTimer -= delta / 1000;
+    if (twinkleTimer <= 0) { twinkleTimer = TWINKLE_GAP; twinkle(); }
+
     moveHero(now);
     if (running) movePatrols(now);
 
@@ -398,6 +459,9 @@ MISSIONS[3] = (function () {
     heroTimer = 0;
     zones = GUARDS.map(makeZone);
     zoneClock = 0;
+    searchClock = 0;
+    twinkleTimer = 0.6;
+    phewAt = -9999;
 
     /* --- 미로 벽을 그려요 --- */
     let html = '';
@@ -423,6 +487,8 @@ MISSIONS[3] = (function () {
       html += '<div class="m3-item m3-flagcell" data-flag="' + i + '" style="' +
               cellStyle(flag) + '"></div>';
     });
+    // ★ 밤의 어둠 (주인공 둘레만 밝아요). 태극기는 어둠 아래, 위험한 것들은 어둠 위에 보여요.
+    html += '<div class="m3-fog"></div>';
     html += '<div class="m3-item m3-safecell" style="' + cellStyle(SAFE) + '"></div>';
 
     /* --- 보초 경찰 (가만히 서 있어요) --- */
@@ -446,8 +512,10 @@ MISSIONS[3] = (function () {
         '<div class="m3-head">' +
           '<span class="m3-count"></span>' +
           '<span class="m3-count-text"></span>' +
+          '<span class="m3-race"><span class="m3-race-label">경찰 수색</span>' +
+            '<span class="m3-race-bar"><span class="m3-race-fill"></span></span></span>' +
         '</div>' +
-        '<p class="m3-notice">숨겨진 태극기 다섯 장을 모두 찾아라. 붉은 곳은 보초가 지키고 있다.</p>' +
+        '<p class="m3-notice">어둠 속에 숨겨진 태극기 다섯 장을 찾아라. 반짝이는 곳을 잘 봐! 경찰보다 먼저!</p>' +
         '<div class="m3-maze" style="--cols:21;--rows:13">' + html + '</div>' +
         '<p class="m3-tip">' +
           '<span class="m3-key">스틱</span> 네 방향 이동 &nbsp;·&nbsp; ' +
@@ -464,6 +532,10 @@ MISSIONS[3] = (function () {
       safe:      stage.querySelector('.m3-safecell'),
       count:     stage.querySelector('.m3-count'),
       countText: stage.querySelector('.m3-count-text'),
+      maze:      stage.querySelector('.m3-maze'),
+      fog:       stage.querySelector('.m3-fog'),
+      race:      stage.querySelector('.m3-race'),
+      raceFill:  stage.querySelector('.m3-race-fill'),
     };
 
     /* 경계 구역 칸들을 보초별로 기억해 두고, 처음 모습을 칠해요 */
@@ -499,6 +571,6 @@ MISSIONS[3] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '미로에 숨겨진 태극기 다섯 장을 모두 찾아 안전한 곳으로 옮겨라. 붉은 곳은 보초가 지킨다.',
+    hint: '어두운 골목에서 반짝이는 태극기 다섯 장을 찾아 안전한 곳으로! 경찰 수색 막대가 다 차기 전에.',
   };
 })();
