@@ -9,6 +9,10 @@
    - 3장 미로와 달리 칸이 없어요. 광장을 자유롭게 걸어 다녀요.
    - 일본 경찰은 광장 전체를 돌아다니고,
      태극기를 하나 건넬 때마다 경찰이 한 명씩 늘어나요!
+   - ★ 경찰은 앞쪽만 등불로 비춰 봐요. 불빛 안에 들어가면 들켜요.
+     뒤쪽은 안 보이니 몰래 돌아가요! (부딪히면 들켜요)
+   - ★ 태극기는 몰래 건네요 : 사람 곁에서 2번(B)을 0.5초 꾹!
+   - ★ 다섯 명에게 다 건네면 유관순에게 돌아가 2번으로 만세 신호!
 
    조작 : 스틱(방향키)으로 걸어다니고
           사람 곁에 다가가서 2번 버튼(말걸기)을 눌러요
@@ -45,9 +49,14 @@ MISSIONS[4] = (function () {
   /* ★ 광장을 돌아다니는 일본 경찰이에요.
      정해진 길만 도는 게 아니라, 광장 곳곳의 '길목'을 마음대로 골라 걸어 다녀요.
      처음엔 1명이고, 태극기를 하나 건넬 때마다 1명씩 늘어나요! */
-  const COP_SPEED = 15;    // 경찰이 걷는 빠르기
+  const COP_SPEED = 13;    // 경찰이 걷는 빠르기
   const COP_REACH = 8;     // 이만큼 가까워지면 들켜요
   const COP_GRACE = 1.2;   // 새로 온 경찰은 이 시간(초) 동안은 잡지 못해요 (나타나는 중)
+  const CONE_LEN  = 12;    // 경찰 등불이 닿는 거리
+  const CONE_HALF = 30 * Math.PI / 180;   // 등불이 퍼지는 각도 (반쪽)
+  const TOUCH     = 5.5;   // 이만큼 가까우면 뒤에서도 들켜요 (부딪힘)
+  const HAND_TIME = 0.5;   // 태극기를 몰래 건네는 데 걸리는 시간 (초)
+  const SEEN_TIME = 0.35;  // 등불 안에 이만큼 머물러야 들켜요 (얼른 빠져나오면 살아요)
 
   /* 경찰이 걸어 다닐 수 있는 길목들 (광장을 바둑판처럼 나눈 점들)
      담이나 수레 위의 점은 빼고, 담을 넘지 않고 갈 수 있는 점끼리만 이어요. */
@@ -73,6 +82,8 @@ MISSIONS[4] = (function () {
   let nearest = -1;              // 지금 가장 가까운 사람 번호 (없으면 -1)
   let cops = [];                 // 돌아다니는 일본 경찰들
   let spots = [];                // 경찰이 다닐 수 있는 길목들
+  let handing = null;            // 지금 건네는 중 { i: 사람 번호, t: 걸린 시간, mouse }
+  let finalStep = false;         // 다 건네고 유관순에게 돌아가는 중
   let running = false;
   let onFail = null;             // 들켰을 때 부를 함수
   let lastTime = 0;
@@ -156,6 +167,62 @@ MISSIONS[4] = (function () {
   /* ----------------------------------------------------------------
      5. 태극기 건네주기 (2번 버튼 · 말걸기)
      ---------------------------------------------------------------- */
+  /* 2번(B) 을 누르면 건네기 시작 (꾹 누르고 있어야 해요) */
+  function startHand(fromMouse) {
+    if (!running) return;
+    // 다 건넸으면 유관순에게 만세 신호!
+    if (finalStep) {
+      if (distance(hero, YU) < REACH) signal();
+      else {
+        node.talk.textContent = '유관순에게 돌아가 만세 신호를 보내자!';
+        node.talk.className = 'm4-talk';
+      }
+      return;
+    }
+    if (nearest < 0) {
+      node.talk.textContent = '사람들 곁으로 다가가야 한다.';
+      node.talk.className = 'm4-talk';
+      return;
+    }
+    handing = { i: nearest, t: 0, mouse: !!fromMouse };
+    people[nearest].node.classList.add('is-handing');
+  }
+
+  function cancelHand(msg) {
+    if (!handing) return;
+    people[handing.i].node.classList.remove('is-handing');
+    people[handing.i].node.style.setProperty('--p', 0);
+    handing = null;
+    if (msg) { node.talk.textContent = msg; node.talk.className = 'm4-talk'; }
+  }
+
+  /* 건네는 동안 원이 차올라요 */
+  function updateHand(delta, moved) {
+    if (!handing) return;
+    const held = Input.held.talk || Input.held.next || handing.mouse;
+    if (moved || !held || nearest !== handing.i) {
+      cancelHand('건네다 멈췄다. 2번을 꾹 눌러야 몰래 건넬 수 있어.');
+      return;
+    }
+    handing.t += delta;
+    people[handing.i].node.style.setProperty('--p', Math.min(1, handing.t / HAND_TIME));
+    if (handing.t >= HAND_TIME) {
+      people[handing.i].node.classList.remove('is-handing');
+      handing = null;
+      giveFlag();
+    }
+  }
+
+  /* 유관순에게 만세 신호! → 성공 */
+  function signal() {
+    running = false;
+    node.talk.textContent = '유관순 : 이제 다 함께 만세를 부를 때입니다!';
+    node.talk.className = 'm4-talk is-good';
+    node.field.classList.add('is-ready');       // 광장이 환해져요
+    if (window.Sound) Sound.fanfare();
+    setTimeout(onSuccess, 1600);
+  }
+
   function giveFlag() {
     if (!running) return;
     if (nearest < 0) {
@@ -186,13 +253,13 @@ MISSIONS[4] = (function () {
       node.talk.textContent = '「 ' + PEOPLE[person.index].say + ' 」  —  경찰이 한 명 더 왔다!';
     }
 
-    /* 다섯 명 모두에게 나누어 주었나요? */
+    /* 다섯 명 모두에게 나누어 주었나요? → 유관순에게 돌아가요 */
     if (given >= PEOPLE.length) {
-      running = false;
-      node.talk.textContent = '유관순 : 이제 다 함께 만세를 부를 때입니다!';
-      node.field.classList.add('is-ready');     // 광장이 환해져요
-      if (window.Sound) Sound.fanfare();
-      setTimeout(onSuccess, 1600);
+      finalStep = true;
+      node.yu.classList.add('is-call');
+      node.talk.textContent = '다 건넸다! 유관순에게 돌아가 2번으로 만세 신호를 보내자!';
+      node.talk.className = 'm4-talk is-good';
+      if (window.Sound) Sound.ding();
     }
   }
 
@@ -225,8 +292,12 @@ MISSIONS[4] = (function () {
     if (Input.dir.down)  ny = inField(ny + SPEED_Y * delta);
     if (!hitsWall(hero.x, ny)) hero.y = ny;      // 세로로 갈 수 있으면 가요
 
+    const moved = Math.abs(hero.x - nx) > 0.001 || Math.abs(hero.y - ny) > 0.001 ||
+                  Input.dir.left || Input.dir.right || Input.dir.up || Input.dir.down;
     drawHero();
     updateNearest();
+    updateHand(delta, moved);
+    if (finalStep) node.yu.classList.toggle('is-near', distance(hero, YU) < REACH);
     moveCops(delta);
 
     requestAnimationFrame(loop);
@@ -311,12 +382,19 @@ MISSIONS[4] = (function () {
     el.innerHTML = MissionUtil.figure('police');
     node.field.appendChild(el);
 
+    // 경찰 등불 (앞쪽 부채꼴)
+    const cone = document.createElement('div');
+    cone.className = 'm4-cone is-new';
+    node.field.insertBefore(cone, node.field.firstChild);
+
     const c = {
       x: spots[pick].x, y: spots[pick].y,
       at: pick, path: [],
-      speed: COP_SPEED * MissionUtil.random(0.9, 1.15),   // 조금씩 빠르기가 달라요
+      speed: COP_SPEED * MissionUtil.random(0.85, 1.05),   // 조금씩 빠르기가 달라요
       grace: COP_GRACE,
       node: el,
+      cone: cone,
+      face: Math.random() * Math.PI * 2,     // 바라보는 방향
     };
     pickNext(c);
     cops.push(c);
@@ -326,6 +404,27 @@ MISSIONS[4] = (function () {
   function placeCop(c) {
     c.node.style.left = c.x + '%';
     c.node.style.top  = c.y + '%';
+    c.node.classList.toggle('is-left', Math.cos(c.face) < 0);
+    drawCone(c);
+  }
+
+  /* 등불 부채꼴을 그려요 (광장 위의 점들을 이어서) */
+  function drawCone(c) {
+    if (!c.cone) return;
+    const pts = [c.x + '% ' + c.y + '%'];
+    for (let k = 0; k <= 6; k++) {
+      const a = c.face - CONE_HALF + (CONE_HALF * 2) * k / 6;
+      pts.push((c.x + Math.cos(a) * CONE_LEN) + '% ' + (c.y + Math.sin(a) * CONE_LEN / 0.55) + '%');
+    }
+    c.cone.style.clipPath = 'polygon(' + pts.join(',') + ')';
+    c.cone.style.background = 'radial-gradient(ellipse ' + CONE_LEN + '% ' + (CONE_LEN / 0.55) + '% at ' +
+      c.x + '% ' + c.y + '%, rgba(255, 236, 160, 0.42), rgba(255, 220, 130, 0.12) 75%, transparent 100%)';
+  }
+
+  /* 각도 차이 (0 ~ π) */
+  function angleGap(a, b) {
+    let d = Math.abs(a - b) % (Math.PI * 2);
+    return d > Math.PI ? Math.PI * 2 - d : d;
   }
 
   function moveCops(delta) {
@@ -341,20 +440,37 @@ MISSIONS[4] = (function () {
       } else {
         c.x += (dx / dist) * c.speed * delta;
         c.y += (dy / dist) * c.speed * delta * 1.7;
+        // 걸어가는 쪽으로 천천히 고개를 돌려요
+        const want = Math.atan2((dy / dist) * 1.7 * 0.55, dx / dist);
+        let turn = want - c.face;
+        while (turn > Math.PI) turn -= Math.PI * 2;
+        while (turn < -Math.PI) turn += Math.PI * 2;
+        c.face += Math.max(-5 * delta, Math.min(5 * delta, turn));
       }
       placeCop(c);
 
       if (c.grace > 0) {                   // 막 나타난 경찰은 아직 못 잡아요
         c.grace -= delta;
-        if (c.grace <= 0) c.node.classList.remove('is-new');
+        if (c.grace <= 0) { c.node.classList.remove('is-new'); c.cone.classList.remove('is-new'); }
         continue;
       }
 
-      // 주인공과 너무 가까워지면 들켜요!
-      if (distance(hero, c) < COP_REACH) {
+      // ★ 등불 안에 들어가거나(앞쪽), 바로 부딪히면(어느 쪽이든) 들켜요!
+      const hx = hero.x - c.x;
+      const hy = (hero.y - c.y) * 0.55;
+      const d = Math.sqrt(hx * hx + hy * hy);
+      const inLight = d < CONE_LEN && angleGap(Math.atan2(hy, hx), c.face) < CONE_HALF;
+      // 등불에 들어가면 불빛이 붉게 번쩍! 얼른 빠져나오면 살아요
+      c.seen = inLight ? (c.seen || 0) + delta : 0;
+      c.cone.classList.toggle('is-alert', inLight);
+      if (inLight && !c.alerted) { c.alerted = true; if (window.Sound) Sound.alert(); }
+      if (!inLight) c.alerted = false;
+      if (d < TOUCH || c.seen > SEEN_TIME) {
         running = false;
+        cancelHand();
         c.node.querySelector('.fig').classList.add('is-looking');
-        node.talk.textContent = '순찰하던 일본 경찰에게 들켰다!';
+        c.cone.classList.add('is-caught');
+        node.talk.textContent = c.seen > SEEN_TIME ? '경찰의 등불에 들켰다!' : '순찰하던 일본 경찰에게 들켰다!';
         node.talk.className = 'm4-talk is-bad';
         setTimeout(function () {
           onFail('만세운동을 준비하다 일본 경찰에게 들켰어요!');
@@ -376,6 +492,8 @@ MISSIONS[4] = (function () {
     given = 0;
     nearest = -1;
     running = true;
+    handing = null;
+    finalStep = false;
 
     /* --- 장애물(돌담과 수레)을 그려요 --- */
     let wallsHtml = '';
@@ -411,6 +529,7 @@ MISSIONS[4] = (function () {
           peopleHtml +
           // 유관순은 광장 가운데에 서 있어요
           '<div class="m4-yu" style="left:' + YU.x + '%;top:' + YU.y + '%">' +
+            '<span class="m4-bubble is-yu">2</span>' +
             MissionUtil.figure('yu', 'is-looking') +
             '<span class="m4-name">유관순</span>' +
           '</div>' +
@@ -422,7 +541,7 @@ MISSIONS[4] = (function () {
         '<p class="m4-talk">유관순 : 이 태극기를 사람들에게 나누어 주세요.</p>' +
         '<p class="m4-tip">' +
           '<span class="m3-key">스틱</span> 걸어다니기 &nbsp;·&nbsp; ' +
-          '<span class="m3-key">2번</span> 곁에 있는 사람에게 태극기 건네기' +
+          '<span class="m3-key">2번 꾹</span> 곁에 있는 사람에게 몰래 건네기 &nbsp;·&nbsp; 경찰 등불 앞은 피하고 뒤로 돌아가요' +
         '</p>' +
 
       '</div>'
@@ -434,6 +553,7 @@ MISSIONS[4] = (function () {
       count:     stage.querySelector('.m4-count'),
       countText: stage.querySelector('.m4-count-text'),
       talk:      stage.querySelector('.m4-talk'),
+      yu:        stage.querySelector('.m4-yu'),
     };
 
     people = PEOPLE.map(function (person, i) {
@@ -455,8 +575,8 @@ MISSIONS[4] = (function () {
     drawCount();
 
     // 2번 버튼(말걸기)으로 태극기를 건네요
-    Input.on('talk', giveFlag);
-    Input.on('next', giveFlag);        // 4번 버튼으로도 돼요
+    Input.on('talk', function () { startHand(false); });
+    Input.on('next', function () { startHand(false); });   // 4번 버튼으로도 돼요
 
     /* 마우스로 사람을 눌러도 태극기를 줄 수 있어요.
        단, 곁에 다가가 있을 때만요! (담을 뚫고 줄 수는 없어요) */
@@ -469,7 +589,7 @@ MISSIONS[4] = (function () {
           return;
         }
         nearest = i;
-        giveFlag();
+        startHand(true);                 // 마우스는 누른 채로 있지 않아도 돼요
       });
     });
 
@@ -485,6 +605,6 @@ MISSIONS[4] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '담과 수레를 돌아 사람들에게 태극기를 나누어 주어라. 순찰하는 일본 경찰을 조심할 것.',
+    hint: '경찰 등불 앞을 피해 뒤로 돌아가며, 사람 곁에서 2번을 꾹 눌러 태극기를 몰래 건네라. 다 건네면 유관순에게!',
   };
 })();

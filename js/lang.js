@@ -274,6 +274,13 @@ const Lang = (function () {
     '곁에 있는 사람에게 태극기 건네기': 'give a flag to a nearby person',
     '너무 멀어요. 곁으로 다가가야 한다.': 'Too far. Get closer.',
     '담과 수레를 돌아 사람들에게 태극기를 나누어 주어라. 순찰하는 일본 경찰을 조심할 것.': 'Go around the walls and carts and hand out the flags. Watch out for the patrolling police.',
+    '경찰 등불 앞을 피해 뒤로 돌아가며, 사람 곁에서 2번을 꾹 눌러 태극기를 몰래 건네라. 다 건네면 유관순에게!': 'Stay out of the police lanterns and sneak behind them. Hold #2 next to a person to hand over a flag. Then return to Yu Gwan-sun!',
+    '2번 꾹': 'hold #2',
+    '곁에 있는 사람에게 몰래 건네기  ·  경찰 등불 앞은 피하고 뒤로 돌아가요': 'secretly hand a flag to a nearby person  ·  avoid the lantern light, go behind the police',
+    '건네다 멈췄다. 2번을 꾹 눌러야 몰래 건넬 수 있어.': 'You stopped. Hold #2 to hand it over secretly.',
+    '유관순에게 돌아가 만세 신호를 보내자!': 'Go back to Yu Gwan-sun and give the Manse signal!',
+    '다 건넸다! 유관순에게 돌아가 2번으로 만세 신호를 보내자!': 'All handed out! Go back to Yu Gwan-sun and press #2 to give the Manse signal!',
+    '경찰의 등불에 들켰다!': 'Caught in a policeman\'s lantern light!',
 
     /* 5장 */
     '준비!  곧 공격한다': 'Ready! Attack coming',

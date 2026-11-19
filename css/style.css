@@ -3946,3 +3946,43 @@ body.liberation .score-card strong { color: #8a6420; }
 .m3-race-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #6b7a99, #b9505c); }
 .m3-race.is-hot { color: #ff9a9a; }
 .m3-race.is-hot .m3-race-fill { background: linear-gradient(90deg, #b9505c, #ff4a4a); animation: blink 0.5s ease-in-out infinite; }
+
+/* ==================================================================
+   4장 : 경찰 등불 · 몰래 건네기 · 만세 신호
+   ================================================================== */
+/* 경찰 등불 (앞쪽 부채꼴) */
+.m4-cone {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.m4-cone.is-new { opacity: 0.35; }
+.m4-cone.is-caught { filter: hue-rotate(-40deg) saturate(3); }
+.m4-cop.is-left .fig { transform: scaleX(-1); }
+/* 등불이 잘 보이게 광장을 조금 더 어둡게 */
+.m4-field { box-shadow: inset 0 0 0 9999px rgba(4, 6, 14, 0.18); }
+
+/* 몰래 건네기 : 사람 둘레에 원이 차올라요 */
+.m4-person::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 2.6em; height: 2.6em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background: conic-gradient(#ffe08a calc(var(--p, 0) * 360deg), rgba(255, 255, 255, 0.12) 0);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+          mask: radial-gradient(circle, transparent 58%, #000 60%);
+}
+.m4-person.is-handing::before { opacity: 1; }
+.m4-person .fig { position: relative; }
+
+/* 다 건네면 유관순이 금빛으로 부르고, 가까이 가면 「2」 */
+.m4-yu .m4-bubble.is-yu { opacity: 0; }
+.m4-yu.is-call .fig { filter: drop-shadow(0 0 10px rgba(255, 224, 138, 0.95)); animation: nod 1s ease-in-out infinite; }
+.m4-yu.is-near .m4-bubble.is-yu { opacity: 1; }
+.m4-cone.is-alert { filter: hue-rotate(-45deg) saturate(4) brightness(1.2); }
