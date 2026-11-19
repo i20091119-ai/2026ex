@@ -2948,6 +2948,153 @@ body.liberation .pad-btn .pad-arcade { background: #1a2340; color: #fff; }
 .m4-cop.is-new { animation: cop-arrive 0.3s ease-in-out infinite alternate; }
 @keyframes cop-arrive { from { opacity: 0.25; } to { opacity: 0.9; } }
 
+/* ==================================================================
+   5장 싸움 효과 (휘두르기 · 불꽃 · 숫자 · 흔들림)
+   ================================================================== */
+
+/* 주인공이 헌병대장에게 달려가 베고 돌아와요 */
+.m5-hero.is-dash { animation: hero-dash 0.42s cubic-bezier(.2,.8,.3,1); }
+@keyframes hero-dash {
+  0%   { transform: translateX(-50%); }
+  38%  { transform: translateX(calc(-50% + var(--dash, 200px))) rotate(8deg); }
+  55%  { transform: translateX(calc(-50% + var(--dash, 200px))) rotate(-6deg); }
+  100% { transform: translateX(-50%); }
+}
+
+/* 헛손질 : 허공을 가르며 살짝 앞으로 */
+.m5-hero.is-whiff { animation: hero-whiff 0.3s ease; }
+@keyframes hero-whiff {
+  0%, 100% { transform: translateX(-50%); }
+  45%      { transform: translateX(calc(-50% + 26px)) rotate(10deg); }
+}
+
+/* 점프할 때 몸을 웅크려요 */
+.m5-hero.is-jumping .fig { transform: rotate(-8deg) scale(0.95); transition: transform 0.15s ease; }
+
+/* 맞으면 뒤로 밀려나요 (주인공 · 헌병대장 모두) */
+.m5-hero .fig.is-knock { animation: knock-left 0.38s ease-out; }
+.m5-boss .fig.is-knock { animation: knock-right 0.38s ease-out; }
+@keyframes knock-left {
+  0% { transform: translateX(0); } 30% { transform: translateX(-26px) rotate(-10deg); } 100% { transform: translateX(0); }
+}
+@keyframes knock-right {
+  0% { transform: translateX(0); } 30% { transform: translateX(30px) rotate(12deg); } 100% { transform: translateX(0); }
+}
+
+/* 헌병대장 : 준비하면 붉은 기운을 모아요 */
+.m5-boss.is-ready .fig { animation: boss-charge 0.28s ease-in-out infinite alternate; }
+@keyframes boss-charge {
+  from { filter: drop-shadow(0 0 4px rgba(255, 60, 60, 0.5)); }
+  to   { filter: drop-shadow(0 0 16px rgba(255, 60, 60, 1)); transform: translateY(-3px); }
+}
+
+/* 헌병대장 : 공격하면 주인공 앞까지 확 달려들어요 */
+.m5-boss.is-strike {
+  transform: translateX(50%) translateX(calc(-1 * var(--lunge, 120px))) rotate(-12deg);
+  transition: transform 0.13s cubic-bezier(.3,1.4,.6,1);
+}
+
+/* 효과들이 올라가는 자리 */
+.m5-fx { position: absolute; pointer-events: none; z-index: 6; transform: translate(-50%, -50%); }
+
+/* 칼 자국 (초승달 모양 빛) */
+.m5-slash {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  border-right: 7px solid #ffffff;
+  box-shadow: 8px 0 14px -6px rgba(255, 255, 255, 0.9);
+  animation: slash 0.42s ease-out forwards;
+}
+.m5-slash.is-enemy { border-right-color: #ff4a4a; box-shadow: 8px 0 14px -6px rgba(255, 60, 60, 0.9); transform: translate(-50%, -50%) scaleX(-1); animation-name: slash-enemy; }
+.m5-slash.is-miss  { border-right-color: rgba(255, 255, 255, 0.45); width: 60px; height: 60px; }
+@keyframes slash {
+  from { transform: translate(-50%, -50%) rotate(-70deg) scale(0.4); opacity: 1; }
+  to   { transform: translate(-50%, -50%) rotate(40deg) scale(1.2); opacity: 0; }
+}
+@keyframes slash-enemy {
+  from { transform: translate(-50%, -50%) scaleX(-1) rotate(-70deg) scale(0.4); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scaleX(-1) rotate(40deg) scale(1.2); opacity: 0; }
+}
+
+/* 불꽃 */
+.m5-spark {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--c, #ffe08a);
+  box-shadow: 0 0 8px var(--c, #ffe08a);
+  animation: spark 0.6s ease-out forwards;
+}
+@keyframes spark {
+  from { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  to   { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
+}
+
+/* 떠오르는 글자 (-1, 회피!, 헛손질!, 승리!) */
+.m5-pop {
+  font-weight: 900;
+  font-size: clamp(16px, 2.6vw, 26px);
+  white-space: nowrap;
+  text-shadow: 0 0 4px #000, 0 2px 8px #000;
+  animation: pop-up 0.8s ease-out forwards;
+}
+.m5-pop.is-dmg   { color: #ffe08a; }
+.m5-pop.is-ouch  { color: #ff6b6b; }
+.m5-pop.is-dodge { color: #9fd08f; }
+.m5-pop.is-miss  { color: var(--paper-dim); font-size: clamp(12px, 1.8vw, 17px); }
+.m5-pop.is-win   { color: #ffe08a; font-size: clamp(34px, 7vw, 64px); letter-spacing: 6px; animation: win-pop 1.4s ease-out forwards; }
+@keyframes pop-up {
+  0%   { transform: translate(-50%, -30%) scale(0.6); opacity: 0; }
+  20%  { transform: translate(-50%, -60%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -160%) scale(1); opacity: 0; }
+}
+@keyframes win-pop {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  25%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  80%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+}
+
+/* 점프로 피하면 발밑에 먼지가 일어요 */
+.m5-dust {
+  width: 70px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(222, 213, 194, 0.55), transparent 70%);
+  animation: dust 0.5s ease-out forwards;
+}
+@keyframes dust {
+  from { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+
+/* 화면 흔들림 · 붉게 번쩍 · 하얗게 번쩍 */
+.m5-arena.is-shake { animation: arena-shake 0.3s linear; }
+@keyframes arena-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-6px, 3px); }
+  40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-4px, 2px); }
+  80% { transform: translate(3px, -1px); }
+}
+.m5-arena::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+}
+.m5-arena.is-ouch::after { background: rgba(255, 40, 40, 0.35); animation: screen-flash 0.38s ease-out; }
+.m5-arena.is-win::after  { background: rgba(255, 255, 255, 0.7); animation: screen-flash 0.9s ease-out; }
+@keyframes screen-flash { from { opacity: 1; } to { opacity: 0; } }
+
+/* 이기면 동료들이 계속 폴짝폴짝 */
+.m5-allies.is-cheer-loop .m5-ally { animation: ally-cheer 0.5s ease infinite; }
+.m5-allies.is-cheer-loop .m5-ally:nth-child(2) { animation-delay: 0.1s; }
+.m5-allies.is-cheer-loop .m5-ally:nth-child(3) { animation-delay: 0.2s; }
+
+/* 헌병대장이 쓰러질 때 더 크게 날아가요 */
+.m5-boss.is-down { transition: transform 0.6s cubic-bezier(.3,1.3,.5,1), opacity 0.8s ease 0.3s; }
+
 </style>
 </head>
 <body>
@@ -3259,6 +3406,37 @@ const Sound = (function () {
     tone(760, 0.09, 'square', 0.13, null, 0.22);
   }
 
+  /* 높이가 미끄러지듯 바뀌는 소리 (휙! 같은 소리에 써요) */
+  function sweep(f1, f2, dur, type, peak, when) {
+    if (!ctx) return;
+    const start = ctx.currentTime + (when || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sawtooth';
+    osc.frequency.setValueAtTime(f1, start);
+    osc.frequency.exponentialRampToValueAtTime(f2, start + dur);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(peak || 0.2, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(start);
+    osc.stop(start + dur + 0.03);
+  }
+
+  /* 휙! - 칼이나 몸을 휘두를 때 */
+  function swish() {
+    if (!wake()) return;
+    sweep(1400, 260, 0.16, 'sawtooth', 0.12);
+  }
+
+  /* 퍽! - 공격이 맞았을 때 (낮고 묵직한 소리) */
+  function hit() {
+    if (!wake()) return;
+    sweep(220, 55, 0.18, 'square', 0.3);
+    tone(1800, 0.04, 'square', 0, null, 0.12);
+  }
+
   /* 짜잔! - 광복을 맞이했을 때 나는 축하 소리 */
   function fanfare() {
     if (!wake()) return;
@@ -3345,6 +3523,8 @@ const Sound = (function () {
     ppyong: ppyong,
     alert: alert,
     fanfare: fanfare,
+    swish: swish,
+    hit: hit,
 
     startBgm: startBgm,
     stopBgm: stopBgm,
@@ -3618,6 +3798,9 @@ const Lang = (function () {
     '기력이 다했다...': 'Out of strength...',
     '일본 헌병대장과의 싸움에서 힘이 다했어요!': 'You ran out of strength fighting the captain!',
     '잘 피했다!': 'Nice dodge!',
+    '회피!': 'Dodge!',
+    '헛손질!': 'Miss!',
+    '승리!': 'Victory!',
     '주인공': 'You',
     '김구 · 한국광복군': 'Kim Gu · Korean Liberation Army',
     '마지막 싸움이다. 겁먹지 말자.': 'The final battle. Don\'t be afraid.',
@@ -6820,6 +7003,55 @@ MISSIONS[5] = (function () {
     node.hero.classList.toggle('is-stiff', isStiff(now));
   }
 
+  /* ----------------------------------------------------------------
+     4-2. 싸움 효과 (휘두르기, 불꽃, 숫자, 화면 흔들림)
+     ★ 효과는 잠깐 나타났다가 저절로 사라져요.
+     ---------------------------------------------------------------- */
+
+  /* 어떤 것의 가운데 자리를 싸움터 안의 좌표(px)로 알려줘요 */
+  function centerOf(el) {
+    const r = el.getBoundingClientRect();
+    const a = node.arena.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - a.left, y: r.top + r.height / 2 - a.top, w: r.width, h: r.height };
+  }
+
+  /* 효과 하나를 잠깐 띄워요 */
+  function fx(cls, x, y, html, life, vars) {
+    const el = document.createElement('div');
+    el.className = 'm5-fx ' + cls;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    if (vars) for (const k in vars) el.style.setProperty(k, vars[k]);
+    if (html) el.innerHTML = html;
+    node.arena.appendChild(el);
+    setTimeout(function () { el.remove(); }, life || 700);
+  }
+
+  /* 불꽃이 사방으로 튀어요 */
+  function sparks(x, y, color, count) {
+    for (let i = 0; i < (count || 9); i++) {
+      const a = Math.random() * Math.PI * 2;
+      const d = 30 + Math.random() * 45;
+      fx('m5-spark', x, y, '', 600, {
+        '--dx': Math.cos(a) * d + 'px', '--dy': Math.sin(a) * d + 'px', '--c': color || '#ffe08a',
+      });
+    }
+  }
+
+  /* 클래스를 붙였다가 애니메이션이 끝나면 떼요 (여러 번 해도 처음부터 다시) */
+  function flash(el, cls, ms) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function () { el.classList.remove(cls); }, ms);
+  }
+
+  /* 주인공과 헌병대장 사이 거리(px) — 돌진할 거리를 정할 때 써요 */
+  function gap() {
+    const h = centerOf(node.hero), b = centerOf(node.bossFig);
+    return Math.max(40, b.x - h.x);
+  }
+
   function setTalk(text, kind) {
     node.talk.textContent = text;
     node.talk.className = 'm5-talk' + (kind ? ' is-' + kind : '');
@@ -6839,6 +7071,11 @@ MISSIONS[5] = (function () {
       bossState = 'strike';
       stateTimer = speedOf(STRIKE_TIME);
       struck = false;                        // 이번 공격은 아직 판정 안 했어요
+      // 주인공 바로 앞까지 확 달려들어요
+      node.boss.style.setProperty('--lunge', Math.max(0, gap() - 70) + 'px');
+      if (window.Sound) Sound.swish();
+      const h = centerOf(node.hero);
+      fx('m5-slash is-enemy', h.x + 26, h.y - 6, '', 420);
 
     } else if (bossState === 'strike') {
       // 내려치는 동안 한 번도 안 뛰었으면 그제서야 맞아요
@@ -6882,6 +7119,20 @@ MISSIONS[5] = (function () {
       node.boss.classList.add('is-hurt');
       setTimeout(function () { node.boss.classList.remove('is-hurt'); }, HIT_FLASH);
 
+      // ★ 헌병대장에게 달려가 베고 돌아와요
+      node.hero.style.setProperty('--dash', Math.max(0, gap() - 80) + 'px');
+      flash(node.hero, 'is-dash', 420);
+      if (window.Sound) Sound.swish();
+      setTimeout(function () {
+        const b = centerOf(node.bossFig);
+        fx('m5-slash', b.x, b.y, '', 420);              // 하얀 칼 자국
+        sparks(b.x, b.y, '#ffe08a', 10);                  // 불꽃
+        fx('m5-pop is-dmg', b.x, b.y - b.h * 0.55, '-1', 800);
+        flash(node.bossFig, 'is-knock', 380);             // 뒤로 밀려나요
+        flash(node.arena, 'is-shake', 300);               // 화면이 흔들려요
+        if (window.Sound) Sound.hit();
+      }, 150);
+
       if (window.Sound) Sound.ding();
       setTalk('명중! 헌병대장이 물러선다.', 'good');
 
@@ -6902,6 +7153,11 @@ MISSIONS[5] = (function () {
       missUntil = now + MISS_TIME;
       setTalk('헛손질! 잠시 움직일 수 없다.', 'bad');
       drawHero(now);
+      flash(node.hero, 'is-whiff', 300);                // 허공을 가르는 몸짓
+      if (window.Sound) Sound.swish();
+      const h = centerOf(node.hero);
+      fx('m5-slash is-miss', h.x + 34, h.y, '', 360);
+      fx('m5-pop is-miss', h.x, h.y - h.h * 0.6, '헛손질!', 700);
     }
   }
 
@@ -6916,6 +7172,14 @@ MISSIONS[5] = (function () {
     node.hero.classList.add('is-hurt');
     setTimeout(function () { node.hero.classList.remove('is-hurt'); }, HIT_FLASH);
 
+    // ★ 맞으면 뒤로 밀려나고, 화면이 붉게 번쩍이며 흔들려요
+    const h = centerOf(node.hero);
+    sparks(h.x, h.y, '#ff5a5a', 8);
+    fx('m5-pop is-ouch', h.x, h.y - h.h * 0.6, '-1', 800);
+    flash(node.heroFig, 'is-knock', 380);
+    flash(node.arena, 'is-shake', 300);
+    flash(node.arena, 'is-ouch', 380);
+    if (window.Sound) Sound.hit();
     if (window.Sound) Sound.ppyong();
 
     if (heroHp <= 0) { lose(); return; }
@@ -6924,6 +7188,15 @@ MISSIONS[5] = (function () {
 
   function win() {
     running = false;
+    // ★ 마지막 한 방! 크게 번쩍이고 불꽃이 터져요
+    setTimeout(function () {
+      const b = centerOf(node.bossFig);
+      sparks(b.x, b.y, '#ffffff', 16);
+      sparks(b.x, b.y, '#ffe08a', 12);
+      flash(node.arena, 'is-win', 900);
+      fx('m5-pop is-win', centerOf(node.arena).x, centerOf(node.arena).y * 0.55, '승리!', 1400);
+      node.allies.classList.add('is-cheer-loop');
+    }, 160);
     node.boss.classList.add('is-down');
     node.signal.className = 'm5-signal';
     node.signal.textContent = '';
@@ -6968,6 +7241,9 @@ MISSIONS[5] = (function () {
     if (bossState === 'strike' && !struck && isJumping(now)) {
       struck = true;
       setTalk('잘 피했다!', 'good');
+      const h = centerOf(node.hero);
+      fx('m5-pop is-dodge', h.x, h.y - h.h * 0.7, '회피!', 700);
+      fx('m5-dust', h.x, centerOf(node.ground).y, '', 500);
     }
 
     drawHero(now);
@@ -7036,6 +7312,9 @@ MISSIONS[5] = (function () {
       boss:    stage.querySelector('.m5-boss'),
       bossFig: stage.querySelector('.m5-boss .fig'),
       hero:    stage.querySelector('.m5-hero'),
+      heroFig: stage.querySelector('.m5-hero .fig'),
+      arena:   stage.querySelector('.m5-arena'),
+      ground:  stage.querySelector('.m5-ground'),
       allies:  stage.querySelector('.m5-allies'),
       signal:  stage.querySelector('.m5-signal'),
       bossHp:  stage.querySelector('.m5-boss-hp'),

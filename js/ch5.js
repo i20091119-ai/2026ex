@@ -112,6 +112,55 @@ MISSIONS[5] = (function () {
     node.hero.classList.toggle('is-stiff', isStiff(now));
   }
 
+  /* ----------------------------------------------------------------
+     4-2. 싸움 효과 (휘두르기, 불꽃, 숫자, 화면 흔들림)
+     ★ 효과는 잠깐 나타났다가 저절로 사라져요.
+     ---------------------------------------------------------------- */
+
+  /* 어떤 것의 가운데 자리를 싸움터 안의 좌표(px)로 알려줘요 */
+  function centerOf(el) {
+    const r = el.getBoundingClientRect();
+    const a = node.arena.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - a.left, y: r.top + r.height / 2 - a.top, w: r.width, h: r.height };
+  }
+
+  /* 효과 하나를 잠깐 띄워요 */
+  function fx(cls, x, y, html, life, vars) {
+    const el = document.createElement('div');
+    el.className = 'm5-fx ' + cls;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    if (vars) for (const k in vars) el.style.setProperty(k, vars[k]);
+    if (html) el.innerHTML = html;
+    node.arena.appendChild(el);
+    setTimeout(function () { el.remove(); }, life || 700);
+  }
+
+  /* 불꽃이 사방으로 튀어요 */
+  function sparks(x, y, color, count) {
+    for (let i = 0; i < (count || 9); i++) {
+      const a = Math.random() * Math.PI * 2;
+      const d = 30 + Math.random() * 45;
+      fx('m5-spark', x, y, '', 600, {
+        '--dx': Math.cos(a) * d + 'px', '--dy': Math.sin(a) * d + 'px', '--c': color || '#ffe08a',
+      });
+    }
+  }
+
+  /* 클래스를 붙였다가 애니메이션이 끝나면 떼요 (여러 번 해도 처음부터 다시) */
+  function flash(el, cls, ms) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function () { el.classList.remove(cls); }, ms);
+  }
+
+  /* 주인공과 헌병대장 사이 거리(px) — 돌진할 거리를 정할 때 써요 */
+  function gap() {
+    const h = centerOf(node.hero), b = centerOf(node.bossFig);
+    return Math.max(40, b.x - h.x);
+  }
+
   function setTalk(text, kind) {
     node.talk.textContent = text;
     node.talk.className = 'm5-talk' + (kind ? ' is-' + kind : '');
@@ -131,6 +180,11 @@ MISSIONS[5] = (function () {
       bossState = 'strike';
       stateTimer = speedOf(STRIKE_TIME);
       struck = false;                        // 이번 공격은 아직 판정 안 했어요
+      // 주인공 바로 앞까지 확 달려들어요
+      node.boss.style.setProperty('--lunge', Math.max(0, gap() - 70) + 'px');
+      if (window.Sound) Sound.swish();
+      const h = centerOf(node.hero);
+      fx('m5-slash is-enemy', h.x + 26, h.y - 6, '', 420);
 
     } else if (bossState === 'strike') {
       // 내려치는 동안 한 번도 안 뛰었으면 그제서야 맞아요
@@ -174,6 +228,20 @@ MISSIONS[5] = (function () {
       node.boss.classList.add('is-hurt');
       setTimeout(function () { node.boss.classList.remove('is-hurt'); }, HIT_FLASH);
 
+      // ★ 헌병대장에게 달려가 베고 돌아와요
+      node.hero.style.setProperty('--dash', Math.max(0, gap() - 80) + 'px');
+      flash(node.hero, 'is-dash', 420);
+      if (window.Sound) Sound.swish();
+      setTimeout(function () {
+        const b = centerOf(node.bossFig);
+        fx('m5-slash', b.x, b.y, '', 420);              // 하얀 칼 자국
+        sparks(b.x, b.y, '#ffe08a', 10);                  // 불꽃
+        fx('m5-pop is-dmg', b.x, b.y - b.h * 0.55, '-1', 800);
+        flash(node.bossFig, 'is-knock', 380);             // 뒤로 밀려나요
+        flash(node.arena, 'is-shake', 300);               // 화면이 흔들려요
+        if (window.Sound) Sound.hit();
+      }, 150);
+
       if (window.Sound) Sound.ding();
       setTalk('명중! 헌병대장이 물러선다.', 'good');
 
@@ -194,6 +262,11 @@ MISSIONS[5] = (function () {
       missUntil = now + MISS_TIME;
       setTalk('헛손질! 잠시 움직일 수 없다.', 'bad');
       drawHero(now);
+      flash(node.hero, 'is-whiff', 300);                // 허공을 가르는 몸짓
+      if (window.Sound) Sound.swish();
+      const h = centerOf(node.hero);
+      fx('m5-slash is-miss', h.x + 34, h.y, '', 360);
+      fx('m5-pop is-miss', h.x, h.y - h.h * 0.6, '헛손질!', 700);
     }
   }
 
@@ -208,6 +281,14 @@ MISSIONS[5] = (function () {
     node.hero.classList.add('is-hurt');
     setTimeout(function () { node.hero.classList.remove('is-hurt'); }, HIT_FLASH);
 
+    // ★ 맞으면 뒤로 밀려나고, 화면이 붉게 번쩍이며 흔들려요
+    const h = centerOf(node.hero);
+    sparks(h.x, h.y, '#ff5a5a', 8);
+    fx('m5-pop is-ouch', h.x, h.y - h.h * 0.6, '-1', 800);
+    flash(node.heroFig, 'is-knock', 380);
+    flash(node.arena, 'is-shake', 300);
+    flash(node.arena, 'is-ouch', 380);
+    if (window.Sound) Sound.hit();
     if (window.Sound) Sound.ppyong();
 
     if (heroHp <= 0) { lose(); return; }
@@ -216,6 +297,15 @@ MISSIONS[5] = (function () {
 
   function win() {
     running = false;
+    // ★ 마지막 한 방! 크게 번쩍이고 불꽃이 터져요
+    setTimeout(function () {
+      const b = centerOf(node.bossFig);
+      sparks(b.x, b.y, '#ffffff', 16);
+      sparks(b.x, b.y, '#ffe08a', 12);
+      flash(node.arena, 'is-win', 900);
+      fx('m5-pop is-win', centerOf(node.arena).x, centerOf(node.arena).y * 0.55, '승리!', 1400);
+      node.allies.classList.add('is-cheer-loop');
+    }, 160);
     node.boss.classList.add('is-down');
     node.signal.className = 'm5-signal';
     node.signal.textContent = '';
@@ -260,6 +350,9 @@ MISSIONS[5] = (function () {
     if (bossState === 'strike' && !struck && isJumping(now)) {
       struck = true;
       setTalk('잘 피했다!', 'good');
+      const h = centerOf(node.hero);
+      fx('m5-pop is-dodge', h.x, h.y - h.h * 0.7, '회피!', 700);
+      fx('m5-dust', h.x, centerOf(node.ground).y, '', 500);
     }
 
     drawHero(now);
@@ -328,6 +421,9 @@ MISSIONS[5] = (function () {
       boss:    stage.querySelector('.m5-boss'),
       bossFig: stage.querySelector('.m5-boss .fig'),
       hero:    stage.querySelector('.m5-hero'),
+      heroFig: stage.querySelector('.m5-hero .fig'),
+      arena:   stage.querySelector('.m5-arena'),
+      ground:  stage.querySelector('.m5-ground'),
       allies:  stage.querySelector('.m5-allies'),
       signal:  stage.querySelector('.m5-signal'),
       bossHp:  stage.querySelector('.m5-boss-hp'),

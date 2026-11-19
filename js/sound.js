@@ -126,6 +126,37 @@ const Sound = (function () {
     tone(760, 0.09, 'square', 0.13, null, 0.22);
   }
 
+  /* 높이가 미끄러지듯 바뀌는 소리 (휙! 같은 소리에 써요) */
+  function sweep(f1, f2, dur, type, peak, when) {
+    if (!ctx) return;
+    const start = ctx.currentTime + (when || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sawtooth';
+    osc.frequency.setValueAtTime(f1, start);
+    osc.frequency.exponentialRampToValueAtTime(f2, start + dur);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(peak || 0.2, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(start);
+    osc.stop(start + dur + 0.03);
+  }
+
+  /* 휙! - 칼이나 몸을 휘두를 때 */
+  function swish() {
+    if (!wake()) return;
+    sweep(1400, 260, 0.16, 'sawtooth', 0.12);
+  }
+
+  /* 퍽! - 공격이 맞았을 때 (낮고 묵직한 소리) */
+  function hit() {
+    if (!wake()) return;
+    sweep(220, 55, 0.18, 'square', 0.3);
+    tone(1800, 0.04, 'square', 0, null, 0.12);
+  }
+
   /* 짜잔! - 광복을 맞이했을 때 나는 축하 소리 */
   function fanfare() {
     if (!wake()) return;
@@ -212,6 +243,8 @@ const Sound = (function () {
     ppyong: ppyong,
     alert: alert,
     fanfare: fanfare,
+    swish: swish,
+    hit: hit,
 
     startBgm: startBgm,
     stopBgm: stopBgm,
