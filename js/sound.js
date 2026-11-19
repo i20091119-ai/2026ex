@@ -157,6 +157,13 @@ const Sound = (function () {
     tone(1800, 0.04, 'square', 0, null, 0.12);
   }
 
+  /* 둥! - 북 소리 (만세 박자, 불꽃) */
+  function drum() {
+    if (!wake()) return;
+    sweep(150, 52, 0.22, 'sine', 0.45);
+    tone(320, 0.05, 'triangle', 0, null, 0.08);
+  }
+
   /* 짜잔! - 광복을 맞이했을 때 나는 축하 소리 */
   function fanfare() {
     if (!wake()) return;
@@ -245,6 +252,7 @@ const Sound = (function () {
     fanfare: fanfare,
     swish: swish,
     hit: hit,
+    drum: drum,
 
     startBgm: startBgm,
     stopBgm: stopBgm,

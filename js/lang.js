@@ -278,6 +278,15 @@ const Lang = (function () {
     '태극기를 흔들어 새벽을 맞이하라  (스틱 좌 · 우)': 'Wave the flag to bring the dawn  (stick left · right)',
     '스틱을 좌 · 우로 흔들어 태극기를 펄럭여라': 'Wave the stick left and right to fly the flag',
     '드디어 광복의 날. 스틱을 좌우로 흔들어 태극기를 펄럭이면 새벽이 밝아온다.': 'Liberation Day at last. Wave the stick left and right to fly the flag, and the dawn will come.',
+    '드디어 광복의 날. 북에 맞춰 A 버튼으로 만세를 부르고, 스틱을 흔들어 태극기를 펄럭여라.': 'Liberation Day at last. Shout "Manse!" with A on the drum beat, and wave the flag with the stick.',
+    '북이 고리에 닿을 때': 'When a drum reaches the ring, press',
+    '버튼 = 만세!  ·  스틱 좌 · 우 = 태극기 흔들기': '= Manse!  ·  Stick left · right = wave the flag',
+    '북에 맞춰': 'On the drum beat, press',
+    '버튼으로 만세! 태극기도 흔들어 새벽을 맞이하라': 'for Manse! Wave the flag too and bring the dawn',
+    '딱 좋아!': 'Perfect!',
+    '좋아!': 'Good!',
+    '만세!': 'Manse!',
+    '함께해요!': 'Join us!',
 
     /* 들켰을 때 · 끝 화면 */
     '들켰다!': 'Caught!',
@@ -425,6 +434,7 @@ const Lang = (function () {
     [/^(\d)장을 해내면 열려요$/, function (m) { return 'Unlocks after Chapter ' + m[1]; }],
     [/^(\d+)장$/, function (m) { return 'Ch.' + m[1]; }],
     [/^(\d+)점$/, function (m) { return m[1] + ' pts'; }],
+    [/^만세 ×(\d+)$/, function (m) { return 'Manse ×' + m[1]; }],
     [/^(\d+)번 (.+) ✔$/, function (m) { return '#' + m[1] + ' ' + t(m[2]) + ' ✔'; }],
     [/^(\d+)번 (.+) \(건너뜀\)$/, function (m) { return '#' + m[1] + ' ' + t(m[2]) + ' (skipped)'; }],
     [/^(\d+)번$/, function (m) { return '#' + m[1]; }],
