@@ -421,6 +421,7 @@ function finishGame() {
   el.endTitle.textContent = '대한 독립 만세';
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
   el.endScore.textContent = game.score;
+  drawEndExtras(CHAPTERS.length, true);
   showScreen('end');
   Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
 }
@@ -437,8 +438,77 @@ function gameOver(reason) {
   el.endMessage.textContent = (reason || '일본 경찰에게 발각되었어요.') +
                               ' 하지만 포기하지 말아요. 다시 도전!';
   el.endScore.textContent = game.score;
+  drawEndExtras(game.chapterIndex, false);   // 끝낸 장까지만 보여줘요
   showScreen('end');
   Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
+}
+
+
+/* ==================================================================
+   7-1. 끝 화면 : 오늘 배운 역사 + 최고 기록
+   ================================================================== */
+
+/* 해낸 장(cleared 개)만큼 역사 이야기를 보여줘요 */
+function drawHistory(cleared) {
+  const box = document.getElementById('end-history');
+  let html = '';
+  for (let id = 1; id <= CHAPTERS.length; id++) {
+    const h = HISTORY[id];
+    if (!h) continue;
+    if (id <= cleared) {
+      html += '<li><b>' + h.title + '</b><span>' + h.text + '</span></li>';
+    } else {
+      html += '<li class="is-locked"><b>' + id + '장을 해내면 열려요</b></li>';
+    }
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- 최고 기록 (이 기계에 저장돼요) ----------
+   점수가 높은 순서로 5개까지 기억해요. */
+const RANK_KEY = 'dokrip.ranks';
+const RANK_MAX = 5;
+
+function loadRanks() {
+  try { return JSON.parse(localStorage.getItem(RANK_KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function saveRank(score, cleared, won) {
+  const ranks = loadRanks();
+  const d = new Date();
+  const mine = {
+    score: score,
+    stage: won ? '광복' : (cleared + 1) + '장',
+    date: (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+          d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'),
+    id: d.getTime(),
+  };
+  ranks.push(mine);
+  ranks.sort(function (a, b) { return b.score - a.score || a.id - b.id; });
+  const top = ranks.slice(0, RANK_MAX);
+  try { localStorage.setItem(RANK_KEY, JSON.stringify(top)); } catch (e) {}
+  return { list: top, mine: mine, best: top[0] && top[0].id === mine.id && score > 0 };
+}
+
+function drawRank(result) {
+  const box = document.getElementById('end-rank');
+  let html = '';
+  result.list.forEach(function (r, i) {
+    html += '<li class="' + (r.id === result.mine.id ? 'is-mine' : '') + '">' +
+              '<span class="r-no">' + (i + 1) + '</span>' +
+              '<span class="r-score">' + r.score + '점</span>' +
+              '<span class="r-stage">' + r.stage + '</span>' +
+              '<span class="r-date">' + r.date + '</span>' +
+            '</li>';
+  });
+  box.innerHTML = html || '<li class="is-locked">아직 기록이 없어요</li>';
+  document.getElementById('end-record').hidden = !result.best;
+}
+
+function drawEndExtras(cleared, won) {
+  drawHistory(cleared);
+  drawRank(saveRank(game.score, cleared, won));
 }
 
 

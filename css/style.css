@@ -693,6 +693,91 @@ body {
   color: var(--ochre);
 }
 
+/* 결과(왼쪽) + 오늘 배운 역사·최고 기록(오른쪽) */
+.end-layout {
+  width: min(1100px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(14px, 3vw, 36px);
+  align-items: center;
+  padding: 16px;
+}
+.end-layout .title-box { max-width: none; }
+.end-layout .score-card { display: flex; width: fit-content; margin: 20px auto; align-items: center; }
+.end-layout #btn-retry { display: block; margin: 0 auto; }
+
+.end-record {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--ink);
+  background: var(--ochre);
+  padding: 3px 10px;
+  border-radius: var(--round);
+}
+
+.end-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.end-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px 14px;
+}
+.end-panel h3 {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+
+.end-history { list-style: none; display: grid; gap: 6px; }
+.end-history li {
+  display: grid;
+  grid-template-columns: 9em 1fr;
+  gap: 8px;
+  font-size: clamp(11px, 1.35vw, 13px);
+  line-height: 1.45;
+}
+.end-history b { color: var(--paper); }
+.end-history span { color: var(--paper-dim); }
+.end-history li.is-locked { grid-template-columns: 1fr; }
+.end-history li.is-locked b { color: rgba(222, 213, 194, 0.35); font-weight: 400; }
+
+.end-note { margin-top: 8px; font-size: 11px; color: var(--paper-dim); opacity: 0.8; }
+
+.end-rank { list-style: none; display: grid; gap: 4px; }
+.end-rank li {
+  display: grid;
+  grid-template-columns: 1.6em 4.5em 3.5em 1fr;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--round);
+}
+.end-rank li.is-mine { background: rgba(200, 162, 90, 0.2); outline: 1px solid var(--ochre); }
+.end-rank .r-no { color: var(--ochre); font-weight: 800; }
+.end-rank .r-score { font-weight: 800; }
+.end-rank .r-stage, .end-rank .r-date { color: var(--paper-dim); }
+.end-rank .r-date { text-align: right; }
+.end-rank li.is-locked { color: var(--paper-dim); display: block; }
+
+/* 좁은 화면에서는 위아래로 */
+@media (max-width: 760px) {
+  .end-layout { grid-template-columns: 1fr; align-items: start; }
+  #screen-end.is-on { overflow-y: auto; justify-content: flex-start; }
+}
+
+/* 밝아진 화면(광복)에서도 잘 보이게 */
+body.liberation .end-panel { background: rgba(255, 255, 255, 0.55); border-color: rgba(60, 40, 10, 0.25); }
+body.liberation .end-panel h3 { color: #8a6420; }
+body.liberation .end-history b { color: #2a2016; }
+body.liberation .end-history span,
+body.liberation .end-note,
+body.liberation .end-rank .r-stage,
+body.liberation .end-rank .r-date { color: #5a4a36; }
+body.liberation .end-rank .r-no { color: #8a6420; }
+
 /* 조작 안내판에 조종기에 진짜 적힌 이름도 보여줘요 (A/X, Y/△ 같은 것들) */
 .pad-arcade {
   font-size: 8px;
@@ -836,6 +921,20 @@ body {
   vertical-align: bottom;
 }
 
+/* 한국광복군 : 국방색 군복과 군모 */
+.fig--army { color: #7d8a62; }
+.fig--army .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.02em;
+  transform: translateX(-50%);
+  width: 0.6em;
+  height: 0.2em;
+  border-radius: 0.1em 0.1em 0 0;
+  background: #5c6747;
+  z-index: 1;
+}
+
 /* ---------- 우리가 그린 그림 (skin.js) ----------
    images 폴더에 그림이 있으면 실루엣 대신 이 그림이 나와요.
    그림 크기는 실루엣과 같은 키(1.55em)에 맞춰요. */
@@ -858,6 +957,12 @@ body {
 .fig.has-look.is-looking .f-art--look { display: block; }
 
 /* 쳐다보는 그림이 없으면 붉은 빛으로 알려줘요 (들키면 안 되니까 중요해요!) */
+.is-hurt .fig.has-art .f-art,
+.is-caught .fig.has-art .f-art {
+  filter: sepia(1) saturate(6) hue-rotate(-50deg) brightness(0.9)
+          drop-shadow(0 0 0.06em #ff4a4a);
+}
+
 .fig.has-art.is-looking:not(.has-look) .f-art {
   filter: drop-shadow(0 0 0.04em #ff4a4a) drop-shadow(0 0 0.1em rgba(255, 60, 60, 0.85));
 }
@@ -1709,6 +1814,38 @@ body {
 .m5-signal.is-ready  { background: var(--ochre);    color: var(--ink); }
 .m5-signal.is-strike { background: var(--flag-red); color: #fff0f0; }
 .m5-signal.is-open   { background: var(--moss);     color: #0d1a0b; }
+
+/* ---------- 주인공 뒤의 김구 · 한국광복군 ---------- */
+.m5-allies {
+  position: absolute;
+  left: 2%;
+  bottom: 16%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  opacity: 0.8;
+}
+.m5-ally .fig { font-size: clamp(22px, 4.2vw, 40px); }
+.m5-ally-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  text-align: center;
+  font-size: clamp(9px, 1.2vw, 12px);
+  color: var(--paper-dim);
+  white-space: nowrap;
+}
+/* 명중하면 다 같이 폴짝! */
+.m5-allies.is-cheer .m5-ally { animation: ally-cheer 0.5s ease; }
+.m5-allies.is-cheer .m5-ally:nth-child(2) { animation-delay: 0.08s; }
+.m5-allies.is-cheer .m5-ally:nth-child(3) { animation-delay: 0.16s; }
+@keyframes ally-cheer {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-14px); }
+}
+.m5-ally { display: inline-block; }
 
 /* ---------- 주인공 (왼쪽) ---------- */
 .m5-hero {
@@ -2682,3 +2819,6 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 }
 
 .frame-warning b { color: #ff8a93; }
+
+/* 5장 헌병대장 그림은 조금 더 크게 (마지막 상대니까요) */
+.m5-boss .fig.has-art .f-art { height: 1.85em; max-width: 2.8em; }

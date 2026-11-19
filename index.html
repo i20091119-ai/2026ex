@@ -128,17 +128,36 @@
 
   <!-- ============ 3) 끝 화면 ============ -->
   <section id="screen-end" class="screen">
-    <div class="title-box">
-      <div id="end-emoji">🎉</div>
-      <h2 id="end-title">광복!</h2>
-      <p id="end-message">모든 임무를 마쳤어요!</p>
+    <div class="end-layout">
 
-      <div class="score-card">
-        <span class="hud-label">내 독립 포인트</span>
-        <strong id="end-score">0</strong>
+      <!-- 왼쪽 : 결과와 점수 -->
+      <div class="title-box">
+        <div id="end-emoji">🎉</div>
+        <h2 id="end-title">광복!</h2>
+        <p id="end-message">모든 임무를 마쳤어요!</p>
+
+        <div class="score-card">
+          <span class="hud-label">내 독립 포인트</span>
+          <strong id="end-score">0</strong>
+          <span id="end-record" class="end-record" hidden>최고 기록!</span>
+        </div>
+
+        <button id="btn-retry" class="big-btn">다시 하기</button>
       </div>
 
-      <button id="btn-retry" class="big-btn">다시 하기</button>
+      <!-- 오른쪽 : 오늘 배운 역사 + 최고 기록 -->
+      <div class="end-side">
+        <section class="end-panel">
+          <h3>오늘 배운 역사</h3>
+          <ol id="end-history" class="end-history"></ol>
+          <p class="end-note">이 게임은 실제 역사를 바탕으로 꾸민 이야기예요.</p>
+        </section>
+        <section class="end-panel">
+          <h3>최고 기록</h3>
+          <ol id="end-rank" class="end-rank"></ol>
+        </section>
+      </div>
+
     </div>
   </section>
 

@@ -177,6 +177,11 @@ MISSIONS[5] = (function () {
       if (window.Sound) Sound.ding();
       setTalk('명중! 헌병대장이 물러선다.', 'good');
 
+      // 뒤에 있는 동료들이 함께 기뻐해요
+      node.allies.classList.remove('is-cheer');
+      void node.allies.offsetWidth;            // 애니메이션을 처음부터 다시
+      node.allies.classList.add('is-cheer');
+
       if (bossHp <= 0) { win(); return; }
 
       // 맞으면 바로 다음 동작으로 넘어가요
@@ -296,6 +301,13 @@ MISSIONS[5] = (function () {
         '<div class="m5-arena">' +
           '<div class="m5-signal"></div>' +
           '<div class="m5-ground"></div>' +
+          // 주인공 뒤 : 김구 선생님과 한국광복군이 함께 서 있어요 (기획서 5장)
+          '<div class="m5-allies">' +
+            '<span class="m5-ally">' + MissionUtil.figure('army') + '</span>' +
+            '<span class="m5-ally">' + MissionUtil.figure('kimgu') + '</span>' +
+            '<span class="m5-ally">' + MissionUtil.figure('army') + '</span>' +
+            '<span class="m5-ally-name">김구 · 한국광복군</span>' +
+          '</div>' +
           '<div class="m5-hero">' + MissionUtil.figure('hero') + '</div>' +
           '<div class="m5-boss is-idle">' +
             MissionUtil.figure('captain') +
@@ -316,6 +328,7 @@ MISSIONS[5] = (function () {
       boss:    stage.querySelector('.m5-boss'),
       bossFig: stage.querySelector('.m5-boss .fig'),
       hero:    stage.querySelector('.m5-hero'),
+      allies:  stage.querySelector('.m5-allies'),
       signal:  stage.querySelector('.m5-signal'),
       bossHp:  stage.querySelector('.m5-boss-hp'),
       heroHp:  stage.querySelector('.m5-hero-hp'),

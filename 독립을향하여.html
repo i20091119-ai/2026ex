@@ -701,6 +701,91 @@ body {
   color: var(--ochre);
 }
 
+/* 결과(왼쪽) + 오늘 배운 역사·최고 기록(오른쪽) */
+.end-layout {
+  width: min(1100px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(14px, 3vw, 36px);
+  align-items: center;
+  padding: 16px;
+}
+.end-layout .title-box { max-width: none; }
+.end-layout .score-card { display: flex; width: fit-content; margin: 20px auto; align-items: center; }
+.end-layout #btn-retry { display: block; margin: 0 auto; }
+
+.end-record {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--ink);
+  background: var(--ochre);
+  padding: 3px 10px;
+  border-radius: var(--round);
+}
+
+.end-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.end-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--round);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px 14px;
+}
+.end-panel h3 {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+
+.end-history { list-style: none; display: grid; gap: 6px; }
+.end-history li {
+  display: grid;
+  grid-template-columns: 9em 1fr;
+  gap: 8px;
+  font-size: clamp(11px, 1.35vw, 13px);
+  line-height: 1.45;
+}
+.end-history b { color: var(--paper); }
+.end-history span { color: var(--paper-dim); }
+.end-history li.is-locked { grid-template-columns: 1fr; }
+.end-history li.is-locked b { color: rgba(222, 213, 194, 0.35); font-weight: 400; }
+
+.end-note { margin-top: 8px; font-size: 11px; color: var(--paper-dim); opacity: 0.8; }
+
+.end-rank { list-style: none; display: grid; gap: 4px; }
+.end-rank li {
+  display: grid;
+  grid-template-columns: 1.6em 4.5em 3.5em 1fr;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: var(--round);
+}
+.end-rank li.is-mine { background: rgba(200, 162, 90, 0.2); outline: 1px solid var(--ochre); }
+.end-rank .r-no { color: var(--ochre); font-weight: 800; }
+.end-rank .r-score { font-weight: 800; }
+.end-rank .r-stage, .end-rank .r-date { color: var(--paper-dim); }
+.end-rank .r-date { text-align: right; }
+.end-rank li.is-locked { color: var(--paper-dim); display: block; }
+
+/* 좁은 화면에서는 위아래로 */
+@media (max-width: 760px) {
+  .end-layout { grid-template-columns: 1fr; align-items: start; }
+  #screen-end.is-on { overflow-y: auto; justify-content: flex-start; }
+}
+
+/* 밝아진 화면(광복)에서도 잘 보이게 */
+body.liberation .end-panel { background: rgba(255, 255, 255, 0.55); border-color: rgba(60, 40, 10, 0.25); }
+body.liberation .end-panel h3 { color: #8a6420; }
+body.liberation .end-history b { color: #2a2016; }
+body.liberation .end-history span,
+body.liberation .end-note,
+body.liberation .end-rank .r-stage,
+body.liberation .end-rank .r-date { color: #5a4a36; }
+body.liberation .end-rank .r-no { color: #8a6420; }
+
 /* 조작 안내판에 조종기에 진짜 적힌 이름도 보여줘요 (A/X, Y/△ 같은 것들) */
 .pad-arcade {
   font-size: 8px;
@@ -844,6 +929,20 @@ body {
   vertical-align: bottom;
 }
 
+/* 한국광복군 : 국방색 군복과 군모 */
+.fig--army { color: #7d8a62; }
+.fig--army .f-hat {
+  position: absolute;
+  left: 50%;
+  top: 0.02em;
+  transform: translateX(-50%);
+  width: 0.6em;
+  height: 0.2em;
+  border-radius: 0.1em 0.1em 0 0;
+  background: #5c6747;
+  z-index: 1;
+}
+
 /* ---------- 우리가 그린 그림 (skin.js) ----------
    images 폴더에 그림이 있으면 실루엣 대신 이 그림이 나와요.
    그림 크기는 실루엣과 같은 키(1.55em)에 맞춰요. */
@@ -866,6 +965,12 @@ body {
 .fig.has-look.is-looking .f-art--look { display: block; }
 
 /* 쳐다보는 그림이 없으면 붉은 빛으로 알려줘요 (들키면 안 되니까 중요해요!) */
+.is-hurt .fig.has-art .f-art,
+.is-caught .fig.has-art .f-art {
+  filter: sepia(1) saturate(6) hue-rotate(-50deg) brightness(0.9)
+          drop-shadow(0 0 0.06em #ff4a4a);
+}
+
 .fig.has-art.is-looking:not(.has-look) .f-art {
   filter: drop-shadow(0 0 0.04em #ff4a4a) drop-shadow(0 0 0.1em rgba(255, 60, 60, 0.85));
 }
@@ -1717,6 +1822,38 @@ body {
 .m5-signal.is-ready  { background: var(--ochre);    color: var(--ink); }
 .m5-signal.is-strike { background: var(--flag-red); color: #fff0f0; }
 .m5-signal.is-open   { background: var(--moss);     color: #0d1a0b; }
+
+/* ---------- 주인공 뒤의 김구 · 한국광복군 ---------- */
+.m5-allies {
+  position: absolute;
+  left: 2%;
+  bottom: 16%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  opacity: 0.8;
+}
+.m5-ally .fig { font-size: clamp(22px, 4.2vw, 40px); }
+.m5-ally-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  text-align: center;
+  font-size: clamp(9px, 1.2vw, 12px);
+  color: var(--paper-dim);
+  white-space: nowrap;
+}
+/* 명중하면 다 같이 폴짝! */
+.m5-allies.is-cheer .m5-ally { animation: ally-cheer 0.5s ease; }
+.m5-allies.is-cheer .m5-ally:nth-child(2) { animation-delay: 0.08s; }
+.m5-allies.is-cheer .m5-ally:nth-child(3) { animation-delay: 0.16s; }
+@keyframes ally-cheer {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-14px); }
+}
+.m5-ally { display: inline-block; }
 
 /* ---------- 주인공 (왼쪽) ---------- */
 .m5-hero {
@@ -2691,6 +2828,9 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 
 .frame-warning b { color: #ff8a93; }
 
+/* 5장 헌병대장 그림은 조금 더 크게 (마지막 상대니까요) */
+.m5-boss .fig.has-art .f-art { height: 1.85em; max-width: 2.8em; }
+
 </style>
 </head>
 <body>
@@ -2814,17 +2954,36 @@ body.liberation #bubble-face .fig { color: #e6dcc6; }
 
   <!-- ============ 3) 끝 화면 ============ -->
   <section id="screen-end" class="screen">
-    <div class="title-box">
-      <div id="end-emoji">🎉</div>
-      <h2 id="end-title">광복!</h2>
-      <p id="end-message">모든 임무를 마쳤어요!</p>
+    <div class="end-layout">
 
-      <div class="score-card">
-        <span class="hud-label">내 독립 포인트</span>
-        <strong id="end-score">0</strong>
+      <!-- 왼쪽 : 결과와 점수 -->
+      <div class="title-box">
+        <div id="end-emoji">🎉</div>
+        <h2 id="end-title">광복!</h2>
+        <p id="end-message">모든 임무를 마쳤어요!</p>
+
+        <div class="score-card">
+          <span class="hud-label">내 독립 포인트</span>
+          <strong id="end-score">0</strong>
+          <span id="end-record" class="end-record" hidden>최고 기록!</span>
+        </div>
+
+        <button id="btn-retry" class="big-btn">다시 하기</button>
       </div>
 
-      <button id="btn-retry" class="big-btn">다시 하기</button>
+      <!-- 오른쪽 : 오늘 배운 역사 + 최고 기록 -->
+      <div class="end-side">
+        <section class="end-panel">
+          <h3>오늘 배운 역사</h3>
+          <ol id="end-history" class="end-history"></ol>
+          <p class="end-note">이 게임은 실제 역사를 바탕으로 꾸민 이야기예요.</p>
+        </section>
+        <section class="end-panel">
+          <h3>최고 기록</h3>
+          <ol id="end-rank" class="end-rank"></ol>
+        </section>
+      </div>
+
     </div>
   </section>
 
@@ -3911,6 +4070,7 @@ const Skin = (function () {
     'police-look':  '일본 경찰 - 이쪽을 쳐다볼 때 (없어도 돼요)',
     'captain':      '일본 헌병대장',
     'captain-look': '일본 헌병대장 - 공격하려고 노려볼 때 (없어도 돼요)',
+    'army':         '한국광복군 (5장에서 주인공 뒤에 서요)',
 
     // 배경
     'title':        '시작 화면 배경',
@@ -4062,6 +4222,7 @@ const MissionUtil = {
    who  : 누가 말하는지 (실루엣 모양)
           'hero' 주인공 / 'mate' 독립운동가 동료 / 'kimgu' 김구
           'yu' 유관순 / 'police' 일본 경찰 / 'captain' 일본 헌병대장
+          'army' 한국광복군
           'narr' 해설 (사람 없이 이야기만 나와요)
    name : 이름표에 쓸 이름
    text : 하는 말
@@ -4097,7 +4258,8 @@ const STORIES = {
 
   /* ---------- 4장 · 만세운동 준비 ---------- */
   4: [
-    { who: 'narr', text: '태극기를 지켜 낸 주인공은 유관순을 만났다.' },
+    { who: 'narr', text: '【역사 메모】 실제 유관순 열사는 1919년 3·1 운동 때 아우내 장터에서 만세운동을 이끌었고, 1920년 서대문 형무소에서 돌아가셨다.' },
+    { who: 'narr', text: '이 장은 유관순 열사의 뜻을 기리며 꾸민 이야기다. 태극기를 지켜 낸 주인공은 유관순을 만났다.' },
     { who: 'yu', name: '유관순', text: '이 태극기로 만세운동을 준비할 거예요.' },
     { who: 'yu', name: '유관순', text: '광장에 모인 사람들에게 하나씩 나누어 주고, 독립의 뜻을 알려 주세요.' },
     { who: 'yu', name: '유관순', text: '순찰하는 일본 경찰이 있으니 가까이 가지 않게 조심하세요.' },
@@ -4107,6 +4269,7 @@ const STORIES = {
   5: [
     { who: 'narr', text: '모든 준비를 마쳤다. 이제 마지막 싸움만이 남았다.' },
     { who: 'kimgu', name: '김구', text: '여기까지 온 것은 모두 자네와 같은 이들의 용기 덕분이네.' },
+    { who: 'kimgu', name: '김구', text: '우리 한국광복군도 자네 뒤를 지킬 걸세. 우리는 모두 함께 싸우는 것이네.' },
     { who: 'captain', name: '일본 헌병대장', text: '감히 독립을 꿈꾸다니! 여기서 끝을 내 주마!' },
     { who: 'hero', name: '나', text: '우리는 물러서지 않는다!' },
   ],
@@ -4116,6 +4279,27 @@ const STORIES = {
     { who: 'narr', text: '마지막 임무까지 마친 그날 밤이 지나고…' },
     { who: 'kimgu', name: '김구', text: '이보게, 들리는가? 거리에서 사람들이 만세를 부르고 있네.' },
   ],
+};
+
+
+/* ==================================================================
+   오늘 배운 역사 (끝 화면에 나와요)
+   ★ 게임 속 이야기는 꾸민 것이지만, 여기는 실제 역사예요.
+     장마다 하나씩, 그 장에서 해낸 만큼 보여줘요.
+   ================================================================== */
+const HISTORY = {
+  1: { title: '비밀 연락망',
+       text: '일제는 독립운동가를 늘 감시했어요. 그래서 대한민국 임시정부는 「연통제」라는 비밀 연락망을 만들어 몰래 소식과 편지를 주고받았어요.' },
+  2: { title: '김구',
+       text: '김구는 대한민국 임시정부를 이끈 독립운동가예요. 1940년에는 임시정부의 주석(가장 높은 자리)이 되었어요.' },
+  3: { title: '태극기',
+       text: '일제강점기에는 태극기를 마음대로 쓸 수 없었어요. 사람들은 태극기를 몰래 숨겨 두고 지켰어요.' },
+  4: { title: '3·1 운동과 유관순',
+       text: '1919년 3월 1일, 온 나라에서 「대한 독립 만세」를 외친 3·1 운동이 일어났어요. 유관순 열사는 고향 아우내 장터에서 만세운동을 이끌었어요.' },
+  5: { title: '한국광복군',
+       text: '1940년 임시정부는 우리 군대인 한국광복군을 만들었어요. 광복군은 나라 안으로 들어가 일본과 싸울 작전을 준비했어요.' },
+  6: { title: '광복',
+       text: '1945년 8월 15일, 일본이 전쟁에서 지면서 우리나라는 광복을 맞았어요. 광복은 「빛을 되찾았다」는 뜻이에요.' },
 };
 
 
@@ -5901,6 +6085,11 @@ MISSIONS[5] = (function () {
       if (window.Sound) Sound.ding();
       setTalk('명중! 헌병대장이 물러선다.', 'good');
 
+      // 뒤에 있는 동료들이 함께 기뻐해요
+      node.allies.classList.remove('is-cheer');
+      void node.allies.offsetWidth;            // 애니메이션을 처음부터 다시
+      node.allies.classList.add('is-cheer');
+
       if (bossHp <= 0) { win(); return; }
 
       // 맞으면 바로 다음 동작으로 넘어가요
@@ -6020,6 +6209,13 @@ MISSIONS[5] = (function () {
         '<div class="m5-arena">' +
           '<div class="m5-signal"></div>' +
           '<div class="m5-ground"></div>' +
+          // 주인공 뒤 : 김구 선생님과 한국광복군이 함께 서 있어요 (기획서 5장)
+          '<div class="m5-allies">' +
+            '<span class="m5-ally">' + MissionUtil.figure('army') + '</span>' +
+            '<span class="m5-ally">' + MissionUtil.figure('kimgu') + '</span>' +
+            '<span class="m5-ally">' + MissionUtil.figure('army') + '</span>' +
+            '<span class="m5-ally-name">김구 · 한국광복군</span>' +
+          '</div>' +
           '<div class="m5-hero">' + MissionUtil.figure('hero') + '</div>' +
           '<div class="m5-boss is-idle">' +
             MissionUtil.figure('captain') +
@@ -6040,6 +6236,7 @@ MISSIONS[5] = (function () {
       boss:    stage.querySelector('.m5-boss'),
       bossFig: stage.querySelector('.m5-boss .fig'),
       hero:    stage.querySelector('.m5-hero'),
+      allies:  stage.querySelector('.m5-allies'),
       signal:  stage.querySelector('.m5-signal'),
       bossHp:  stage.querySelector('.m5-boss-hp'),
       heroHp:  stage.querySelector('.m5-hero-hp'),
@@ -6756,6 +6953,7 @@ function finishGame() {
   el.endTitle.textContent = '대한 독립 만세';
   el.endMessage.textContent = '모든 임무를 마치고 독립을 이루었어요. 대한 독립 만세!';
   el.endScore.textContent = game.score;
+  drawEndExtras(CHAPTERS.length, true);
   showScreen('end');
   Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
 }
@@ -6772,8 +6970,77 @@ function gameOver(reason) {
   el.endMessage.textContent = (reason || '일본 경찰에게 발각되었어요.') +
                               ' 하지만 포기하지 말아요. 다시 도전!';
   el.endScore.textContent = game.score;
+  drawEndExtras(game.chapterIndex, false);   // 끝낸 장까지만 보여줘요
   showScreen('end');
   Input.on('jump', goTitle);   // 1번 버튼으로도 다시 할 수 있어요
+}
+
+
+/* ==================================================================
+   7-1. 끝 화면 : 오늘 배운 역사 + 최고 기록
+   ================================================================== */
+
+/* 해낸 장(cleared 개)만큼 역사 이야기를 보여줘요 */
+function drawHistory(cleared) {
+  const box = document.getElementById('end-history');
+  let html = '';
+  for (let id = 1; id <= CHAPTERS.length; id++) {
+    const h = HISTORY[id];
+    if (!h) continue;
+    if (id <= cleared) {
+      html += '<li><b>' + h.title + '</b><span>' + h.text + '</span></li>';
+    } else {
+      html += '<li class="is-locked"><b>' + id + '장을 해내면 열려요</b></li>';
+    }
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- 최고 기록 (이 기계에 저장돼요) ----------
+   점수가 높은 순서로 5개까지 기억해요. */
+const RANK_KEY = 'dokrip.ranks';
+const RANK_MAX = 5;
+
+function loadRanks() {
+  try { return JSON.parse(localStorage.getItem(RANK_KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function saveRank(score, cleared, won) {
+  const ranks = loadRanks();
+  const d = new Date();
+  const mine = {
+    score: score,
+    stage: won ? '광복' : (cleared + 1) + '장',
+    date: (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+          d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'),
+    id: d.getTime(),
+  };
+  ranks.push(mine);
+  ranks.sort(function (a, b) { return b.score - a.score || a.id - b.id; });
+  const top = ranks.slice(0, RANK_MAX);
+  try { localStorage.setItem(RANK_KEY, JSON.stringify(top)); } catch (e) {}
+  return { list: top, mine: mine, best: top[0] && top[0].id === mine.id && score > 0 };
+}
+
+function drawRank(result) {
+  const box = document.getElementById('end-rank');
+  let html = '';
+  result.list.forEach(function (r, i) {
+    html += '<li class="' + (r.id === result.mine.id ? 'is-mine' : '') + '">' +
+              '<span class="r-no">' + (i + 1) + '</span>' +
+              '<span class="r-score">' + r.score + '점</span>' +
+              '<span class="r-stage">' + r.stage + '</span>' +
+              '<span class="r-date">' + r.date + '</span>' +
+            '</li>';
+  });
+  box.innerHTML = html || '<li class="is-locked">아직 기록이 없어요</li>';
+  document.getElementById('end-record').hidden = !result.best;
+}
+
+function drawEndExtras(cleared, won) {
+  drawHistory(cleared);
+  drawRank(saveRank(game.score, cleared, won));
 }
 
 
