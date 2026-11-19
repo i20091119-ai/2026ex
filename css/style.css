@@ -6,6 +6,9 @@
 /* ---------- 색깔을 이름표에 저장해 둬요 ----------
    이렇게 해두면 나중에 색을 바꿀 때 여기만 고치면 돼요! */
 :root {
+  /* 진짜 태극기 (국기법 비율대로 그렸어요 : 태극 지름 = 세로의 1/2, 건·곤·감·리) */
+  --taegukgi: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 360 240%22%3E%3Crect width=%22360%22 height=%22240%22 fill=%22%23ffffff%22/%3E%3Cg transform=%22translate(180.0 120.0) rotate(33.690)%22%3E%3Ccircle r=%2260.0%22 fill=%22%230047a0%22/%3E%3Cpath d=%22M-60.0 0 A60.0 60.0 0 0 1 60.0 0 A30.0 30.0 0 0 0 0 0 A30.0 30.0 0 0 1 -60.0 0 Z%22 fill=%22%23cd2e3a%22/%3E%3C/g%3E%3Cg fill=%22%23000000%22%3E%3Cg transform=%22translate(180.0 120.0) rotate(-146.310)%22%3E%3Crect x=%2290.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3Crect x=%22105.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3Crect x=%22120.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3C/g%3E%3Cg transform=%22translate(180.0 120.0) rotate(33.690)%22%3E%3Crect x=%2290.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%2290.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22105.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22105.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22120.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22120.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3C/g%3E%3Cg transform=%22translate(180.0 120.0) rotate(-33.690)%22%3E%3Crect x=%2290.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%2290.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22105.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3Crect x=%22120.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22120.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3C/g%3E%3Cg transform=%22translate(180.0 120.0) rotate(146.310)%22%3E%3Crect x=%2290.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3Crect x=%22105.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22105.00%22 y=%222.50%22 width=%2210.00%22 height=%2227.50%22/%3E%3Crect x=%22120.00%22 y=%22-30.00%22 width=%2210.00%22 height=%2260.00%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
   --bg-1: #10152a;          /* 먹빛 남색 (한밤의 조선) */
   --bg-2: #1a2340;          /* 조금 밝은 먹빛 남색 */
   --ink: #080b16;           /* 거의 검정에 가까운 먹색 */
@@ -270,36 +273,10 @@ body {
   width: clamp(120px, 22vw, 210px);
   aspect-ratio: 3 / 2;                 /* 태극기는 가로:세로가 3:2예요 */
   margin: 0 auto;
-  position: relative;
-  background: #f2ede2;                 /* 살짝 바랜 흰색 */
+  background: var(--taegukgi) center / 100% 100% no-repeat;
   border-radius: 2px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
-
-/* 가운데 동그란 태극 무늬 */
-.taegeuk {
-  position: absolute;
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%) rotate(-33deg);
-  width: 40%;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  /* 위쪽 절반은 빨강, 아래쪽 절반은 파랑 */
-  background: linear-gradient(to bottom, var(--flag-red) 50%, var(--flag-blue) 50%);
-}
-
-/* 네 귀퉁이의 검은 막대(괘)예요 */
-.gwe {
-  position: absolute;
-  width: 17%;
-  height: 3.5px;
-  background: #1a1a1a;
-  border-radius: 2px;
-}
-.gwe1 { top: 22%; left: 12%; }
-.gwe2 { top: 22%; right: 12%; }
-.gwe3 { bottom: 22%; left: 12%; }
-.gwe4 { bottom: 22%; right: 12%; }
 
 
 
@@ -1501,9 +1478,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
   width: 64%; height: 46%;
   background: #f2ede2;
   /* 가운데 작은 태극 무늬 */
-  background-image:
-    linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 52% 52%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   box-shadow: 0 0 12px rgba(242, 237, 226, 0.5);
@@ -1553,8 +1529,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
   right: 6%; top: 4%;
   width: 34%; height: 26%;
   background: #f2ede2;
-  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 56% 56%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -1620,8 +1596,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
   width: 18px;
   height: 12px;
   background: #f2ede2;
-  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 52% 78%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   transition: opacity 0.3s ease;
@@ -1713,8 +1689,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
   width: 14px;
   height: 10px;
   background: #f2ede2;
-  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 52% 78%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
@@ -2065,8 +2041,8 @@ body.liberation .end-rank .r-no { color: #8a6420; }
   width: clamp(15px, 2.6vw, 24px);
   height: clamp(10px, 1.8vw, 16px);
   background: #f2ede2;
-  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 52% 78%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   transform-origin: left bottom;
@@ -2377,8 +2353,8 @@ body.liberation .overlay-card .help-row .no { color: #1a2340; }
 /* 찾은 태극기는 색이 채워져요 */
 .m3-mark.is-got {
   background: #f2ede2;
-  background-image: linear-gradient(160deg, var(--flag-red) 50%, var(--flag-blue) 50%);
-  background-size: 52% 78%;
+  background-image: var(--taegukgi);
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   border-color: transparent;
