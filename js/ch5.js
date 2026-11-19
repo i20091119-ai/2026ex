@@ -13,6 +13,10 @@
 
      ※ 빈틈이 아닐 때 공격하면 헛손질을 해서 잠깐 움직이지 못해요.
         아무 때나 마구 누르면 안 돼요!
+
+     ★ 기력이 절반 남으면 헌병대장이 화가 나요.
+        - 「속임수」 : 공격하는 척만 해요. 이때 공격하면 헛손질!
+        - 「한 번 더」 : 두 번 연달아 내려쳐요. 두 번 다 피해야 해요.
    ================================================================== */
 
 MISSIONS[5] = (function () {
@@ -33,6 +37,14 @@ MISSIONS[5] = (function () {
   const STRIKE_TIME = [380, 320];   // 내려치는 시간 (이 동안 뛰어도 피할 수 있어요)
   const OPEN_TIME   = [1400, 1050]; // 빈틈이 생기는 시간 (공격할 틈이 길어요)
 
+  /* 화난 헌병대장의 기술 */
+  const ANGRY_HP     = 2;     // 기력이 이만큼 남으면 화가 나요
+  const FEINT_CHANCE = 0.3;   // 속임수를 쓸 확률
+  const FEINT_TIME   = 750;   // 속임수 자세를 보여주는 시간
+  const DOUBLE_CHANCE = 0.5;  // 두 번 연달아 내려칠 확률
+  const READY2_TIME  = 820;   // 두 번째 공격 전 「한 번 더」 시간
+  const SHOUT_TIME   = 1300;  // 동료의 외침이 보이는 시간
+
 
   /* ----------------------------------------------------------------
      2. 이 미션이 기억해야 할 것들
@@ -44,6 +56,10 @@ MISSIONS[5] = (function () {
   let jumpUntil = 0;        // 이 시각까지 공중에 떠 있어요
   let missUntil = 0;        // 이 시각까지 헛손질로 굳어 있어요
   let struck = false;       // 이번 공격이 이미 판정됐는지
+  let angry = false;        // 헌병대장이 화가 났는지
+  let strikeNo = 0;         // 이번에 몇 번째 내려치기인지 (1 또는 2)
+  let lastFeint = false;    // 바로 전에 속임수를 썼는지 (두 번 연속은 안 해요)
+  let feintSwing = false;   // 속임수 때 공격 버튼을 눌렀는지
   let running = false;
   let lastTime = 0;
   let onSuccess = null;
@@ -92,12 +108,13 @@ MISSIONS[5] = (function () {
   function drawBoss() {
     const words = {
       idle:   '……',
-      ready:  '준비!  곧 공격한다',
+      ready:  strikeNo === 1 ? '한 번 더!  다시 온다' : '준비!  곧 공격한다',
+      feint:  '속임수!  기다려라',
       strike: '공격!  점프로 피해라',
       open:   '빈틈!  지금 공격하라',
     };
 
-    node.boss.className = 'm5-boss is-' + bossState;
+    node.boss.className = 'm5-boss is-' + bossState + (angry ? ' is-angry' : '');
     node.signal.className = 'm5-signal is-' + bossState;
     node.signal.textContent = words[bossState];
 
@@ -161,6 +178,14 @@ MISSIONS[5] = (function () {
     return Math.max(40, b.x - h.x);
   }
 
+  /* 뒤에 있는 동료가 한마디 외쳐요 */
+  function shout(text) {
+    node.shout.textContent = text;
+    flash(node.shout, 'is-on', SHOUT_TIME);
+  }
+
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+
   function setTalk(text, kind) {
     node.talk.textContent = text;
     node.talk.className = 'm5-talk' + (kind ? ' is-' + kind : '');
@@ -173,10 +198,26 @@ MISSIONS[5] = (function () {
   function nextBossState() {
     if (bossState === 'idle') {
       bossState = 'ready';
+      strikeNo = 0;
       stateTimer = speedOf(READY_TIME);
       if (window.Sound) Sound.alert();       // 삐빅! 곧 공격해요
 
+    } else if (bossState === 'ready' && angry && strikeNo === 0 && !lastFeint && Math.random() < FEINT_CHANCE) {
+      /* ★ 속임수 : 내려치는 척만 하고 물러나요 */
+      lastFeint = true;
+      feintSwing = false;
+      bossState = 'feint';
+      stateTimer = FEINT_TIME;
+      setTalk('속임수다! 섣불리 공격하지 마라.', '');
+
+    } else if (bossState === 'feint') {
+      if (!feintSwing) shout('속지 않았다!');
+      bossState = 'idle';
+      stateTimer = speedOf(IDLE_TIME) * 0.6;
+
     } else if (bossState === 'ready') {
+      lastFeint = false;
+      strikeNo += 1;
       bossState = 'strike';
       stateTimer = speedOf(STRIKE_TIME);
       struck = false;                        // 이번 공격은 아직 판정 안 했어요
@@ -189,8 +230,15 @@ MISSIONS[5] = (function () {
     } else if (bossState === 'strike') {
       // 내려치는 동안 한 번도 안 뛰었으면 그제서야 맞아요
       if (!struck) { struck = true; heroHit(); if (!running) return; }
-      bossState = 'open';
-      stateTimer = speedOf(OPEN_TIME);
+      if (angry && strikeNo === 1 && Math.random() < DOUBLE_CHANCE) {
+        /* ★ 한 번 더! 두 번째 공격이 와요 */
+        bossState = 'ready';
+        stateTimer = READY2_TIME;
+        if (window.Sound) Sound.alert();
+      } else {
+        bossState = 'open';
+        stateTimer = speedOf(OPEN_TIME);
+      }
 
     } else {
       bossState = 'idle';
@@ -251,14 +299,28 @@ MISSIONS[5] = (function () {
       node.allies.classList.add('is-cheer');
 
       if (bossHp <= 0) { win(); return; }
+      shout(pick(['좋다!', '그렇지!', '조금만 더!']));
 
       // 맞으면 바로 다음 동작으로 넘어가요
       bossState = 'idle';
       stateTimer = speedOf(IDLE_TIME);
+
+      // ★ 기력이 절반 남으면 화가 나서 기술을 써요
+      if (bossHp === ANGRY_HP && !angry) {
+        angry = true;
+        stateTimer = 1800;                 // 화내는 동안은 잠깐 쉬어요
+        setTimeout(function () {
+          if (!running) return;
+          setTalk('헌병대장이 화가 났다! 속임수와 연속 공격을 조심하라.', 'bad');
+          flash(node.arena, 'is-shake', 300);
+          if (window.Sound) Sound.alert();
+        }, 450);
+      }
       drawBoss();
 
     } else {
       /* ---- 빈틈이 아닌데 휘둘렀어요 ---- */
+      if (bossState === 'feint') feintSwing = true;
       missUntil = now + MISS_TIME;
       setTalk('헛손질! 잠시 움직일 수 없다.', 'bad');
       drawHero(now);
@@ -293,6 +355,7 @@ MISSIONS[5] = (function () {
 
     if (heroHp <= 0) { lose(); return; }
     setTalk('공격에 맞았다! 다음엔 점프로 피하자.', 'bad');
+    if (heroHp === 1) shout('버텨라! 우리가 있다!');
   }
 
   function win() {
@@ -371,6 +434,9 @@ MISSIONS[5] = (function () {
     heroHp = HERO_HP;
     bossState = 'idle';
     stateTimer = 1200;                 // 처음에는 조금 여유를 줘요
+    angry = false;
+    strikeNo = 0;
+    lastFeint = false;
     jumpUntil = 0;
     missUntil = 0;
     running = true;
@@ -400,6 +466,7 @@ MISSIONS[5] = (function () {
             '<span class="m5-ally">' + MissionUtil.figure('kimgu') + '</span>' +
             '<span class="m5-ally">' + MissionUtil.figure('army') + '</span>' +
             '<span class="m5-ally-name">김구 · 한국광복군</span>' +
+            '<span class="m5-shout"></span>' +       // 동료의 외침
           '</div>' +
           '<div class="m5-hero">' + MissionUtil.figure('hero') + '</div>' +
           '<div class="m5-boss is-idle">' +
@@ -425,6 +492,7 @@ MISSIONS[5] = (function () {
       arena:   stage.querySelector('.m5-arena'),
       ground:  stage.querySelector('.m5-ground'),
       allies:  stage.querySelector('.m5-allies'),
+      shout:   stage.querySelector('.m5-shout'),
       signal:  stage.querySelector('.m5-signal'),
       bossHp:  stage.querySelector('.m5-boss-hp'),
       heroHp:  stage.querySelector('.m5-hero-hp'),
@@ -457,6 +525,6 @@ MISSIONS[5] = (function () {
   return {
     start: start,
     stop: stop,
-    hint: '「준비」 뒤 공격이 온다. 1번으로 점프해 피하고, 「빈틈」에 3번으로 공격하라.',
+    hint: '「준비」 뒤 공격이 온다. 1번으로 점프해 피하고, 「빈틈」에 3번으로 공격하라. 화가 나면 「속임수」와 「한 번 더」를 조심!',
   };
 })();

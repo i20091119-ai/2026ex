@@ -3986,3 +3986,49 @@ body.liberation .score-card strong { color: #8a6420; }
 .m4-yu.is-call .fig { filter: drop-shadow(0 0 10px rgba(255, 224, 138, 0.95)); animation: nod 1s ease-in-out infinite; }
 .m4-yu.is-near .m4-bubble.is-yu { opacity: 1; }
 .m4-cone.is-alert { filter: hue-rotate(-45deg) saturate(4) brightness(1.2); }
+
+/* ==================================================================
+   5장 : 화난 헌병대장 (속임수 · 한 번 더) 과 동료의 외침
+   ================================================================== */
+.m5-signal.is-feint { background: transparent; color: var(--ochre); border: 2px dashed var(--ochre); }
+
+/* 속임수 : 칼을 들었다가 슬쩍 물러나요 */
+.m5-boss.is-feint { transform: translateX(50%) translateX(18px) rotate(3deg); transition: transform 0.25s ease; }
+.m5-boss.is-feint .m5-blade { opacity: 0.6; transform: rotate(-20deg); background: var(--ochre); }
+
+/* 화가 나면 붉은 기운이 계속 감돌아요 */
+.m5-boss.is-angry .fig { filter: drop-shadow(0 0 7px rgba(255, 50, 50, 0.75)); }
+.m5-boss.is-angry::after {
+  content: '怒';
+  position: absolute; right: -0.2em; top: -0.4em;
+  font: 800 clamp(14px, 2.2vw, 22px) 'Noto Serif KR', serif;
+  color: #ff6b6b; text-shadow: 0 0 8px rgba(255, 60, 60, 0.8);
+  animation: angry-pulse 0.7s ease-in-out infinite alternate;
+}
+@keyframes angry-pulse { from { opacity: 0.55; transform: scale(0.92); } to { opacity: 1; transform: scale(1.1); } }
+
+/* 동료의 외침 말풍선 */
+.m5-shout {
+  position: absolute; left: 50%; bottom: 100%;
+  transform: translate(-50%, 6px);
+  margin-bottom: 8px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(246, 236, 210, 0.95); color: #1d1a14;
+  font: 800 clamp(11px, 1.6vw, 15px) 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+}
+.m5-shout::after {
+  content: ''; position: absolute; left: 50%; top: 100%;
+  border: 6px solid transparent; border-top-color: rgba(246, 236, 210, 0.95);
+  transform: translateX(-50%);
+}
+.m5-shout.is-on { animation: shout-pop 1.3s ease forwards; }
+@keyframes shout-pop {
+  0%   { opacity: 0; transform: translate(-50%, 8px) scale(0.8); }
+  12%  { opacity: 1; transform: translate(-50%, 0) scale(1.06); }
+  20%  { transform: translate(-50%, 0) scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
