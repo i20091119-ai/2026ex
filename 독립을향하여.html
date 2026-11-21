@@ -5575,6 +5575,13 @@ const Input = (function () {
           const r = padMap.acts[k];
           if (r && r.type === 'axis') claimedAxes[r.index] = true;
         }
+        /* ★ 맞추기에서 배운 방향이 쓰는 축도 기본 방식으로는 읽지 않아요.
+             (조종기 스틱이 옆으로 돌아가 달려 있으면, 오른쪽으로 밀 때
+              '배운 오른쪽'과 '기본 방식의 위'가 한꺼번에 켜졌어요!) */
+        for (const k in padMap.dirs) {
+          const r = padMap.dirs[k];
+          if (r && r.type === 'axis') claimedAxes[r.index] = true;
+        }
       }
 
       BUTTONS.forEach(function (b, index) {
@@ -5821,6 +5828,12 @@ const Input = (function () {
         const moved = Math.abs(now.axes[i] - was);
         // 버튼 단계에서는 해트(십자키)를 버튼으로 배우지 않아요
         if (kind !== 'dir' && Math.abs(was) > 1.05) continue;
+        /* ★ 앞 단계에서 민 스틱을 이제 막 놓은 것(가운데로 돌아감)은
+             새 신호가 아니에요. 가만히 있을 때 값 근처면 건너뛰어요. */
+        //   (해트는 가만히 있을 때 3.29 같은 바깥 값이라 이 검사를 안 해요.
+        //    해트의 '아래' 값 0.14 는 0 과 가까워도 진짜 신호예요)
+        const rest = padRest ? padRest[i] : 0;
+        if (Math.abs(rest) <= 1.05 && Math.abs(now.axes[i] - rest) < 0.4) continue;
         if (moved > bestMove && Math.abs(now.axes[i]) <= 1.05) {
           bestMove = moved;
           best = {
